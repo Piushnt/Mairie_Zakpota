@@ -4,7 +4,11 @@ import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { newsData } from '../data/config';
 import NewsCard from '../components/NewsCard';
 
-export default function PageActualites() {
+interface PageActualitesProps {
+  news: any[];
+}
+
+export default function PageActualites({ news }: PageActualitesProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Toutes');
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,12 +19,12 @@ export default function PageActualites() {
     'Jeunesse', 'Éducation', 'Social', 'Environnement'
   ];
 
-  const filteredNews = newsData.filter(news => {
-    const matchesSearch = (news.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (news.desc?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (news.cat?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+  const filteredNews = news.filter(n => {
+    const matchesSearch = (n.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (n.desc?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (n.cat?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     
-    const matchesCategory = selectedCategory === 'Toutes' || news.cat === selectedCategory;
+    const matchesCategory = selectedCategory === 'Toutes' || n.cat === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
@@ -58,6 +62,7 @@ export default function PageActualites() {
               <select 
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
+                title="Filtrer par catégorie"
                 className="px-6 py-4 bg-card border border-border rounded-2xl outline-none focus:border-primary transition-all shadow-sm font-bold text-sm text-ink/70 cursor-pointer min-w-[160px]"
               >
                 {categories.map(cat => (
@@ -100,6 +105,7 @@ export default function PageActualites() {
                 <button 
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
+                  title="Page précédente"
                   className="p-4 rounded-xl border border-border text-ink-muted hover:text-primary hover:border-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="w-6 h-6" />
@@ -124,6 +130,7 @@ export default function PageActualites() {
                 <button 
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
+                  title="Page suivante"
                   className="p-4 rounded-xl border border-border text-ink-muted hover:text-primary hover:border-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <ChevronRight className="w-6 h-6" />

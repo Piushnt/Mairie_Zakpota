@@ -111,14 +111,17 @@ const RapportsPage: React.FC<RapportsPageProps> = ({ store }) => {
                   <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{report.type}</p>
                   <h3 className="text-sm font-bold text-ink truncate group-hover:text-primary transition-colors">{report.title}</h3>
                 </div>
-                <a 
+                <motion.a 
+                  whileHover={{ scale: 0.98 }}
+                  whileTap={{ scale: 0.95 }}
                   href={report.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title={`Télécharger ${report.title}`}
                   className="ml-4 p-2 bg-muted rounded-lg text-ink/40 group-hover:bg-primary group-hover:text-white transition-all"
                 >
                   <Download className="w-4 h-4" />
-                </a>
+                </motion.a>
               </motion.div>
             ))}
           </div>
@@ -145,6 +148,7 @@ const RapportsPage: React.FC<RapportsPageProps> = ({ store }) => {
               <select 
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
+                title="Filtrer par année"
                 className="w-full pl-12 pr-10 py-4 bg-muted border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium appearance-none text-ink"
               >
                 {years.map(year => (
@@ -160,6 +164,7 @@ const RapportsPage: React.FC<RapportsPageProps> = ({ store }) => {
               <select 
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
+                title="Filtrer par catégorie"
                 className="w-full pl-12 pr-10 py-4 bg-muted border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium appearance-none text-ink"
               >
                 {categories.map(cat => (
@@ -182,13 +187,13 @@ const RapportsPage: React.FC<RapportsPageProps> = ({ store }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="group bg-card rounded-[2rem] p-8 shadow-sm hover:shadow-xl transition-all border border-border flex flex-col h-full"
+                className="group bg-white/40 backdrop-blur-md rounded-[2rem] p-8 shadow-sm hover:shadow-xl transition-all border border-white/30 flex flex-col h-full"
               >
                 <div className="flex items-start justify-between mb-6">
                   <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-500">
                     <FileText className="w-7 h-7" />
                   </div>
-                  <span className="px-4 py-1.5 bg-muted text-ink/50 rounded-full text-[10px] font-black uppercase tracking-widest">
+                  <span className="px-4 py-1.5 bg-white/50 backdrop-blur-sm text-ink/50 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">
                     {report.year}
                   </span>
                 </div>
@@ -206,15 +211,17 @@ const RapportsPage: React.FC<RapportsPageProps> = ({ store }) => {
                   </div>
                 </div>
 
-                <a 
+                <motion.a 
+                  whileHover={{ scale: 0.98 }}
+                  whileTap={{ scale: 0.95 }}
                   href={report.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-auto flex items-center justify-center space-x-3 w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-lg shadow-primary/10"
+                  className="mt-auto flex items-center justify-center space-x-3 w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
                 >
                   <Download className="w-4 h-4" />
                   <span>Télécharger</span>
-                </a>
+                </motion.a>
               </motion.div>
             ))}
           </AnimatePresence>

@@ -280,22 +280,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
             <LayoutDashboard className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="font-black text-ink uppercase tracking-widest text-sm">Admin Portal</h2>
-            <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">Mairie de Za-Kpota</p>
+            <h2 className="font-black text-ink uppercase tracking-widest text-sm">Portail S.E.</h2>
+            <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">Secrétaire Exécutif</p>
           </div>
         </div>
 
         <nav className="space-y-2 flex-1 overflow-y-auto pr-2 custom-scrollbar">
           {[
-            { id: 'services', label: 'Services & Tarifs', icon: FileText },
-            { id: 'agenda', label: 'Agenda Stade', icon: Calendar },
-            { id: 'reports', label: 'Rapports & Docs', icon: FileText },
+            { id: 'services', label: 'Tarifs des Actes', icon: FileText },
+            { id: 'agenda', label: 'Planning du Stade', icon: Calendar },
+            { id: 'reports', label: 'Rapports Officiels', icon: FileText },
             { id: 'arrondissements', label: 'Arrondissements', icon: MapPin },
-            { id: 'opportunities', label: 'Opportunités', icon: Briefcase },
-            { id: 'market', label: 'Gestion Marché', icon: ShoppingBag },
-            { id: 'appointments', label: 'Planning RDV', icon: CalendarCheck },
-            { id: 'flash', label: 'Flash News', icon: Bell },
-            { id: 'settings', label: 'Paramètres', icon: Settings },
+            { id: 'opportunities', label: 'Opportunités & Appels', icon: Briefcase },
+            { id: 'market', label: 'Cycle du Marché', icon: ShoppingBag },
+            { id: 'appointments', label: 'Audiences Citoyennes', icon: CalendarCheck },
+            { id: 'flash', label: 'Bandeau d\'Alerte', icon: Bell },
+            { id: 'settings', label: 'Configuration', icon: Settings },
           ].map(item => (
             <button
               key={item.id}
@@ -437,6 +437,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                           value={arr.chef}
                           onChange={(e) => handleUpdateArrondissement(arr.id, 'chef', e.target.value)}
                           className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary text-ink min-h-[44px]"
+                          title="Nom du Chef d'Arrondissement"
+                          placeholder="Ex: M. SOSSOU"
                         />
                       </div>
                       <div className="space-y-1">
@@ -446,6 +448,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                           value={arr.contact}
                           onChange={(e) => handleUpdateArrondissement(arr.id, 'contact', e.target.value)}
                           className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary text-ink min-h-[44px]"
+                          title="Contact de l'Arrondissement"
+                          placeholder="Ex: +229 97 00 00 00"
                         />
                       </div>
                     </div>
@@ -484,6 +488,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       value={newOpportunity.type}
                       onChange={(e) => setNewOpportunity({...newOpportunity, type: e.target.value})}
                       className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-ink min-h-[44px]"
+                      title="Type d'opportunité"
                     >
                       <option>Marché Public</option>
                       <option>Emploi</option>
@@ -497,6 +502,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       onChange={(e) => setNewOpportunity({...newOpportunity, description: e.target.value})}
                       rows={3}
                       className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-ink resize-none min-h-[44px]"
+                      title="Description de l'opportunité"
+                      placeholder="Détails de l'annonce..."
                     />
                   </div>
                 </div>
@@ -526,6 +533,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       <button 
                         onClick={() => handleRemoveOpportunity(opp.id)}
                         className="p-2 text-red hover:bg-red/5 rounded-lg transition-colors min-h-[44px] min-w-[44px]"
+                        title="Supprimer cette opportunité"
+                        aria-label="Supprimer cette opportunité"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -550,6 +559,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                     value={configMarche.referenceDate}
                     onChange={(e) => setConfigMarche({ referenceDate: e.target.value })}
                     className="w-full bg-card border border-border rounded-xl px-6 py-4 outline-none focus:border-primary text-ink font-bold min-h-[44px]"
+                    title="Date du prochain marché"
                   />
                   <p className="text-xs text-ink/40 font-medium leading-relaxed">
                     Cette date sert de base au calcul automatique des prochains jours de marché (tous les 5 jours). 
@@ -560,6 +570,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                   onClick={handleSaveMarketConfig}
                   disabled={isSaving}
                   className="flex items-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all min-h-[44px]"
+                  title="Enregistrer la configuration du marché"
+                  aria-label="Enregistrer la configuration du marché"
                 >
                   {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>Enregistrer & Rappeler</span>
@@ -628,12 +640,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                                 <button 
                                   onClick={() => handleValidateAppointment(rdv.id)}
                                   className="p-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all min-h-[44px] min-w-[44px]"
+                                  title="Valider le rendez-vous"
+                                  aria-label="Valider le rendez-vous"
                                 >
                                   <CheckCircle className="w-5 h-5" />
                                 </button>
                                 <button 
                                   onClick={() => handleCancelAppointment(rdv.id)}
                                   className="p-2 bg-red/10 text-red rounded-xl hover:bg-red hover:text-white transition-all min-h-[44px] min-w-[44px]"
+                                  title="Annuler le rendez-vous"
+                                  aria-label="Annuler le rendez-vous"
                                 >
                                   <Trash2 className="w-5 h-5" />
                                 </button>
@@ -672,6 +688,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                             value={service.cost}
                             onChange={(e) => handleUpdateServicePrice(category, service.id, e.target.value)}
                             className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all font-bold text-primary"
+                            title="Tarif du service"
+                            placeholder="Montant en FCFA"
                           />
                         </div>
 
@@ -684,6 +702,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                                 <button 
                                   onClick={() => handleRemovePiece(category, service.id, idx)}
                                   className="text-red hover:bg-red/5 p-1 rounded-lg transition-colors"
+                                  title={`Supprimer la pièce "${piece}"`}
+                                  aria-label={`Supprimer la pièce "${piece}"`}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -702,7 +722,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                                 }
                               }}
                             />
-                            <button className="p-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all">
+                            <button 
+                              className="p-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all"
+                              title="Ajouter une pièce"
+                              aria-label="Ajouter une pièce"
+                            >
                               <Plus className="w-4 h-4" />
                             </button>
                           </div>
@@ -716,6 +740,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                 onClick={handleSaveServices}
                 disabled={isSaving}
                 className="flex items-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+                title="Enregistrer les tarifs des services"
+                aria-label="Enregistrer les tarifs des services"
               >
                 {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                 <span>Enregistrer les Tarifs</span>
@@ -730,6 +756,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                 <button 
                   onClick={handleAddEvent}
                   className="flex items-center space-x-2 px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                  title="Ajouter un nouvel événement"
+                  aria-label="Ajouter un nouvel événement"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Ajouter un événement</span>
@@ -751,6 +779,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                             value={event.title}
                             onChange={(e) => handleUpdateEvent(event.id, 'title', e.target.value)}
                             className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary text-ink"
+                            title="Titre de l'événement"
+                            placeholder="Nom de la rencontre"
                           />
                         </div>
                         <div className="space-y-1">
@@ -780,6 +810,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                               value={event.type}
                               onChange={(e) => handleUpdateEvent(event.id, 'type', e.target.value)}
                               className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary text-ink"
+                              title="Type d'événement"
+                              aria-label="Type d'événement"
                             >
                               <option className="bg-card">Sport</option>
                               <option className="bg-card">Culture</option>
@@ -801,6 +833,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                           <button 
                             onClick={() => handleRemoveEvent(event.id)}
                             className="ml-4 p-3 text-red hover:bg-red/5 rounded-xl transition-colors"
+                            title={`Supprimer l'événement "${event.title}"`}
+                            aria-label={`Supprimer l'événement "${event.title}"`}
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
@@ -815,6 +849,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                 onClick={handleSaveAgenda}
                 disabled={isSaving}
                 className="flex items-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+                title="Enregistrer les modifications de l'agenda"
+                aria-label="Enregistrer les modifications de l'agenda"
               >
                 {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                 <span>Enregistrer l'Agenda</span>
@@ -852,7 +888,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                     <select 
                       value={newReport.type}
                       onChange={(e) => setNewReport({...newReport, type: e.target.value})}
-                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink min-h-[44px]"
+                      title="Type de document"
+                      aria-label="Type de document"
                     >
                       <option className="bg-card">Conseil de Supervision</option>
                       <option className="bg-card">Session Communale</option>
@@ -865,7 +903,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                     <select 
                       value={newReport.category}
                       onChange={(e) => setNewReport({...newReport, category: e.target.value})}
-                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink min-h-[44px]"
+                      title="Catégorie du document"
+                      aria-label="Catégorie du document"
                     >
                       <option className="bg-card">Sessions</option>
                       <option className="bg-card">Finances</option>
@@ -888,6 +928,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                   onClick={handleAddReport}
                   disabled={isSaving}
                   className="w-full flex items-center justify-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+                  title="Publier le document et notifier les citoyens"
+                  aria-label="Publier le document et notifier les citoyens"
                 >
                   {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus className="w-4 h-4" />}
                   <span>Publier & Notifier les Citoyens</span>
@@ -911,6 +953,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       <button 
                         onClick={() => handleRemoveReport(report.id)}
                         className="p-2 text-red hover:bg-red/5 rounded-lg transition-colors"
+                        title={`Supprimer le document "${report.title}"`}
+                        aria-label={`Supprimer le document "${report.title}"`}
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
