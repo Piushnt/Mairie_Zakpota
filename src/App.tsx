@@ -4,21 +4,21 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Menu, 
-  X, 
-  Phone, 
-  Mail, 
+import {
+  Search,
+  Menu,
+  X,
+  Phone,
+  Mail,
   Clock,
-  MapPin, 
-  ChevronDown, 
-  ArrowRight, 
-  FileText, 
-  Users, 
-  Home, 
-  Building2, 
-  Calendar, 
+  MapPin,
+  ChevronDown,
+  ArrowRight,
+  FileText,
+  Users,
+  Home,
+  Building2,
+  Calendar,
   Info,
   Facebook,
   Twitter,
@@ -60,9 +60,9 @@ L.Icon.Default.mergeOptions({
 });
 
 // --- DATA ---
-import { 
-  servicesData, 
-  tourismData, 
+import {
+  servicesData,
+  tourismData,
   galleryData,
   maireData,
   conseilMunicipal,
@@ -111,7 +111,7 @@ const SearchModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
   <AnimatePresence>
     {isOpen && (
       <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95, y: -20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
@@ -119,10 +119,10 @@ const SearchModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
         >
           <div className="p-6 flex items-center space-x-4 border-b border-border">
             <Search className="w-6 h-6 text-primary" />
-            <input 
+            <input
               autoFocus
-              type="text" 
-              placeholder="Rechercher un service, un acte ou une actualité..." 
+              type="text"
+              placeholder="Rechercher un service, un acte ou une actualité..."
               className="flex-grow bg-transparent border-none outline-none text-lg font-medium text-ink placeholder-ink-muted/40"
             />
             <button onClick={onClose} className="p-2 hover:bg-muted rounded-full transition-colors">
@@ -162,17 +162,17 @@ const FlashNews = ({ news }: { news: string }) => (
   </div>
 );
 
-const Header = ({ 
-  activePage, 
-  setActivePage, 
-  isDarkMode, 
+const Header = ({
+  activePage,
+  setActivePage,
+  isDarkMode,
   toggleDarkMode,
   onOpenSearch,
   notifications,
   onMarkAsRead
-}: { 
-  activePage: Page, 
-  setActivePage: (p: Page) => void, 
+}: {
+  activePage: Page,
+  setActivePage: (p: Page) => void,
   isDarkMode: boolean,
   toggleDarkMode: () => void,
   onOpenSearch: () => void,
@@ -182,28 +182,36 @@ const Header = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { label: 'La Mairie', id: 'mairie', submenu: [
-      { label: 'Le Maire', id: 'maire' },
-      { label: 'Le Conseil Municipal', id: 'conseil' },
-      { label: 'Les Arrondissements', id: 'arrondissements' },
-      { label: 'Histoire et Culture', id: 'histoire' },
-      { label: 'Transparence & Rapports', id: 'publications' },
-    ]},
-    { label: 'Services Publics', id: 'eservices', submenu: [
-      { label: 'État Civil', id: 'etat-civil' },
-      { label: 'Urbanisme', id: 'urbanisme' },
-      { label: 'Simulateur Fiscal', id: 'simulateur' },
-      { label: 'Prise de RDV', id: 'rendezvous' },
-    ]},
-    { label: 'Économie', id: 'economie', submenu: [
-      { label: 'Marchés', id: 'economie' },
-      { label: 'Opportunités Locales', id: 'opportunites' },
-    ]},
-    { label: 'Agenda & Loisirs', id: 'agenda', submenu: [
-      { label: 'Événements', id: 'agenda' },
-      { label: 'Stade Municipal', id: 'stade' },
-      { label: 'Guide Touristique', id: 'tourisme' },
-    ]},
+    {
+      label: 'La Mairie', id: 'mairie', submenu: [
+        { label: 'Le Maire', id: 'maire' },
+        { label: 'Le Conseil Municipal', id: 'conseil' },
+        { label: 'Les Arrondissements', id: 'arrondissements' },
+        { label: 'Histoire et Culture', id: 'histoire' },
+        { label: 'Transparence & Rapports', id: 'publications' },
+      ]
+    },
+    {
+      label: 'Services Publics', id: 'eservices', submenu: [
+        { label: 'État Civil', id: 'etat-civil' },
+        { label: 'Urbanisme', id: 'urbanisme' },
+        { label: 'Simulateur Fiscal', id: 'simulateur' },
+        { label: 'Prise de RDV', id: 'rendezvous' },
+      ]
+    },
+    {
+      label: 'Économie', id: 'economie', submenu: [
+        { label: 'Marchés', id: 'economie' },
+        { label: 'Opportunités Locales', id: 'opportunites' },
+      ]
+    },
+    {
+      label: 'Agenda & Loisirs', id: 'agenda', submenu: [
+        { label: 'Événements', id: 'agenda' },
+        { label: 'Stade Municipal', id: 'stade' },
+        { label: 'Guide Touristique', id: 'tourisme' },
+      ]
+    },
     { label: 'Actualités', id: 'actualites' },
     { label: 'Signalement', id: 'signalement' },
     { label: 'Contact', id: 'contact' },
@@ -215,8 +223,8 @@ const Header = ({
         <div className="flex items-center justify-between py-4">
           {/* Left: Armoirie du Pays */}
           <div className="flex items-center">
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png" 
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png"
               alt="Armoirie du Bénin"
               className="h-12 w-auto"
             />
@@ -226,7 +234,7 @@ const Header = ({
           <nav className="hidden lg:flex items-center space-x-6">
             {navItems.map((item) => (
               <div key={item.id} className="relative group">
-                <button 
+                <button
                   onClick={() => !item.submenu && setActivePage(item.id as Page)}
                   className={`nav-link flex items-center space-x-1 ${activePage === item.id || item.submenu?.some(s => s.id === activePage) ? 'active' : ''}`}
                 >
@@ -255,13 +263,13 @@ const Header = ({
           {/* Actions */}
           <div className="flex items-center space-x-6">
             {/* Logo et Nom de la Mairie (Right) */}
-            <div 
+            <div
               className="hidden md:flex items-center space-x-3 cursor-pointer border-l border-white/20 pl-6"
               onClick={() => setActivePage('home')}
             >
               <div className="w-10 h-10 bg-white rounded-full p-1 flex items-center justify-center overflow-hidden shadow-inner">
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png" 
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png"
                   alt="Logo Za-Kpota"
                   className="w-full h-full object-contain"
                 />
@@ -275,10 +283,10 @@ const Header = ({
             </div>
 
             <div className="flex items-center space-x-4">
-              <NotificationBell 
-                notifications={notifications} 
-                onMarkAsRead={onMarkAsRead} 
-                onViewAll={() => setActivePage('actualites')} 
+              <NotificationBell
+                notifications={notifications}
+                onMarkAsRead={onMarkAsRead}
+                onViewAll={() => setActivePage('actualites')}
               />
               <button onClick={onOpenSearch} className="text-white/80 hover:text-white transition-colors">
                 <Search className="w-5 h-5" />
@@ -286,7 +294,7 @@ const Header = ({
               <button onClick={toggleDarkMode} className="text-white/80 hover:text-white transition-colors">
                 {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              <button 
+              <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="lg:hidden text-white"
               >
@@ -300,7 +308,7 @@ const Header = ({
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: '100%' }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
@@ -311,15 +319,15 @@ const Header = ({
               <div className="flex items-center justify-between mb-12">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center p-2">
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png" 
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png"
                       alt="Logo"
                       className="w-full h-full object-contain brightness-0 invert"
                     />
                   </div>
                   <h2 className="text-xl font-black text-primary uppercase tracking-tighter">Za-Kpota</h2>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsMenuOpen(false)}
                   className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center text-ink"
                 >
@@ -329,7 +337,7 @@ const Header = ({
 
               <nav className="space-y-8 flex-grow">
                 {navItems.map((item, i) => (
-                  <motion.div 
+                  <motion.div
                     key={item.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -392,13 +400,13 @@ const Header = ({
 
 const Hero = () => (
   <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
-    <img 
-      src="https://images.unsplash.com/photo-1523800503107-5bc3ba2a6f81?auto=format&fit=crop&q=80&w=1920" 
+    <img
+      src="https://images.unsplash.com/photo-1523800503107-5bc3ba2a6f81?auto=format&fit=crop&q=80&w=1920"
       alt="Za-Kpota Hero"
       className="absolute inset-0 w-full h-full object-cover grayscale-[0.2]"
     />
     <div className="absolute inset-0 hero-overlay" />
-    
+
     <div className="container mx-auto px-4 relative z-10 text-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -428,9 +436,9 @@ const ServiceCard = ({ title, desc, url, logo }: { title: string, desc: string, 
       <p className="text-ink/60 mb-6 leading-relaxed">
         {desc}
       </p>
-      <a 
-        href={url} 
-        target="_blank" 
+      <a
+        href={url}
+        target="_blank"
         rel="noopener noreferrer"
         className="text-primary font-bold hover:underline flex items-center"
       >
@@ -504,7 +512,7 @@ const PhotoGallery = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {galleryData.map((img, i) => (
-          <motion.div 
+          <motion.div
             key={i}
             whileHover={{ scale: 1.02 }}
             className="relative group cursor-pointer overflow-hidden rounded-2xl shadow-sm aspect-square"
@@ -520,15 +528,15 @@ const PhotoGallery = () => {
 
       <AnimatePresence>
         {selectedImg && (
-          <div 
+          <div
             className="fixed inset-0 z-[110] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
             onClick={() => setSelectedImg(null)}
           >
-            <motion.img 
+            <motion.img
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              src={selectedImg} 
+              src={selectedImg}
               className="max-w-full max-h-full rounded-lg shadow-2xl"
             />
             <button className="absolute top-8 right-8 text-white p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
@@ -623,13 +631,13 @@ const SignalementForm = () => {
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-ink/40">Localisation</label>
                 <div className="flex space-x-2">
-                  <input 
+                  <input
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="Adresse ou coordonnées"
-                    className="flex-grow bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors text-ink" 
+                    className="flex-grow bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors text-ink"
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={handleGetLocation}
                     className="bg-accent text-primary p-3 rounded-xl hover:bg-accent/80 transition-colors"
@@ -643,8 +651,8 @@ const SignalementForm = () => {
                 <label className="text-xs font-bold uppercase tracking-widest text-ink/40">Message / Détails</label>
                 <textarea required rows={4} className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors resize-none text-ink"></textarea>
               </div>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={status === 'loading'}
                 className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
               >
@@ -671,15 +679,15 @@ const PartnersSection = () => {
         </div>
       </div>
 
-      <div 
+      <div
         className="relative flex overflow-hidden"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        <motion.div 
+        <motion.div
           className="flex space-x-16 items-center whitespace-nowrap"
           animate={isPaused ? {} : { x: [0, -1920] }}
-          transition={{ 
+          transition={{
             x: {
               repeat: Infinity,
               repeatType: "loop",
@@ -690,9 +698,9 @@ const PartnersSection = () => {
         >
           {[...partnersData, ...partnersData, ...partnersData].map((partner, i) => (
             <div key={i} className="flex-shrink-0 w-48 h-24 flex items-center justify-center group">
-              <img 
-                src={partner.logo} 
-                alt={partner.name} 
+              <img
+                src={partner.logo}
+                alt={partner.name}
                 className="max-w-full max-h-full object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
                 title={partner.name}
               />
@@ -700,7 +708,7 @@ const PartnersSection = () => {
           ))}
         </motion.div>
       </div>
-      
+
       <div className="container mx-auto px-4 mt-12 flex justify-center space-x-4">
         <button className="p-2 rounded-full border border-border text-ink/40 hover:text-primary hover:border-primary transition-all">
           <ChevronRight className="w-6 h-6 rotate-180" />
@@ -715,30 +723,30 @@ const PartnersSection = () => {
 
 
 const PageHome = ({ setActivePage }: { setActivePage: (p: Page) => void }) => (
-    <main className="pb-20 bg-surface transition-colors duration-300">
+  <main className="pb-20 bg-surface transition-colors duration-300">
     <Hero />
-    
+
     <section className="container mx-auto px-4 -mt-20 relative z-20">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ServiceCard 
+        <ServiceCard
           title="État Civil"
           desc="Demandez vos actes de naissance, mariage ou décès en ligne. Suivez l'évolution de votre demande en temps réel."
           url="https://service-public.bj/etat-civil"
           logo="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png"
         />
-        <ServiceCard 
+        <ServiceCard
           title="Urbanisme & Foncier"
           desc="Permis de construire, certificat d'urbanisme et démarches foncières. Consultez le Plan Directeur d'Urbanisme."
           url="https://zakpota.bj/urbanisme"
           logo="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png"
         />
-        <ServiceCard 
+        <ServiceCard
           title="Marchés Publics"
           desc="Consultez les appels d'offres en cours et les résultats des attributions pour la commune de Za-Kpota."
           url="https://marches-publics.bj"
           logo="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png"
         />
-        <ServiceCard 
+        <ServiceCard
           title="Taxe de Développement"
           desc="Payez vos taxes locales et contribuez au développement des infrastructures de notre commune."
           url="https://zakpota.bj/taxes"
@@ -804,16 +812,16 @@ const PageMaire = () => (
   <main className="py-20 bg-surface">
     <div className="container mx-auto px-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           className="sticky top-32"
         >
           <div className="relative">
             <div className="absolute -top-4 -left-4 w-24 h-24 bg-accent/20 rounded-full blur-3xl" />
-            <img 
-              src={maireData.photo} 
-              alt={maireData.name} 
+            <img
+              src={maireData.photo}
+              alt={maireData.name}
               className="w-full rounded-3xl shadow-2xl border-4 border-border"
             />
             <div className="absolute bottom-8 left-8 right-8 bg-card/90 backdrop-blur-md p-6 rounded-2xl border border-border">
@@ -823,7 +831,7 @@ const PageMaire = () => (
           </div>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           className="space-y-12"
@@ -870,31 +878,31 @@ const PageConseil = () => (
   <main className="py-20 bg-surface transition-colors duration-300 min-h-screen">
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="container mx-auto px-4">
-      <div className="text-center mb-16">
-        <h2 className="text-accent font-bold uppercase tracking-[0.4em] text-xs mb-4">Gouvernance</h2>
-        <h3 className="text-4xl font-bold text-ink">Le Conseil Municipal</h3>
-        <p className="text-ink-muted mt-4 max-w-2xl mx-auto">
-          Découvrez les élus qui travaillent quotidiennement pour le développement de notre commune.
-        </p>
-      </div>
+        <div className="text-center mb-16">
+          <h2 className="text-accent font-bold uppercase tracking-[0.4em] text-xs mb-4">Gouvernance</h2>
+          <h3 className="text-4xl font-bold text-ink">Le Conseil Municipal</h3>
+          <p className="text-ink-muted mt-4 max-w-2xl mx-auto">
+            Découvrez les élus qui travaillent quotidiennement pour le développement de notre commune.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {conseilMunicipal.map((membre, i) => (
-          <motion.div 
-            key={i}
-            whileHover={{ y: -10 }}
-            className="bg-card rounded-3xl overflow-hidden shadow-sm border border-border group"
-          >
-            <div className="h-64 overflow-hidden">
-              <img src={membre.photo} alt={membre.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-            </div>
-            <div className="p-6 text-center">
-              <h4 className="font-bold text-lg text-ink mb-1">{membre.name}</h4>
-              <p className="text-primary text-sm font-medium">{membre.role}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {conseilMunicipal.map((membre, i) => (
+            <motion.div
+              key={i}
+              whileHover={{ y: -10 }}
+              className="bg-card rounded-3xl overflow-hidden shadow-sm border border-border group"
+            >
+              <div className="h-64 overflow-hidden">
+                <img src={membre.photo} alt={membre.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+              </div>
+              <div className="p-6 text-center">
+                <h4 className="font-bold text-lg text-ink mb-1">{membre.name}</h4>
+                <p className="text-primary text-sm font-medium">{membre.role}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </motion.div>
   </main>
@@ -904,48 +912,48 @@ const PageHistoire = () => (
   <main className="py-20 bg-surface transition-colors duration-300 min-h-screen">
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="container mx-auto px-4">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-accent font-bold uppercase tracking-[0.4em] text-xs mb-4">Patrimoine</h2>
-        <h3 className="text-5xl font-bold text-ink mb-12">Histoire et Culture</h3>
-        
-        <div className="space-y-16">
-          <section className="bg-card p-12 rounded-3xl shadow-sm border border-border">
-            <h4 className="text-2xl font-bold mb-6 text-primary">Origines</h4>
-            <p className="text-ink-muted text-lg leading-relaxed">
-              {histoireData.origine}
-            </p>
-          </section>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-accent font-bold uppercase tracking-[0.4em] text-xs mb-4">Patrimoine</h2>
+          <h3 className="text-5xl font-bold text-ink mb-12">Histoire et Culture</h3>
 
-          <section>
-            <h4 className="text-3xl font-black mb-12 text-ink">Sites Touristiques Incontournables</h4>
-            <div className="grid grid-cols-1 gap-12">
-              {histoireData.sites.map((site, i) => (
-                <div key={i} className="bg-card rounded-[2.5rem] overflow-hidden shadow-xl border border-border flex flex-col md:flex-row">
-                  <div className="w-full md:w-2/5 h-72 md:h-auto overflow-hidden">
-                    <img src={site.img} alt={site.name} className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
-                  </div>
-                  <div className="p-10 md:p-12 flex-1 flex flex-col justify-center">
-                    <h5 className="font-black text-3xl mb-6 text-primary">{site.name}</h5>
-                    <p className="text-ink-muted text-lg leading-relaxed">{site.description}</p>
-                    <button className="mt-8 flex items-center text-accent font-bold hover:translate-x-2 transition-transform">
-                      En savoir plus <ArrowRight className="w-5 h-5 ml-2" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <div className="space-y-16">
+            <section className="bg-card p-12 rounded-3xl shadow-sm border border-border">
+              <h4 className="text-2xl font-bold mb-6 text-primary">Origines</h4>
+              <p className="text-ink-muted text-lg leading-relaxed">
+                {histoireData.origine}
+              </p>
+            </section>
 
-          <section className="bg-primary text-white p-12 rounded-3xl shadow-xl">
-            <h4 className="text-2xl font-bold mb-6">Identité Culturelle</h4>
-            <p className="text-white/80 text-lg leading-relaxed">
-              {histoireData.culture}
-            </p>
-          </section>
+            <section>
+              <h4 className="text-3xl font-black mb-12 text-ink">Sites Touristiques Incontournables</h4>
+              <div className="grid grid-cols-1 gap-12">
+                {histoireData.sites.map((site, i) => (
+                  <div key={i} className="bg-card rounded-[2.5rem] overflow-hidden shadow-xl border border-border flex flex-col md:flex-row">
+                    <div className="w-full md:w-2/5 h-72 md:h-auto overflow-hidden">
+                      <img src={site.img} alt={site.name} className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
+                    </div>
+                    <div className="p-10 md:p-12 flex-1 flex flex-col justify-center">
+                      <h5 className="font-black text-3xl mb-6 text-primary">{site.name}</h5>
+                      <p className="text-ink-muted text-lg leading-relaxed">{site.description}</p>
+                      <button className="mt-8 flex items-center text-accent font-bold hover:translate-x-2 transition-transform">
+                        En savoir plus <ArrowRight className="w-5 h-5 ml-2" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="bg-primary text-white p-12 rounded-3xl shadow-xl">
+              <h4 className="text-2xl font-bold mb-6">Identité Culturelle</h4>
+              <p className="text-white/80 text-lg leading-relaxed">
+                {histoireData.culture}
+              </p>
+            </section>
+          </div>
         </div>
       </div>
-    </div>
-  </motion.div>
+    </motion.div>
   </main>
 );
 
@@ -954,67 +962,67 @@ const PageAgenda = React.lazy(() => import('./pages/PageAgenda'));
 const PageStade = ({ stade }: { stade: any }) => (
   <main className="bg-surface transition-colors duration-300 min-h-screen">
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-32 pb-20">
-    <div className="container mx-auto px-4">
-      <div className="bg-card rounded-3xl overflow-hidden shadow-2xl border border-border">
-        <div className="relative h-[500px]">
-          <img 
-            src={stade.image} 
-            alt="Stade Municipal" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-12">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-12 h-1 bg-accent rounded-full"></div>
-                <span className="text-accent font-bold uppercase tracking-widest text-sm">Infrastructure Sportive</span>
-              </div>
-              <h1 className="text-6xl font-black text-white mb-4">Stade Municipal de Za-Kpota</h1>
-              <p className="text-white/80 text-xl max-w-2xl">Un complexe moderne dédié à l'excellence sportive et au rassemblement de la jeunesse.</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-12 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div className="col-span-2 space-y-8">
-            <section>
-              <h2 className="text-3xl font-bold text-primary mb-6">Présentation</h2>
-              <p className="text-ink-muted leading-relaxed text-lg">
-                Le Stade Municipal de Za-Kpota est le cœur battant du sport dans notre commune. Récemment rénové, il offre des installations de qualité pour le football, l'athlétisme et diverses activités physiques. C'est le lieu de rencontre privilégié pour les compétitions locales et inter-communales.
-              </p>
-            </section>
-            
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-primary/5 p-8 rounded-2xl border border-primary/10">
-                <div className="text-primary font-black text-4xl mb-2">5 000</div>
-                <div className="text-ink/50 uppercase tracking-widest text-xs font-bold">Places assises</div>
-              </div>
-              <div className="bg-primary/5 p-8 rounded-2xl border border-primary/10">
-                <div className="text-primary font-black text-4xl mb-2">FIFA</div>
-                <div className="text-ink/50 uppercase tracking-widest text-xs font-bold">Normes Pelouse</div>
+      <div className="container mx-auto px-4">
+        <div className="bg-card rounded-3xl overflow-hidden shadow-2xl border border-border">
+          <div className="relative h-[500px]">
+            <img
+              src={stade.image}
+              alt="Stade Municipal"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-12">
+              <div>
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="w-12 h-1 bg-accent rounded-full"></div>
+                  <span className="text-accent font-bold uppercase tracking-widest text-sm">Infrastructure Sportive</span>
+                </div>
+                <h1 className="text-6xl font-black text-white mb-4">Stade Municipal de Za-Kpota</h1>
+                <p className="text-white/80 text-xl max-w-2xl">Un complexe moderne dédié à l'excellence sportive et au rassemblement de la jeunesse.</p>
               </div>
             </div>
           </div>
-          
-          <div className="space-y-8">
-            <div className="bg-ink p-8 rounded-2xl text-white">
-              <h3 className="text-xl font-bold mb-6 text-accent">Équipements</h3>
-              <ul className="space-y-4">
-                {stade.equipements?.map((eq: string, i: number) => (
-                  <li key={i} className="flex items-center text-sm text-white/70">
-                    <Check className="w-4 h-4 mr-3 text-accent" /> {eq}
-                  </li>
-                ))}
-              </ul>
+
+          <div className="p-12 grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="col-span-2 space-y-8">
+              <section>
+                <h2 className="text-3xl font-bold text-primary mb-6">Présentation</h2>
+                <p className="text-ink-muted leading-relaxed text-lg">
+                  Le Stade Municipal de Za-Kpota est le cœur battant du sport dans notre commune. Récemment rénové, il offre des installations de qualité pour le football, l'athlétisme et diverses activités physiques. C'est le lieu de rencontre privilégié pour les compétitions locales et inter-communales.
+                </p>
+              </section>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-primary/5 p-8 rounded-2xl border border-primary/10">
+                  <div className="text-primary font-black text-4xl mb-2">5 000</div>
+                  <div className="text-ink/50 uppercase tracking-widest text-xs font-bold">Places assises</div>
+                </div>
+                <div className="bg-primary/5 p-8 rounded-2xl border border-primary/10">
+                  <div className="text-primary font-black text-4xl mb-2">FIFA</div>
+                  <div className="text-ink/50 uppercase tracking-widest text-xs font-bold">Normes Pelouse</div>
+                </div>
+              </div>
             </div>
-            
-            <button className="w-full py-5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center">
-              Réserver le terrain <ArrowRight className="w-5 h-5 ml-2" />
-            </button>
+
+            <div className="space-y-8">
+              <div className="bg-ink p-8 rounded-2xl text-white">
+                <h3 className="text-xl font-bold mb-6 text-accent">Équipements</h3>
+                <ul className="space-y-4">
+                  {stade.equipements?.map((eq: string, i: number) => (
+                    <li key={i} className="flex items-center text-sm text-white/70">
+                      <Check className="w-4 h-4 mr-3 text-accent" /> {eq}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <button className="w-full py-5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center">
+                Réserver le terrain <ArrowRight className="w-5 h-5 ml-2" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </motion.div>
+    </motion.div>
   </main>
 );
 
@@ -1022,45 +1030,45 @@ const PageTourisme = () => (
   <main className="py-20 bg-surface transition-colors duration-300 min-h-screen">
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="container mx-auto px-4">
-      <h2 className="text-4xl font-bold mb-16 text-center text-ink">Découvrir Za-Kpota</h2>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <section>
-          <h3 className="text-2xl font-bold mb-8 flex items-center text-ink">
-            <Home className="w-6 h-6 mr-3 text-primary" /> Où Dormir
-          </h3>
-          <div className="grid gap-6">
-            {tourismData.sleep.map((item, i) => (
-              <div key={i} className="bg-card p-8 rounded-2xl shadow-sm border border-border">
-                <h4 className="font-bold text-xl mb-2 text-ink">{item.name}</h4>
-                <p className="text-primary font-bold mb-4">{item.price}</p>
-                <p className="text-ink-muted text-sm flex items-center">
-                  <Phone className="w-4 h-4 mr-2" /> {item.contact}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <h2 className="text-4xl font-bold mb-16 text-center text-ink">Découvrir Za-Kpota</h2>
 
-        <section>
-          <h3 className="text-2xl font-bold mb-8 flex items-center text-ink">
-            <Building2 className="w-6 h-6 mr-3 text-primary" /> Où Manger
-          </h3>
-          <div className="grid gap-6">
-            {tourismData.eat.map((item, i) => (
-              <div key={i} className="bg-card p-8 rounded-2xl shadow-sm border border-border">
-                <h4 className="font-bold text-xl mb-2 text-ink">{item.name}</h4>
-                <p className="text-accent font-bold mb-4">{item.specialty}</p>
-                <p className="text-ink-muted text-sm flex items-center">
-                  <MapPin className="w-4 h-4 mr-2" /> {item.location}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <section>
+            <h3 className="text-2xl font-bold mb-8 flex items-center text-ink">
+              <Home className="w-6 h-6 mr-3 text-primary" /> Où Dormir
+            </h3>
+            <div className="grid gap-6">
+              {tourismData.sleep.map((item, i) => (
+                <div key={i} className="bg-card p-8 rounded-2xl shadow-sm border border-border">
+                  <h4 className="font-bold text-xl mb-2 text-ink">{item.name}</h4>
+                  <p className="text-primary font-bold mb-4">{item.price}</p>
+                  <p className="text-ink-muted text-sm flex items-center">
+                    <Phone className="w-4 h-4 mr-2" /> {item.contact}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-2xl font-bold mb-8 flex items-center text-ink">
+              <Building2 className="w-6 h-6 mr-3 text-primary" /> Où Manger
+            </h3>
+            <div className="grid gap-6">
+              {tourismData.eat.map((item, i) => (
+                <div key={i} className="bg-card p-8 rounded-2xl shadow-sm border border-border">
+                  <h4 className="font-bold text-xl mb-2 text-ink">{item.name}</h4>
+                  <p className="text-accent font-bold mb-4">{item.specialty}</p>
+                  <p className="text-ink-muted text-sm flex items-center">
+                    <MapPin className="w-4 h-4 mr-2" /> {item.location}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
-  </motion.div>
+    </motion.div>
   </main>
 );
 
@@ -1094,8 +1102,8 @@ const PageService = ({ type, services }: { type: 'etat-civil' | 'urbanisme', ser
                     {type === 'etat-civil' ? 'État Civil' : 'Urbanisme & Foncier'}
                   </h3>
                   <p className="text-white/70 text-sm leading-relaxed">
-                    {type === 'etat-civil' 
-                      ? 'Gérez vos documents officiels en toute simplicité. Actes de naissance, mariage et décès.' 
+                    {type === 'etat-civil'
+                      ? 'Gérez vos documents officiels en toute simplicité. Actes de naissance, mariage et décès.'
                       : 'Démarches liées à la construction, au foncier et à l\'aménagement du territoire.'}
                   </p>
                 </div>
@@ -1110,11 +1118,10 @@ const PageService = ({ type, services }: { type: 'etat-civil' | 'urbanisme', ser
                   <button
                     key={act.id}
                     onClick={() => setSelectedAct(act)}
-                    className={`w-full text-left px-6 py-5 rounded-2xl font-bold transition-all flex items-center justify-between group ${
-                      selectedAct.id === act.id 
-                        ? 'bg-primary text-white shadow-xl shadow-primary/20' 
+                    className={`w-full text-left px-6 py-5 rounded-2xl font-bold transition-all flex items-center justify-between group ${selectedAct.id === act.id
+                        ? 'bg-primary text-white shadow-xl shadow-primary/20'
                         : 'text-ink-muted hover:bg-primary/5 hover:text-primary'
-                    }`}
+                      }`}
                   >
                     <span className="text-sm">{act.name}</span>
                     <ChevronRight className={`w-4 h-4 transition-transform ${selectedAct.id === act.id ? 'translate-x-1' : 'group-hover:translate-x-1'}`} />
@@ -1145,78 +1152,78 @@ const PageService = ({ type, services }: { type: 'etat-civil' | 'urbanisme', ser
               </div>
             </div>
 
-          {/* Main Content Area */}
-          <div className="flex-grow">
-            <div className="bg-card rounded-[3rem] shadow-xl p-10 md:p-16 border border-border relative overflow-hidden">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
-                <div>
-                  <div className="flex items-center space-x-2 mb-4">
-                    <div className="w-8 h-1 bg-accent rounded-full"></div>
-                    <span className="text-accent font-bold uppercase tracking-widest text-[10px]">Détails de la procédure</span>
-                  </div>
-                  <h3 className="text-4xl font-black text-ink leading-tight">{selectedAct.name}</h3>
-                </div>
-                <div className="bg-primary/5 border border-primary/10 px-8 py-4 rounded-2xl text-center">
-                  <div className="text-ink/40 text-[10px] font-bold uppercase tracking-widest mb-1">Frais de dossier</div>
-                  <div className="text-primary font-black text-2xl">
-                    {selectedAct.cost === 0 ? 'Gratuit' : `${selectedAct.cost.toLocaleString()} FCFA`}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="prose prose-lg dark:prose-invert max-w-none mb-16">
-                <p className="text-ink/70 leading-relaxed text-xl italic font-medium border-l-4 border-accent pl-8">
-                  {selectedAct.description}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-16">
-                <div className="space-y-8">
-                  <div className="flex items-center space-x-4 mb-2">
-                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-primary" />
+            {/* Main Content Area */}
+            <div className="flex-grow">
+              <div className="bg-card rounded-[3rem] shadow-xl p-10 md:p-16 border border-border relative overflow-hidden">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
+                  <div>
+                    <div className="flex items-center space-x-2 mb-4">
+                      <div className="w-8 h-1 bg-accent rounded-full"></div>
+                      <span className="text-accent font-bold uppercase tracking-widest text-[10px]">Détails de la procédure</span>
                     </div>
-                    <h4 className="text-xl font-bold text-ink">Pièces à fournir</h4>
+                    <h3 className="text-4xl font-black text-ink leading-tight">{selectedAct.name}</h3>
                   </div>
-                  <ul className="space-y-4">
-                    {selectedAct.pieces?.map((req, i) => (
-                      <li key={i} className="flex items-start bg-primary/5 p-5 rounded-2xl group hover:bg-primary/10 transition-colors">
-                        <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-4 mt-0.5 shrink-0">
-                          {i + 1}
-                        </div>
-                        <span className="text-ink/80 text-sm font-medium leading-relaxed">{req}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="bg-primary/5 border border-primary/10 px-8 py-4 rounded-2xl text-center">
+                    <div className="text-ink/40 text-[10px] font-bold uppercase tracking-widest mb-1">Frais de dossier</div>
+                    <div className="text-primary font-black text-2xl">
+                      {selectedAct.cost === 0 ? 'Gratuit' : `${selectedAct.cost.toLocaleString()} FCFA`}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-10">
-                  <div className="bg-ink p-10 rounded-[2.5rem] text-white relative overflow-hidden">
-                    <div className="relative z-10">
-                      <h4 className="flex items-center text-xl font-bold mb-8 text-accent">
-                        <Clock className="w-6 h-6 mr-4" />
-                        Délai de traitement
-                      </h4>
-                      <div className="space-y-8">
-                        <div>
-                          <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-2">Délai d'obtention</p>
-                          <p className="text-2xl font-bold">{selectedAct.delay}</p>
+                <div className="prose prose-lg dark:prose-invert max-w-none mb-16">
+                  <p className="text-ink/70 leading-relaxed text-xl italic font-medium border-l-4 border-accent pl-8">
+                    {selectedAct.description}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-16">
+                  <div className="space-y-8">
+                    <div className="flex items-center space-x-4 mb-2">
+                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-primary" />
+                      </div>
+                      <h4 className="text-xl font-bold text-ink">Pièces à fournir</h4>
+                    </div>
+                    <ul className="space-y-4">
+                      {selectedAct.pieces?.map((req, i) => (
+                        <li key={i} className="flex items-start bg-primary/5 p-5 rounded-2xl group hover:bg-primary/10 transition-colors">
+                          <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-4 mt-0.5 shrink-0">
+                            {i + 1}
+                          </div>
+                          <span className="text-ink/80 text-sm font-medium leading-relaxed">{req}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="space-y-10">
+                    <div className="bg-ink p-10 rounded-[2.5rem] text-white relative overflow-hidden">
+                      <div className="relative z-10">
+                        <h4 className="flex items-center text-xl font-bold mb-8 text-accent">
+                          <Clock className="w-6 h-6 mr-4" />
+                          Délai de traitement
+                        </h4>
+                        <div className="space-y-8">
+                          <div>
+                            <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-2">Délai d'obtention</p>
+                            <p className="text-2xl font-bold">{selectedAct.delay}</p>
+                          </div>
                         </div>
                       </div>
+                      <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
                     </div>
-                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
-                  </div>
 
-                  <button className="w-full py-6 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30 flex items-center justify-center group uppercase tracking-widest text-sm">
-                    Démarrer la procédure <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-2 transition-transform" />
-                  </button>
+                    <button className="w-full py-6 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30 flex items-center justify-center group uppercase tracking-widest text-sm">
+                      Démarrer la procédure <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-2 transition-transform" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
     </main>
   );
 };
@@ -1235,14 +1242,14 @@ const SimulateurFiscal = () => {
 
           <div className="space-y-8">
             <div className="grid grid-cols-2 gap-4">
-              <button 
+              <button
                 onClick={() => setType('habitation')}
                 className={`p-6 rounded-2xl border-2 transition-all text-center ${type === 'habitation' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-ink-muted'}`}
               >
                 <Home className="w-8 h-8 mx-auto mb-3" />
                 <span className="font-bold">Taxe d'Habitation</span>
               </button>
-              <button 
+              <button
                 onClick={() => setType('foncier')}
                 className={`p-6 rounded-2xl border-2 transition-all text-center ${type === 'foncier' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-ink-muted'}`}
               >
@@ -1253,8 +1260,8 @@ const SimulateurFiscal = () => {
 
             <div className="space-y-4">
               <label className="text-sm font-bold uppercase tracking-widest text-ink-muted">Valeur locative estimée (FCFA)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 value={valeur}
                 onChange={(e) => setValeur(Number(e.target.value))}
                 className="w-full bg-muted border border-border rounded-2xl px-8 py-6 text-3xl font-bold outline-none focus:border-primary transition-colors text-ink"
@@ -1318,7 +1325,7 @@ const PageContact = () => {
 
     setErrors({});
     setIsSubmitting(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       setIsSubmitting(false);
@@ -1337,134 +1344,134 @@ const PageContact = () => {
     <main className="py-20 bg-surface transition-colors duration-300 min-h-screen">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <div className="bg-card p-12 rounded-3xl shadow-xl border border-border">
-            <h2 className="text-4xl font-bold mb-8 text-ink">Contactez-nous</h2>
-            
-            {submitted ? (
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }} 
-                animate={{ scale: 1, opacity: 1 }}
-                className="bg-primary/5 p-8 rounded-2xl border border-primary/10 text-center"
-              >
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white mx-auto mb-4">
-                  <Check className="w-8 h-8" />
-                </div>
-                <h3 className="text-2xl font-bold text-primary mb-2">Message Envoyé !</h3>
-                <p className="text-ink-muted mb-6">Merci de nous avoir contactés. Nous vous répondrons dans les plus brefs délais.</p>
-                <button 
-                  onClick={() => setSubmitted(false)}
-                  className="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all"
-                >
-                  Envoyer un autre message
-                </button>
-              </motion.div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-ink-muted">Nom complet</label>
-                    <input 
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      type="text" 
-                      className={`w-full bg-muted border ${errors.name ? 'border-red' : 'border-border'} rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors text-ink`} 
-                    />
-                    {errors.name && <p className="text-red text-xs font-bold">{errors.name}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-ink-muted">Email</label>
-                    <input 
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      type="email" 
-                      className={`w-full bg-muted border ${errors.email ? 'border-red' : 'border-border'} rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors text-ink`} 
-                    />
-                    {errors.email && <p className="text-red text-xs font-bold">{errors.email}</p>}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-ink-muted">Sujet</label>
-                  <input 
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    type="text" 
-                    className={`w-full bg-muted border ${errors.subject ? 'border-red' : 'border-border'} rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors text-ink`} 
-                  />
-                  {errors.subject && <p className="text-red text-xs font-bold">{errors.subject}</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-ink-muted">Message</label>
-                  <textarea 
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    rows={6} 
-                    className={`w-full bg-muted border ${errors.message ? 'border-red' : 'border-border'} rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors resize-none text-ink`}
-                  ></textarea>
-                  {errors.message && <p className="text-red text-xs font-bold">{errors.message}</p>}
-                </div>
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center"
-                >
-                  {isSubmitting ? (
-                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  ) : 'Envoyer le message'}
-                </button>
-              </form>
-            )}
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="bg-card p-12 rounded-3xl shadow-xl border border-border">
+              <h2 className="text-4xl font-bold mb-8 text-ink">Contactez-nous</h2>
 
-        <div className="space-y-8">
-          <div className="bg-primary text-white p-12 rounded-3xl shadow-xl">
-            <h3 className="text-2xl font-bold mb-8">Coordonnées</h3>
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <MapPin className="w-6 h-6 text-accent mt-1" />
-                <div>
-                  <p className="font-bold">Adresse</p>
-                  <p className="text-white/70">{ADRESSE_MAIRIE}</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-4">
-                <Phone className="w-6 h-6 text-accent mt-1" />
-                <div>
-                  <p className="font-bold">Téléphone</p>
-                  <p className="text-white/70">{TEL_CONTACT}</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-4">
-                <Mail className="w-6 h-6 text-accent mt-1" />
-                <div>
-                  <p className="font-bold">Email</p>
-                  <p className="text-white/70">{EMAIL_CONTACT}</p>
-                </div>
-              </div>
+              {submitted ? (
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="bg-primary/5 p-8 rounded-2xl border border-primary/10 text-center"
+                >
+                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white mx-auto mb-4">
+                    <Check className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-primary mb-2">Message Envoyé !</h3>
+                  <p className="text-ink-muted mb-6">Merci de nous avoir contactés. Nous vous répondrons dans les plus brefs délais.</p>
+                  <button
+                    onClick={() => setSubmitted(false)}
+                    className="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all"
+                  >
+                    Envoyer un autre message
+                  </button>
+                </motion.div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-ink-muted">Nom complet</label>
+                      <input
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        type="text"
+                        className={`w-full bg-muted border ${errors.name ? 'border-red' : 'border-border'} rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors text-ink`}
+                      />
+                      {errors.name && <p className="text-red text-xs font-bold">{errors.name}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-ink-muted">Email</label>
+                      <input
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        type="email"
+                        className={`w-full bg-muted border ${errors.email ? 'border-red' : 'border-border'} rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors text-ink`}
+                      />
+                      {errors.email && <p className="text-red text-xs font-bold">{errors.email}</p>}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-ink-muted">Sujet</label>
+                    <input
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      type="text"
+                      className={`w-full bg-muted border ${errors.subject ? 'border-red' : 'border-border'} rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors text-ink`}
+                    />
+                    {errors.subject && <p className="text-red text-xs font-bold">{errors.subject}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-ink-muted">Message</label>
+                    <textarea
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      rows={6}
+                      className={`w-full bg-muted border ${errors.message ? 'border-red' : 'border-border'} rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors resize-none text-ink`}
+                    ></textarea>
+                    {errors.message && <p className="text-red text-xs font-bold">{errors.message}</p>}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center"
+                  >
+                    {isSubmitting ? (
+                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : 'Envoyer le message'}
+                  </button>
+                </form>
+              )}
             </div>
-          </div>
 
-          <div className="bg-card p-8 rounded-3xl shadow-xl border border-border">
-            <h3 className="text-xl font-bold mb-6 text-ink">Horaires d'ouverture</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between text-ink-muted">
-                <span>Lundi - Vendredi</span>
-                <span className="font-bold">08:00 - 12:30 | 14:00 - 17:30</span>
+            <div className="space-y-8">
+              <div className="bg-primary text-white p-12 rounded-3xl shadow-xl">
+                <h3 className="text-2xl font-bold mb-8">Coordonnées</h3>
+                <div className="space-y-6">
+                  <div className="flex items-start space-x-4">
+                    <MapPin className="w-6 h-6 text-accent mt-1" />
+                    <div>
+                      <p className="font-bold">Adresse</p>
+                      <p className="text-white/70">{ADRESSE_MAIRIE}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4">
+                    <Phone className="w-6 h-6 text-accent mt-1" />
+                    <div>
+                      <p className="font-bold">Téléphone</p>
+                      <p className="text-white/70">{TEL_CONTACT}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4">
+                    <Mail className="w-6 h-6 text-accent mt-1" />
+                    <div>
+                      <p className="font-bold">Email</p>
+                      <p className="text-white/70">{EMAIL_CONTACT}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between text-ink-muted">
-                <span>Samedi - Dimanche</span>
-                <span className="font-bold text-red">Fermé</span>
+
+              <div className="bg-card p-8 rounded-3xl shadow-xl border border-border">
+                <h3 className="text-xl font-bold mb-6 text-ink">Horaires d'ouverture</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between text-ink-muted">
+                    <span>Lundi - Vendredi</span>
+                    <span className="font-bold">08:00 - 12:30 | 14:00 - 17:30</span>
+                  </div>
+                  <div className="flex justify-between text-ink-muted">
+                    <span>Samedi - Dimanche</span>
+                    <span className="font-bold text-red">Fermé</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </motion.div>
+      </motion.div>
     </main>
   );
 };
@@ -1476,8 +1483,8 @@ const Footer = ({ setActivePage }: { setActivePage: (p: Page) => void }) => (
         <div className="col-span-1 md:col-span-1">
           <div className="flex items-center space-x-4 mb-8">
             <div className="w-12 h-12 bg-white rounded-full p-1">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png" 
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Coat_of_arms_of_Benin.svg/1200px-Coat_of_arms_of_Benin.svg.png"
                 alt="Armoiries"
                 className="w-full h-full object-contain"
               />
@@ -1608,12 +1615,12 @@ export default function App() {
       date: new Date().toISOString(),
       read: false
     };
-    
+
     setStore(prev => ({
       ...prev,
       notifications: [notification, ...prev.notifications]
     }));
-    
+
     // Simulate FCM Push
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title, {
@@ -1626,7 +1633,7 @@ export default function App() {
   const handleMarkAsRead = (id: string) => {
     setStore(prev => ({
       ...prev,
-      notifications: prev.notifications.map(n => 
+      notifications: prev.notifications.map(n =>
         n.id === id ? { ...n, read: true } : n
       )
     }));
@@ -1656,9 +1663,9 @@ export default function App() {
 
   if (activePage === 'admin-portal') {
     return (
-      <AdminDashboard 
-        store={store} 
-        onUpdateStore={handleUpdateStore} 
+      <AdminDashboard
+        store={store}
+        onUpdateStore={handleUpdateStore}
         onSendPush={handleSendPush}
         onExit={() => setActivePage('home')}
       />
@@ -1669,10 +1676,10 @@ export default function App() {
     <div className="min-h-screen bg-surface text-ink font-sans transition-colors duration-300">
       <FlashNews news={store.flashNews} />
       <TopBar />
-      <Header 
-        activePage={activePage} 
-        setActivePage={setActivePage} 
-        isDarkMode={isDarkMode} 
+      <Header
+        activePage={activePage}
+        setActivePage={setActivePage}
+        isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
         onOpenSearch={() => setIsSearchOpen(true)}
         notifications={store.notifications}
@@ -1715,7 +1722,7 @@ export default function App() {
                 <p className="text-ink-muted italic">
                   Cette section est en cours de mise à jour pour correspondre à la nouvelle interface officielle de la mairie.
                 </p>
-                <button 
+                <button
                   onClick={() => setActivePage('home')}
                   className="mt-8 bg-primary text-white px-6 py-3 rounded font-bold hover:bg-primary/90 transition-colors"
                 >
