@@ -1,0 +1,161 @@
+@import "tailwindcss";
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Fonts */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Montserrat", sans-serif;
+  
+  /* Official Colors (Mairie de Za-Kpota) */
+  --color-primary: #006633; /* Official Green */
+  --color-accent: #FFCC00; /* Official Yellow */
+  --color-red: #E30613; /* Official Red */
+  
+  /* Semantic UI Colors - Light Mode */
+  --color-ink: #0F172A; /* Slate 900 */
+  --color-ink-muted: #64748B; /* Slate 500 */
+  --color-surface: #FFFFFF;
+  --color-paper: #F8FAFC; /* Slate 50 */
+  --color-muted: #F1F5F9; /* Slate 100 */
+  --color-border: #E2E8F0; /* Slate 200 */
+  --color-card: #FFFFFF;
+  --color-ring: #006633;
+}
+
+.dark {
+  /* Semantic UI Colors - Dark Mode */
+  --color-ink: #F8FAFC; /* Slate 50 */
+  --color-ink-muted: #94A3B8; /* Slate 400 */
+  --color-surface: #020617; /* Slate 950 */
+  --color-paper: #0F172A; /* Slate 900 */
+  --color-muted: #1E293B; /* Slate 800 */
+  --color-border: #334155; /* Slate 700 */
+  --color-card: #1E293B; /* Slate 800 */
+  --color-ring: #FFCC00;
+}
+
+@theme {
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  
+  --color-primary: var(--color-primary);
+  --color-accent: var(--color-accent);
+  --color-red: var(--color-red);
+  
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-surface: var(--color-surface);
+  --color-paper: var(--color-paper);
+  --color-muted: var(--color-muted);
+  --color-border: var(--color-border);
+  --color-card: var(--color-card);
+  --color-ring: var(--color-ring);
+  
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    @apply font-sans text-ink bg-surface antialiased transition-colors duration-300 selection:bg-primary/20 selection:text-primary;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-muted/30 rounded-full border-2 border-transparent bg-clip-padding hover:bg-ink-muted/50 transition-colors;
+  }
+
+  /* Leaflet Dark Mode Fix */
+  .dark .leaflet-tile {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  }
+  
+  .dark .leaflet-container {
+    background: var(--color-surface);
+  }
+}
+
+@layer components {
+  .nav-link {
+    @apply text-white/80 hover:text-white font-medium text-sm transition-all relative py-2 px-1;
+  }
+
+  .nav-link::after {
+    content: '';
+    @apply absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-accent transition-all duration-300 rounded-full;
+  }
+
+  .nav-link:hover::after, .nav-link.active::after {
+    @apply w-full;
+  }
+
+  .top-bar-link {
+    @apply text-[10px] font-bold uppercase tracking-wider text-primary hover:text-red transition-colors flex items-center;
+  }
+
+  .top-bar-link::before {
+    content: '●';
+    @apply mr-1.5 text-accent text-[8px];
+  }
+
+  .tricolor-border {
+    @apply relative overflow-hidden;
+  }
+
+  .tricolor-border::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-1 flex;
+    background: linear-gradient(to right, #006633 33.33%, #FFCC00 33.33%, #FFCC00 66.66%, #E30613 66.66%);
+  }
+
+  .service-card {
+    @apply bg-card p-8 border-l-4 border-primary shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-start space-x-6 rounded-r-xl dark:border-accent;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-accent {
+    @apply px-6 py-3 bg-accent text-primary font-bold rounded-xl hover:bg-accent/90 hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2;
+  }
+
+  .glass-panel {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl;
+  }
+}
+
+@layer utilities {
+  .animate-marquee {
+    animation: marquee 40s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .hero-overlay {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.8) 100%);
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,0 +1,32 @@
+GUIDE D'INSTALLATION ET D'UTILISATION - MAIRIE DE ZA-KPOTA
+
+1. Installation
+---------------
+- Assurez-vous d'avoir Node.js installé sur votre machine.
+- Clonez le projet ou extrayez l'archive.
+- Ouvrez un terminal dans le dossier du projet.
+- Exécutez 'npm install' pour installer les dépendances.
+- Exécutez 'npm run dev' pour lancer le serveur de développement.
+- L'application sera accessible sur http://localhost:3000.
+
+2. Structure du Projet
+----------------------
+- /src : Contient le code source React.
+- /src/App.tsx : Composant principal gérant la navigation et les pages.
+- /src/components : Composants réutilisables et pages spécifiques (Arrondissements, MarketLogic, etc.).
+- /src/data : Données statiques et configuration du store (`store.js`).
+- /src/index.css : Styles globaux et variables de thème (Tailwind).
+
+3. Fonctionnalités Clés
+-----------------------
+- Portail Citoyen : Informations sur les services, l'histoire et les arrondissements.
+- E-Services : Simulateur fiscal, formulaires de contact, signalement et prise de RDV.
+- Économie : Calendrier des marchés (cycle de 5 jours) et opportunités locales.
+- Transparence : Page de rapports officiels avec filtrage et accès rapide.
+- Administration : Dashboard sécurisé pour la gestion du contenu.
+- Mode Sombre/Clair : Interface adaptative utilisant des variables CSS sémantiques.
+
+4. Déploiement
+--------------
+- Exécutez 'npm run build' pour générer les fichiers de production dans le dossier /dist.
+- Ces fichiers peuvent être servis par n'importe quel serveur web statique.

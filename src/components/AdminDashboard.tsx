@@ -1,0 +1,955 @@
+
+import React, { useState, useEffect } from 'react';
+import { 
+  LayoutDashboard, 
+  FileText, 
+  Calendar, 
+  Bell, 
+  Save, 
+  Plus, 
+  Trash2, 
+  MapPin,
+  Briefcase,
+  ShoppingBag,
+  Clock,
+  CheckCircle, 
+  AlertCircle,
+  ChevronRight,
+  Settings,
+  LogOut,
+  User,
+  Search,
+  ArrowRight,
+  Info,
+  CalendarCheck
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface AdminDashboardProps {
+  store: any;
+  onUpdateStore: (newData: any) => void;
+  onSendPush: (title: string, message: string) => void;
+  onExit: () => void;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, onSendPush, onExit }) => {
+  const [activeTab, setActiveTab] = useState('services');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Local form states
+  const [flashNews, setFlashNews] = useState(store.flashNews);
+  const [services, setServices] = useState(store.services);
+  const [agenda, setAgenda] = useState(store.agenda);
+  const [reports, setReports] = useState(store.reports || []);
+  const [arrondissements, setArrondissements] = useState(store.arrondissements || []);
+  const [opportunites, setOpportunites] = useState(store.opportunites || []);
+  const [rendezvous, setRendezvous] = useState(store.rendezvous || []);
+  const [configMarche, setConfigMarche] = useState(store.configMarche || { referenceDate: '' });
+
+  const [newReport, setNewReport] = useState({
+    title: '',
+    date: new Date().toISOString().split('T')[0],
+    type: 'Conseil de Supervision',
+    category: 'Sessions',
+    fileUrl: ''
+  });
+
+  const [newOpportunity, setNewOpportunity] = useState({
+    title: '',
+    type: 'Marché Public',
+    date: new Date().toISOString().split('T')[0],
+    description: ''
+  });
+
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg);
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleSaveFlashNews = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      onUpdateStore({ ...store, flashNews });
+      onSendPush("Flash Info", "Le bandeau défilant a été mis à jour.");
+      setIsSaving(false);
+      showSuccess("Bandeau Flash mis à jour avec succès !");
+    }, 800);
+  };
+
+  const handleUpdateServicePrice = (category: string, serviceId: number, newPrice: string) => {
+    const updatedServices = { ...services };
+    const categoryItems = [...updatedServices[category]];
+    const serviceIndex = categoryItems.findIndex((s: any) => s.id === serviceId);
+    if (serviceIndex !== -1) {
+      categoryItems[serviceIndex] = {
+        ...categoryItems[serviceIndex],
+        cost: Number(newPrice)
+      };
+      updatedServices[category] = categoryItems;
+      setServices(updatedServices);
+    }
+  };
+
+  const handleAddPiece = (category: string, serviceId: number, piece: string) => {
+    if (!piece.trim()) return;
+    const updatedServices = { ...services };
+    const categoryItems = [...updatedServices[category]];
+    const serviceIndex = categoryItems.findIndex((s: any) => s.id === serviceId);
+    if (serviceIndex !== -1) {
+      categoryItems[serviceIndex] = {
+        ...categoryItems[serviceIndex],
+        pieces: [...categoryItems[serviceIndex].pieces, piece]
+      };
+      updatedServices[category] = categoryItems;
+      setServices(updatedServices);
+    }
+  };
+
+  const handleRemovePiece = (category: string, serviceId: number, pieceIndex: number) => {
+    const updatedServices = { ...services };
+    const categoryItems = [...updatedServices[category]];
+    const serviceIndex = categoryItems.findIndex((s: any) => s.id === serviceId);
+    if (serviceIndex !== -1) {
+      const updatedPieces = [...categoryItems[serviceIndex].pieces];
+      updatedPieces.splice(pieceIndex, 1);
+      categoryItems[serviceIndex] = {
+        ...categoryItems[serviceIndex],
+        pieces: updatedPieces
+      };
+      updatedServices[category] = categoryItems;
+      setServices(updatedServices);
+    }
+  };
+
+  const handleSaveServices = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      onUpdateStore({ ...store, services });
+      onSendPush("Mise à jour Tarifs", "Les tarifs des services municipaux ont été mis à jour.");
+      setIsSaving(false);
+      showSuccess("Services et tarifs enregistrés !");
+    }, 800);
+  };
+
+  const handleAddEvent = () => {
+    const newEvent = {
+      id: Date.now(),
+      title: "Nouvel Événement",
+      date: new Date().toISOString().split('T')[0],
+      type: "Sport",
+      description: "Description de l'événement...",
+      location: "Stade Municipal",
+      img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800"
+    };
+    setAgenda([newEvent, ...agenda]);
+  };
+
+  const handleRemoveEvent = (id: number) => {
+    setAgenda(agenda.filter((e: any) => e.id !== id));
+  };
+
+  const handleUpdateEvent = (id: number, field: string, value: any) => {
+    setAgenda(agenda.map((e: any) => e.id === id ? { ...e, [field]: value } : e));
+  };
+
+  const handleSaveAgenda = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      onUpdateStore({ ...store, agenda });
+      onSendPush("Nouvel Événement", "L'agenda municipal a été mis à jour.");
+      setIsSaving(false);
+      showSuccess("Agenda mis à jour avec succès !");
+    }, 800);
+  };
+
+  const handleAddReport = () => {
+    if (!newReport.title || !newReport.fileUrl) {
+      setErrorMessage("Veuillez remplir tous les champs obligatoires.");
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+    
+    const reportToAdd = {
+      ...newReport,
+      id: Date.now(),
+      year: newReport.date.split('-')[0]
+    };
+    
+    const updatedReports = [reportToAdd, ...reports];
+    setReports(updatedReports);
+    
+    setIsSaving(true);
+    setTimeout(() => {
+      onUpdateStore({ ...store, reports: updatedReports });
+      onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`);
+      setIsSaving(false);
+      showSuccess("Rapport publié et notification envoyée avec succès !");
+      setNewReport({
+        title: '',
+        date: new Date().toISOString().split('T')[0],
+        type: 'Conseil de Supervision',
+        category: 'Sessions',
+        fileUrl: ''
+      });
+    }, 800);
+  };
+
+  const handleRemoveReport = (id: number) => {
+    const updatedReports = reports.filter((r: any) => r.id !== id);
+    setReports(updatedReports);
+    onUpdateStore({ ...store, reports: updatedReports });
+    showSuccess("Document supprimé.");
+  };
+
+  // --- NEW HANDLERS ---
+
+  const handleUpdateArrondissement = (id: number, field: string, value: any) => {
+    setArrondissements(arrondissements.map((a: any) => a.id === id ? { ...a, [field]: value } : a));
+  };
+
+  const handleSaveArrondissements = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      onUpdateStore({ ...store, arrondissements });
+      setIsSaving(false);
+      showSuccess("Informations des arrondissements mises à jour !");
+    }, 800);
+  };
+
+  const handleAddOpportunity = () => {
+    if (!newOpportunity.title || !newOpportunity.description) return;
+    const oppToAdd = { ...newOpportunity, id: Date.now() };
+    const updatedOpps = [oppToAdd, ...opportunites];
+    setOpportunites(updatedOpps);
+    onUpdateStore({ ...store, opportunites: updatedOpps });
+    onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${oppToAdd.title}" a été publiée.`);
+    showSuccess("Opportunité publiée !");
+    setNewOpportunity({
+      title: '',
+      type: 'Marché Public',
+      date: new Date().toISOString().split('T')[0],
+      description: ''
+    });
+  };
+
+  const handleRemoveOpportunity = (id: number) => {
+    const updatedOpps = opportunites.filter((o: any) => o.id !== id);
+    setOpportunites(updatedOpps);
+    onUpdateStore({ ...store, opportunites: updatedOpps });
+    showSuccess("Annonce supprimée.");
+  };
+
+  const handleSaveMarketConfig = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      onUpdateStore({ ...store, configMarche });
+      onSendPush("Rappel Marché", "Demain, c'est le jour du Grand Marché à Za-Kpota !");
+      setIsSaving(false);
+      showSuccess("Configuration du marché enregistrée !");
+    }, 800);
+  };
+
+  const handleValidateAppointment = (id: number) => {
+    const updatedRdv = rendezvous.map((r: any) => {
+      if (r.id === id) {
+        onSendPush("RDV Confirmé", `Votre rendez-vous du ${new Date(r.date).toLocaleDateString()} est validé.`);
+        return { ...r, status: 'Validé' };
+      }
+      return r;
+    });
+    setRendezvous(updatedRdv);
+    onUpdateStore({ ...store, rendezvous: updatedRdv });
+    showSuccess("Rendez-vous validé et citoyen notifié !");
+  };
+
+  const handleCancelAppointment = (id: number) => {
+    const updatedRdv = rendezvous.map((r: any) => r.id === id ? { ...r, status: 'Annulé' } : r);
+    setRendezvous(updatedRdv);
+    onUpdateStore({ ...store, rendezvous: updatedRdv });
+    showSuccess("Rendez-vous annulé.");
+  };
+
+  return (
+    <div className="min-h-screen bg-muted flex flex-col lg:flex-row transition-colors duration-300">
+      {/* Sidebar */}
+      <aside className="w-full lg:w-72 bg-card border-r border-border p-8 flex flex-col transition-colors">
+        <div className="flex items-center space-x-4 mb-12">
+          <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+            <LayoutDashboard className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="font-black text-ink uppercase tracking-widest text-sm">Admin Portal</h2>
+            <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">Mairie de Za-Kpota</p>
+          </div>
+        </div>
+
+        <nav className="space-y-2 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          {[
+            { id: 'services', label: 'Services & Tarifs', icon: FileText },
+            { id: 'agenda', label: 'Agenda Stade', icon: Calendar },
+            { id: 'reports', label: 'Rapports & Docs', icon: FileText },
+            { id: 'arrondissements', label: 'Arrondissements', icon: MapPin },
+            { id: 'opportunities', label: 'Opportunités', icon: Briefcase },
+            { id: 'market', label: 'Gestion Marché', icon: ShoppingBag },
+            { id: 'appointments', label: 'Planning RDV', icon: CalendarCheck },
+            { id: 'flash', label: 'Flash News', icon: Bell },
+            { id: 'settings', label: 'Paramètres', icon: Settings },
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center space-x-4 px-6 py-4 rounded-2xl font-bold transition-all min-h-[44px] ${
+                activeTab === item.id 
+                  ? 'bg-primary text-white shadow-xl shadow-primary/20 translate-x-2' 
+                  : 'text-ink/40 hover:text-primary hover:bg-primary/5'
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="text-sm">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="mt-12 pt-8 border-t border-border">
+          <div className="flex items-center space-x-4 mb-8">
+            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-ink/40">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-ink">Agent Municipal</p>
+              <p className="text-[10px] text-ink/40 uppercase font-bold tracking-widest">Connecté</p>
+            </div>
+          </div>
+          <button 
+            onClick={onExit}
+            className="w-full flex items-center justify-center space-x-2 px-6 py-4 rounded-2xl bg-red/10 text-red font-bold hover:bg-red hover:text-white transition-all min-h-[44px]"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-sm">Quitter le Portail</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
+        <header className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8">
+          <div>
+            <h1 className="text-4xl font-black text-ink mb-2">
+              {activeTab === 'services' && "Gestion des Services"}
+              {activeTab === 'agenda' && "Agenda du Stade"}
+              {activeTab === 'reports' && "Rapports & Documents"}
+              {activeTab === 'arrondissements' && "Éditeur d'Arrondissements"}
+              {activeTab === 'opportunities' && "Gestionnaire d'Opportunités"}
+              {activeTab === 'market' && "Configurateur de Marché"}
+              {activeTab === 'appointments' && "Suivi des Rendez-vous"}
+              {activeTab === 'flash' && "Bandeau Flash News"}
+              {activeTab === 'settings' && "Paramètres Système"}
+            </h1>
+            <p className="text-ink/40 font-medium">Interface de gestion simplifiée pour les agents de la mairie.</p>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink/40" />
+              <input 
+                type="text" 
+                placeholder="Rechercher..." 
+                className="pl-12 pr-6 py-3 bg-card border border-border rounded-xl outline-none focus:border-primary transition-all text-sm text-ink min-h-[44px]"
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* Success/Error Messages */}
+        <AnimatePresence>
+          {successMessage && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-8 p-4 bg-primary text-white rounded-2xl flex items-center space-x-3 shadow-lg shadow-primary/20"
+            >
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-bold text-sm">{successMessage}</span>
+            </motion.div>
+          )}
+          {errorMessage && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-8 p-4 bg-red text-white rounded-2xl flex items-center space-x-3 shadow-lg shadow-red/20"
+            >
+              <AlertCircle className="w-5 h-5" />
+              <span className="font-bold text-sm">{errorMessage}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Tab Content */}
+        <div className="bg-card rounded-[2.5rem] shadow-2xl border border-border p-8 lg:p-12 transition-colors">
+          {activeTab === 'flash' && (
+            <div className="max-w-2xl space-y-8">
+              <div className="space-y-4">
+                <label className="text-xs font-black uppercase tracking-widest text-ink/40">Message Défilant</label>
+                <textarea 
+                  value={flashNews}
+                  onChange={(e) => setFlashNews(e.target.value)}
+                  rows={4}
+                  className="w-full bg-muted border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all text-ink font-medium resize-none min-h-[44px]"
+                  placeholder="Entrez le message à afficher sur le site..."
+                />
+              </div>
+              <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 flex items-start space-x-4">
+                <Info className="w-6 h-6 text-primary mt-1" />
+                <p className="text-sm text-ink/60 leading-relaxed">
+                  Ce message apparaîtra instantanément dans le bandeau défilant en haut de toutes les pages du site. 
+                  Une notification push sera également envoyée aux citoyens abonnés.
+                </p>
+              </div>
+              <button 
+                onClick={handleSaveFlashNews}
+                disabled={isSaving}
+                className="flex items-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 min-h-[44px]"
+              >
+                {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>Enregistrer & Notifier</span>
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'arrondissements' && (
+            <div className="space-y-12">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                {arrondissements.map((arr: any) => (
+                  <div key={arr.id} className="p-8 bg-muted rounded-3xl border border-border space-y-6">
+                    <h4 className="text-lg font-black text-ink flex items-center">
+                      <MapPin className="w-5 h-5 mr-3 text-primary" />
+                      {arr.name}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Chef d'Arrondissement</label>
+                        <input 
+                          type="text" 
+                          value={arr.chef}
+                          onChange={(e) => handleUpdateArrondissement(arr.id, 'chef', e.target.value)}
+                          className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary text-ink min-h-[44px]"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Contact</label>
+                        <input 
+                          type="text" 
+                          value={arr.contact}
+                          onChange={(e) => handleUpdateArrondissement(arr.id, 'contact', e.target.value)}
+                          className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary text-ink min-h-[44px]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button 
+                onClick={handleSaveArrondissements}
+                disabled={isSaving}
+                className="flex items-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 min-h-[44px]"
+              >
+                {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>Enregistrer les Modifications</span>
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'opportunities' && (
+            <div className="space-y-12">
+              <div className="max-w-3xl p-8 bg-muted rounded-3xl border border-border space-y-8">
+                <h3 className="text-xl font-black text-ink">Nouvelle Annonce</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Titre</label>
+                    <input 
+                      type="text" 
+                      value={newOpportunity.title}
+                      onChange={(e) => setNewOpportunity({...newOpportunity, title: e.target.value})}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-ink min-h-[44px]"
+                      placeholder="Ex: Recrutement saisonnier"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Type</label>
+                    <select 
+                      value={newOpportunity.type}
+                      onChange={(e) => setNewOpportunity({...newOpportunity, type: e.target.value})}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-ink min-h-[44px]"
+                    >
+                      <option>Marché Public</option>
+                      <option>Emploi</option>
+                      <option>Événement</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Description</label>
+                    <textarea 
+                      value={newOpportunity.description}
+                      onChange={(e) => setNewOpportunity({...newOpportunity, description: e.target.value})}
+                      rows={3}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-ink resize-none min-h-[44px]"
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={handleAddOpportunity}
+                  className="w-full flex items-center justify-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all min-h-[44px]"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Publier l'Opportunité</span>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-xl font-black text-ink">Annonces Actives</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  {opportunites.map((opp: any) => (
+                    <div key={opp.id} className="p-6 bg-muted rounded-2xl border border-border flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                          <Briefcase className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-ink">{opp.title}</p>
+                          <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">{opp.type} • {opp.date}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleRemoveOpportunity(opp.id)}
+                        className="p-2 text-red hover:bg-red/5 rounded-lg transition-colors min-h-[44px] min-w-[44px]"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'market' && (
+            <div className="max-w-2xl space-y-8">
+              <div className="p-8 bg-muted rounded-3xl border border-border space-y-6">
+                <div className="flex items-center space-x-4 mb-4">
+                  <ShoppingBag className="w-8 h-8 text-primary" />
+                  <h3 className="text-xl font-black text-ink">Cycle du Marché</h3>
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Date de référence (Dernier marché)</label>
+                  <input 
+                    type="date" 
+                    value={configMarche.referenceDate}
+                    onChange={(e) => setConfigMarche({ referenceDate: e.target.value })}
+                    className="w-full bg-card border border-border rounded-xl px-6 py-4 outline-none focus:border-primary text-ink font-bold min-h-[44px]"
+                  />
+                  <p className="text-xs text-ink/40 font-medium leading-relaxed">
+                    Cette date sert de base au calcul automatique des prochains jours de marché (tous les 5 jours). 
+                    Ajustez-la uniquement en cas de décalage exceptionnel du calendrier traditionnel.
+                  </p>
+                </div>
+                <button 
+                  onClick={handleSaveMarketConfig}
+                  disabled={isSaving}
+                  className="flex items-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all min-h-[44px]"
+                >
+                  {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>Enregistrer & Rappeler</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'appointments' && (
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-black text-ink">Demandes d'Audience</h3>
+                <div className="flex space-x-2">
+                  <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">
+                    {rendezvous.filter((r: any) => r.status === 'En attente').length} En attente
+                  </span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Citoyen</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Motif</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Date & Heure</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Statut</th>
+                      <th className="text-right py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rendezvous.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-12 text-center text-ink/40 font-medium">Aucune demande de rendez-vous pour le moment.</td>
+                      </tr>
+                    ) : (
+                      rendezvous.map((rdv: any) => (
+                        <tr key={rdv.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                          <td className="py-4 px-6">
+                            <p className="font-bold text-ink">{rdv.name}</p>
+                            <p className="text-xs text-ink/40">{rdv.phone}</p>
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className="px-3 py-1 bg-muted border border-border rounded-lg text-xs font-bold text-ink/60">{rdv.motif}</span>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex items-center space-x-2 text-sm font-bold text-ink">
+                              <Calendar className="w-4 h-4 text-primary" />
+                              <span>{new Date(rdv.date).toLocaleDateString()}</span>
+                              <Clock className="w-4 h-4 text-primary ml-2" />
+                              <span>{rdv.time}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                              rdv.status === 'Validé' ? 'bg-primary/10 text-primary' :
+                              rdv.status === 'Annulé' ? 'bg-red/10 text-red' :
+                              'bg-accent/20 text-primary'
+                            }`}>
+                              {rdv.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-right space-x-2">
+                            {rdv.status === 'En attente' && (
+                              <>
+                                <button 
+                                  onClick={() => handleValidateAppointment(rdv.id)}
+                                  className="p-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all min-h-[44px] min-w-[44px]"
+                                >
+                                  <CheckCircle className="w-5 h-5" />
+                                </button>
+                                <button 
+                                  onClick={() => handleCancelAppointment(rdv.id)}
+                                  className="p-2 bg-red/10 text-red rounded-xl hover:bg-red hover:text-white transition-all min-h-[44px] min-w-[44px]"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'services' && (
+            <div className="space-y-12">
+              {Object.entries(services).map(([category, items]: [string, any]) => (
+                <div key={category} className="space-y-8">
+                  <h3 className="text-2xl font-black text-ink capitalize flex items-center">
+                    <span className="w-2 h-8 bg-primary rounded-full mr-4" />
+                    {category.replace('-', ' ')}
+                  </h3>
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    {items.map((service: any) => (
+                      <div key={service.id} className="p-8 bg-muted rounded-3xl border border-border space-y-6">
+                        <div className="flex justify-between items-start">
+                          <h4 className="text-lg font-black text-ink">{service.name}</h4>
+                          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">{service.delay}</span>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Tarif (FCFA)</label>
+                          <input 
+                            type="number" 
+                            value={service.cost}
+                            onChange={(e) => handleUpdateServicePrice(category, service.id, e.target.value)}
+                            className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all font-bold text-primary"
+                          />
+                        </div>
+
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Pièces à fournir</label>
+                          <div className="space-y-2">
+                            {service.pieces.map((piece: string, idx: number) => (
+                              <div key={idx} className="flex items-center justify-between bg-card p-3 rounded-xl border border-border">
+                                <span className="text-xs text-ink/60">{piece}</span>
+                                <button 
+                                  onClick={() => handleRemovePiece(category, service.id, idx)}
+                                  className="text-red hover:bg-red/5 p-1 rounded-lg transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex space-x-2">
+                            <input 
+                              type="text" 
+                              placeholder="Ajouter une pièce..." 
+                              className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-xs outline-none focus:border-primary text-ink"
+                              onKeyDown={(e: any) => {
+                                if (e.key === 'Enter') {
+                                  handleAddPiece(category, service.id, e.target.value);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                            <button className="p-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all">
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <button 
+                onClick={handleSaveServices}
+                disabled={isSaving}
+                className="flex items-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+              >
+                {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>Enregistrer les Tarifs</span>
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'agenda' && (
+            <div className="space-y-8">
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-black text-ink">Événements à venir</h3>
+                <button 
+                  onClick={handleAddEvent}
+                  className="flex items-center space-x-2 px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Ajouter un événement</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6">
+                {agenda.map((event: any) => (
+                  <div key={event.id} className="p-8 bg-muted rounded-3xl border border-border flex flex-col md:flex-row gap-8">
+                    <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden bg-muted border border-border">
+                      <img src={event.img} alt={event.title} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Titre</label>
+                          <input 
+                            type="text" 
+                            value={event.title}
+                            onChange={(e) => handleUpdateEvent(event.id, 'title', e.target.value)}
+                            className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary text-ink"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Description</label>
+                          <textarea 
+                            value={event.description}
+                            onChange={(e) => handleUpdateEvent(event.id, 'description', e.target.value)}
+                            rows={2}
+                            className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary resize-none text-ink"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Date</label>
+                            <input 
+                              type="date" 
+                              value={event.date}
+                              onChange={(e) => handleUpdateEvent(event.id, 'date', e.target.value)}
+                              className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary text-ink"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Type</label>
+                            <select 
+                              value={event.type}
+                              onChange={(e) => handleUpdateEvent(event.id, 'type', e.target.value)}
+                              className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary text-ink"
+                            >
+                              <option className="bg-card">Sport</option>
+                              <option className="bg-card">Culture</option>
+                              <option className="bg-card">Social</option>
+                              <option className="bg-card">Gouvernance</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex items-end justify-between">
+                          <div className="flex-1 space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Lieu</label>
+                            <input 
+                              type="text" 
+                              value={event.location}
+                              onChange={(e) => handleUpdateEvent(event.id, 'location', e.target.value)}
+                              className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary text-ink"
+                            />
+                          </div>
+                          <button 
+                            onClick={() => handleRemoveEvent(event.id)}
+                            className="ml-4 p-3 text-red hover:bg-red/5 rounded-xl transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button 
+                onClick={handleSaveAgenda}
+                disabled={isSaving}
+                className="flex items-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+              >
+                {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>Enregistrer l'Agenda</span>
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'reports' && (
+            <div className="space-y-12">
+              <div className="max-w-3xl p-8 bg-muted rounded-3xl border border-border space-y-8">
+                <h3 className="text-xl font-black text-ink">Publier un nouveau document</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Titre du document</label>
+                    <input 
+                      type="text" 
+                      value={newReport.title}
+                      onChange={(e) => setNewReport({...newReport, title: e.target.value})}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
+                      placeholder="Ex: Rapport de session Q1 2024"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Date de la séance</label>
+                    <input 
+                      type="date" 
+                      value={newReport.date}
+                      onChange={(e) => setNewReport({...newReport, date: e.target.value})}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Type de document</label>
+                    <select 
+                      value={newReport.type}
+                      onChange={(e) => setNewReport({...newReport, type: e.target.value})}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
+                    >
+                      <option className="bg-card">Conseil de Supervision</option>
+                      <option className="bg-card">Session Communale</option>
+                      <option className="bg-card">Arrêté Municipal</option>
+                      <option className="bg-card">Rapport d'Activité</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Catégorie</label>
+                    <select 
+                      value={newReport.category}
+                      onChange={(e) => setNewReport({...newReport, category: e.target.value})}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
+                    >
+                      <option className="bg-card">Sessions</option>
+                      <option className="bg-card">Finances</option>
+                      <option className="bg-card">Urbanisme</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Lien du fichier (PDF/Word/Image)</label>
+                    <input 
+                      type="text" 
+                      value={newReport.fileUrl}
+                      onChange={(e) => setNewReport({...newReport, fileUrl: e.target.value})}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
+                      placeholder="https://exemple.com/rapport.pdf"
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleAddReport}
+                  disabled={isSaving}
+                  className="w-full flex items-center justify-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+                >
+                  {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus className="w-4 h-4" />}
+                  <span>Publier & Notifier les Citoyens</span>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-xl font-black text-ink">Documents récents</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  {reports.map((report: any) => (
+                    <div key={report.id} className="p-6 bg-muted rounded-2xl border border-border flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-ink">{report.title}</p>
+                          <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">{report.type} • {report.date}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleRemoveReport(report.id)}
+                        className="p-2 text-red hover:bg-red/5 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="max-w-2xl space-y-8">
+              <div className="p-8 bg-muted rounded-3xl border border-border">
+                <h3 className="text-xl font-black text-ink mb-6">Notifications Push</h3>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-ink">Activer FCM</p>
+                      <p className="text-xs text-ink/40">Lier l'application à Firebase Cloud Messaging</p>
+                    </div>
+                    <div className="w-12 h-6 bg-primary rounded-full relative cursor-pointer">
+                      <div className="absolute right-1 top-1 w-4 h-4 bg-card rounded-full shadow-sm" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-ink">Service Worker</p>
+                      <p className="text-xs text-ink/40">État du worker pour le mode hors-ligne</p>
+                    </div>
+                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">Actif</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default AdminDashboard;
