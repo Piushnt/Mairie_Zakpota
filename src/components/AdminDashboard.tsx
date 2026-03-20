@@ -133,34 +133,53 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
   const handleSaveServices = async () => {
     setIsSaving(true);
+    setErrorMessage(null);
     try {
       // Collect all services from all categories into one array
       const allServicesToUpdate: any[] = [];
       Object.keys(services).forEach(category => {
         services[category].forEach((s: any) => {
-          allServicesToUpdate.push({
-            id: s.id, // Supabase needs existing UUIDs or it will create new ones
+          const serviceData: any = {
             category: category,
             name: s.name,
-            cost: s.cost,
+            cost: Number(s.cost),
             pieces: s.pieces,
             delay: s.delay
-          });
+          };
+          
+          // Only include ID if it's a valid UUID
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          if (uuidRegex.test(String(s.id))) {
+            serviceData.id = s.id;
+          }
+          
+          allServicesToUpdate.push(serviceData);
         });
       });
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('services_tarifs')
-        .upsert(allServicesToUpdate);
+        .upsert(allServicesToUpdate)
+        .select();
 
       if (error) throw error;
+      
+      // Update local state with fresh data (including new UUIDs)
+      if (data) {
+        const grouped: any = {};
+        data.forEach(t => {
+          if (!grouped[t.category]) grouped[t.category] = [];
+          grouped[t.category].push(t);
+        });
+        setServices(grouped);
+        onUpdateStore({ services: grouped });
+      }
 
-      onUpdateStore({ ...store, services });
-      onSendPush("Mise à jour Tarifs", "Les tarifs des services municipaux ont été mis à jour.");
-      showSuccess("Services et tarifs enregistrés !");
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("Erreur lors de l'enregistrement des services.");
+      onSendPush("Tarifs Mis à Jour", "Les prix des services municipaux ont été actualisés.");
+      showSuccess("Tous les tarifs ont été enregistrés avec succès !");
+    } catch (error: any) {
+      console.error('Supabase Error:', error);
+      setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de l'enregistrement des services"}`);
     }
     setIsSaving(false);
   };
@@ -188,29 +207,45 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
   const handleSaveAgenda = async () => {
     setIsSaving(true);
+    setErrorMessage(null);
     try {
-      const formattedEvents = agenda.map((e: any) => ({
-        id: typeof e.id === 'string' && e.id.length > 20 ? e.id : undefined, // Avoid malformed UUIDs
-        title: e.title,
-        date: e.date,
-        type: e.type,
-        description: e.description,
-        location: e.location,
-        image_url: e.img
-      }));
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      const formattedEvents = agenda.map((e: any) => {
+        const eventData: any = {
+          title: e.title,
+          date: e.date,
+          type: e.type,
+          description: e.description,
+          location: e.location,
+          image_url: e.img
+        };
+        
+        if (uuidRegex.test(String(e.id))) {
+          eventData.id = e.id;
+        }
+        
+        return eventData;
+      });
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('agenda_events')
-        .upsert(formattedEvents);
+        .upsert(formattedEvents)
+        .select();
 
       if (error) throw error;
 
-      onUpdateStore({ ...store, agenda });
-      onSendPush("Nouvel Événement", "L'agenda municipal a été mis à jour.");
-      showSuccess("Agenda mis à jour avec succès !");
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("Erreur lors de l'enregistrement de l'agenda.");
+      if (data) {
+        const updatedAgenda = data.map(e => ({ ...e, img: e.image_url }));
+        setAgenda(updatedAgenda);
+        onUpdateStore({ agenda: updatedAgenda });
+      }
+
+      onSendPush("Agenda Mis à Jour", "Les événements du stade ont été actualisés.");
+      showSuccess("Agenda enregistré avec succès !");
+    } catch (error: any) {
+      console.error('Supabase Error:', error);
+      setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de l'enregistrement de l'agenda"}`);
     }
     setIsSaving(false);
   };
@@ -223,6 +258,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     }
     
     setIsSaving(true);
+    setErrorMessage(null);
     try {
       const reportData = {
         title: newReport.title,
@@ -240,32 +276,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
       if (error) throw error;
 
-      const updatedReports = [data[0], ...reports];
-      setReports(updatedReports);
-      onUpdateStore({ ...store, reports: updatedReports });
-      onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`);
-      showSuccess("Rapport publié et notification envoyée avec succès !");
-      setNewReport({
-        title: '',
-        date: new Date().toISOString().split('T')[0],
-        type: 'Conseil de Supervision',
-        category: 'Sessions',
-        fileUrl: ''
-      });
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("Erreur lors de la publication du rapport.");
+      if (data && data.length > 0) {
+        const freshReport = { ...data[0], fileUrl: data[0].file_url };
+        const updatedReports = [freshReport, ...reports];
+        setReports(updatedReports);
+        onUpdateStore({ reports: updatedReports });
+        onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`);
+        showSuccess("Rapport publié avec succès !");
+        setNewReport({
+          title: '',
+          date: new Date().toISOString().split('T')[0],
+          type: 'Conseil de Supervision',
+          category: 'Sessions',
+          fileUrl: ''
+        });
+      }
+    } catch (error: any) {
+      console.error('Supabase Error:', error);
+      setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de la publication"}`);
     }
     setIsSaving(false);
   };
 
   const handleRemoveReport = async (id: any) => {
-    const { error } = await supabase.from('reports').delete().eq('id', id);
-    if (!error) {
+    try {
+      const { error } = await supabase.from('reports').delete().eq('id', id);
+      if (error) throw error;
+      
       const updatedReports = reports.filter((r: any) => r.id !== id);
       setReports(updatedReports);
-      onUpdateStore({ ...store, reports: updatedReports });
-      showSuccess("Document supprimé.");
+      onUpdateStore({ reports: updatedReports });
+      showSuccess("Rapport supprimé.");
+    } catch (error: any) {
+      console.error('Supabase Error:', error);
+      setErrorMessage(`Erreur de suppression: ${error.message}`);
     }
   };
 
@@ -277,31 +321,61 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
   const handleSaveArrondissements = async () => {
     setIsSaving(true);
+    setErrorMessage(null);
     try {
-      const { error } = await supabase
-        .from('arrondissements')
-        .upsert(arrondissements.map((a: any) => ({
-          id: typeof a.id === 'string' && a.id.length > 20 ? a.id : undefined,
-          nom: a.name || a.nom,
-          ca: a.chef || a.ca,
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      const formattedArrs = arrondissements.map((a: any) => {
+        const arrData: any = {
+          nom: a.name,
+          ca: a.chef,
           contact: a.contact,
-          image_url: a.image_url || a.img
-        })));
+          localisation: a.localisation,
+          quartiers: a.quartiers,
+          image_url: a.img
+        };
+        
+        if (uuidRegex.test(String(a.id))) {
+          arrData.id = a.id;
+        }
+        
+        return arrData;
+      });
+
+      const { data, error } = await supabase
+        .from('arrondissements')
+        .upsert(formattedArrs)
+        .select();
 
       if (error) throw error;
 
-      onUpdateStore({ ...store, arrondissements });
-      showSuccess("Informations des arrondissements mises à jour !");
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("Erreur lors de la mise à jour des arrondissements.");
+      if (data) {
+        const updatedArrs = data.map(a => ({
+          ...a,
+          name: a.nom,
+          chef: a.ca,
+          img: a.image_url
+        }));
+        setArrondissements(updatedArrs);
+        onUpdateStore({ arrondissements: updatedArrs });
+      }
+
+      onSendPush("Informations Mises à Jour", "Les contacts des arrondissements ont été actualisés.");
+      showSuccess("Arrondissements enregistrés avec succès !");
+    } catch (error: any) {
+      console.error('Supabase Error:', error);
+      setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de l'enregistrement"}`);
     }
     setIsSaving(false);
   };
 
   const handleAddOpportunity = async () => {
-    if (!newOpportunity.title || !newOpportunity.description) return;
+    if (!newOpportunity.title || !newOpportunity.description) {
+      setErrorMessage("Veuillez remplir le titre et la description.");
+      return;
+    }
     setIsSaving(true);
+    setErrorMessage(null);
     try {
       const { data, error } = await supabase
         .from('opportunites')
@@ -309,88 +383,115 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
           titre: newOpportunity.title,
           type: newOpportunity.type,
           description: newOpportunity.description,
-          date_limite: newOpportunity.date
+          date_limite: newOpportunity.date,
+          statut: 'ouvert'
         }])
         .select();
 
       if (error) throw error;
 
-      const updatedOpps = [data[0], ...opportunites];
-      setOpportunites(updatedOpps);
-      onUpdateStore({ ...store, opportunites: updatedOpps });
-      onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${newOpportunity.title}" a été publiée.`);
-      showSuccess("Opportunité publiée !");
-      setNewOpportunity({
-        title: '',
-        type: 'Marché Public',
-        date: new Date().toISOString().split('T')[0],
-        description: ''
-      });
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("Erreur lors de la publication.");
+      if (data && data.length > 0) {
+        const freshOpp = { 
+          ...data[0], 
+          title: data[0].titre, 
+          date: data[0].date_limite 
+        };
+        const updatedOpps = [freshOpp, ...opportunites];
+        setOpportunites(updatedOpps);
+        onUpdateStore({ opportunites: updatedOpps });
+        onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${newOpportunity.title}" a été publiée.`);
+        showSuccess("Opportunité publiée avec succès !");
+        setNewOpportunity({
+          title: '',
+          type: 'Marché Public',
+          date: new Date().toISOString().split('T')[0],
+          description: ''
+        });
+      }
+    } catch (error: any) {
+      console.error('Supabase Error:', error);
+      setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de la publication"}`);
     }
     setIsSaving(false);
   };
 
   const handleRemoveOpportunity = async (id: any) => {
-    const { error } = await supabase.from('opportunites').delete().eq('id', id);
-    if (!error) {
+    try {
+      const { error } = await supabase.from('opportunites').delete().eq('id', id);
+      if (error) throw error;
+      
       const updatedOpps = opportunites.filter((o: any) => o.id !== id);
       setOpportunites(updatedOpps);
-      onUpdateStore({ ...store, opportunites: updatedOpps });
-      showSuccess("Annonce supprimée.");
+      onUpdateStore({ opportunites: updatedOpps });
+      showSuccess("Opportunité supprimée.");
+    } catch (error: any) {
+      console.error('Supabase Error:', error);
+      setErrorMessage(`Erreur de suppression: ${error.message}`);
     }
   };
 
   const handleSaveMarketConfig = async () => {
     setIsSaving(true);
-    const { error } = await supabase
-      .from('site_config')
-      .upsert({ key: 'market_config', value: configMarche });
+    setErrorMessage(null);
+    try {
+      const { error } = await supabase
+        .from('site_config')
+        .upsert({ key: 'market_config', value: configMarche });
 
-    if (!error) {
-      onUpdateStore({ ...store, configMarche });
-      onSendPush("Rappel Marché", "Demain, c'est le jour du Grand Marché à Za-Kpota !");
+      if (error) throw error;
+
+      onUpdateStore({ configMarche });
+      onSendPush("Rappel Marché", "La configuration du cycle du marché a été mise à jour.");
       showSuccess("Configuration du marché enregistrée !");
-    } else {
-      console.error(error);
-      setErrorMessage("Erreur de sauvegarde config marché.");
+    } catch (error: any) {
+      console.error('Supabase Error:', error);
+      setErrorMessage(`Erreur sauvegarde marché: ${error.message}`);
     }
     setIsSaving(false);
   };
 
   const handleValidateAppointment = async (id: any) => {
-    const { error } = await supabase
-      .from('appointments')
-      .update({ status: 'Validé' })
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'Validé' })
+        .eq('id', id);
 
-    if (!error) {
+      if (error) throw error;
+
       const updatedRdv = rendezvous.map((r: any) => {
         if (r.id === id) {
-          onSendPush("RDV Confirmé", `Votre rendez-vous du ${new Date(r.date_limite || r.date || r.appointment_date).toLocaleDateString()} est validé.`);
+          onSendPush("RDV Confirmé", `Votre rendez-vous est validé.`);
           return { ...r, status: 'Validé' };
         }
         return r;
       });
       setRendezvous(updatedRdv);
-      onUpdateStore({ ...store, rendezvous: updatedRdv });
-      showSuccess("Rendez-vous validé et citoyen notifié !");
+      onUpdateStore({ rendezvous: updatedRdv });
+      showSuccess("Rendez-vous validé !");
+    } catch (error: any) {
+      setErrorMessage(`Erreur validation: ${error.message}`);
     }
   };
 
   const handleCancelAppointment = async (id: any) => {
-    const { error } = await supabase
-      .from('appointments')
-      .update({ status: 'Annulé' })
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'Annulé' })
+        .eq('id', id);
 
-    if (!error) {
-      const updatedRdv = rendezvous.map((r: any) => r.id === id ? { ...r, status: 'Annulé' } : r);
+      if (error) throw error;
+
+      const updatedRdv = rendezvous.map((r: any) => {
+        if (r.id === id) return { ...r, status: 'Annulé' };
+        return r;
+      });
       setRendezvous(updatedRdv);
-      onUpdateStore({ ...store, rendezvous: updatedRdv });
+      onUpdateStore({ rendezvous: updatedRdv });
       showSuccess("Rendez-vous annulé.");
+    } catch (error: any) {
+      setErrorMessage(`Erreur annulation: ${error.message}`);
     }
   };
 
@@ -914,6 +1015,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                             onChange={(e) => handleUpdateEvent(event.id, 'description', e.target.value)}
                             rows={2}
                             className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary resize-none text-ink"
+                            title="Description de l'événement"
+                            placeholder="Détails de la rencontre..."
                           />
                         </div>
                       </div>
@@ -999,7 +1102,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       value={newReport.title}
                       onChange={(e) => setNewReport({...newReport, title: e.target.value})}
                       className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
-                      placeholder="Ex: Rapport de session Q1 2024"
+                      title="Titre du rapport"
+                      placeholder="Ex: Rapport de Session Mars 2026"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1009,6 +1113,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       value={newReport.date}
                       onChange={(e) => setNewReport({...newReport, date: e.target.value})}
                       className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
+                      title="Date de la séance ou du document"
                     />
                   </div>
                   <div className="space-y-2">
