@@ -113,6 +113,7 @@ export const initialStoreData = {
   ],
   news: [],
   rendezvous: [],
+  reservationsStade: [],
   configMarche: {
     referenceDate: "2026-03-15", // Date d'un jour de marché connu
     cycleDays: 5,

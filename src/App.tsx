@@ -160,7 +160,8 @@ export default function App() {
           { data: arrs },
           { data: events },
           { data: config },
-          { data: reps }
+          { data: reps },
+          { data: stadeRes }
         ] = await Promise.all([
           supabase.from('services_tarifs').select('*'),
           supabase.from('news').select('*').order('date', { ascending: false }),
@@ -169,7 +170,8 @@ export default function App() {
           supabase.from('arrondissements').select('*').order('nom'),
           supabase.from('agenda_events').select('*').order('date'),
           supabase.from('site_config').select('*'),
-          supabase.from('reports').select('*').order('date', { ascending: false })
+          supabase.from('reports').select('*').order('date', { ascending: false }),
+          supabase.from('reservations_stade').select('*').order('created_at', { ascending: false })
         ]);
 
         const newStore = { ...initialStoreData };
@@ -243,6 +245,10 @@ export default function App() {
           if (flash) newStore.flashNews = flash;
           if (market) newStore.configMarche = market;
           if (stade) newStore.stade = stade;
+        }
+
+        if (stadeRes) {
+          newStore.reservationsStade = stadeRes;
         }
 
         setStore(newStore);
@@ -333,6 +339,31 @@ export default function App() {
     }));
   };
 
+  const handleStadeReservation = async (data: any) => {
+    const { error } = await supabase.from('reservations_stade').insert([{
+      nom: data.nom,
+      prenom: data.prenom,
+      telephone: data.telephone,
+      date: data.date,
+      creneau: data.creneau,
+      statut: 'EN_ATTENTE'
+    }]);
+
+    if (error) {
+      console.error('Error submitting stadium reservation:', error);
+      throw error;
+    }
+
+    // Proactive update for local store
+    setStore(prev => ({
+      ...prev,
+      reservationsStade: [
+        { id: Date.now().toString(), ...data, statut: 'EN_ATTENTE', created_at: new Date().toISOString() },
+        ...prev.reservationsStade
+      ]
+    }));
+  };
+
   return (
     <BrowserRouter>
       <Routes>
@@ -378,7 +409,7 @@ export default function App() {
           <Route path="economie" element={<MarketLogic config={store.configMarche} />} />
           <Route path="opportunites" element={<Opportunities data={store.opportunites} />} />
           <Route path="agenda" element={<PageAgenda agenda={store.agenda} />} />
-          <Route path="stade" element={<PageStade stade={store.stade} />} />
+          <Route path="stade" element={<PageStade stade={store.stade} onReserve={handleStadeReservation} />} />
           <Route path="tourisme" element={<PageTourisme />} />
           <Route path="actualites" element={<PageActualites news={store.news.length > 0 ? store.news : newsData} />} />
           <Route path="signalement" element={<SignalementForm />} />

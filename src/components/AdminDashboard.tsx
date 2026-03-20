@@ -14,6 +14,7 @@ import {
   Clock,
   CheckCircle, 
   AlertCircle,
+  XCircle,
   ChevronRight,
   Settings,
   LogOut,
@@ -50,6 +51,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
   const [arrondissements, setArrondissements] = useState(store.arrondissements || []);
   const [opportunites, setOpportunites] = useState(store.opportunites || []);
   const [rendezvous, setRendezvous] = useState(store.rendezvous || []);
+  const [stadeReservations, setStadeReservations] = useState(store.reservationsStade || []);
   const [configMarche, setConfigMarche] = useState(store.configMarche || { referenceDate: '' });
   const [newReport, setNewReport] = useState({
     title: '',
@@ -68,6 +70,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     setArrondissements(store.arrondissements || []);
     setOpportunites(store.opportunites || []);
     setRendezvous(store.rendezvous || []);
+    setStadeReservations(store.reservationsStade || []);
     setConfigMarche(store.configMarche || { referenceDate: '' });
   }, [store]);
 
@@ -464,6 +467,64 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     setIsSaving(false);
   };
 
+  const handleStadeReservationAction = async (reservation: any, newStatus: 'VALIDE' | 'REFUSE') => {
+    setIsSaving(true);
+    setErrorMessage(null);
+    try {
+      const { error: resError } = await supabase
+        .from('reservations_stade')
+        .update({ statut: newStatus })
+        .eq('id', reservation.id);
+
+      if (resError) throw resError;
+
+      let updatedStoreAgenda = [...agenda];
+      if (newStatus === 'VALIDE') {
+        const eventData = {
+          title: `Réservation : ${reservation.nom} ${reservation.prenom}`,
+          date: reservation.date,
+          type: "Sport",
+          description: `Créneau réservé : ${reservation.creneau}. Contact : ${reservation.telephone}`,
+          location: "Stade Municipal",
+          image_url: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800"
+        };
+
+        const { data: eventResult, error: eventError } = await supabase
+          .from('agenda_events')
+          .insert([eventData])
+          .select();
+
+        if (eventError) throw eventError;
+        if (eventResult) {
+          updatedStoreAgenda = [{ ...eventResult[0], img: eventResult[0].image_url || eventData.image_url }, ...updatedStoreAgenda];
+        }
+      }
+
+      const updatedReservations = stadeReservations.map((r: any) => 
+        r.id === reservation.id ? { ...r, statut: newStatus } : r
+      );
+      
+      setStadeReservations(updatedReservations);
+      setAgenda(updatedStoreAgenda);
+      
+      onUpdateStore({ 
+        reservationsStade: updatedReservations,
+        agenda: updatedStoreAgenda
+      });
+
+      onSendPush(
+        newStatus === 'VALIDE' ? "Réservation Confirmée" : "Réservation Refusée",
+        `La demande de ${reservation.nom} pour le ${reservation.date} a été traitée.`
+      );
+      
+      showSuccess(newStatus === 'VALIDE' ? "Réservation validée et ajoutée à l'agenda !" : "Réservation refusée.");
+    } catch (error: any) {
+      console.error('Supabase Error:', error);
+      setErrorMessage(`Erreur [${error.code}]: Échec de l'action.`);
+    }
+    setIsSaving(false);
+  };
+
   const handleValidateAppointment = async (id: any) => {
     try {
       const { error } = await supabase
@@ -532,6 +593,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
             { id: 'opportunities', label: 'Opportunités & Appels', icon: Briefcase },
             { id: 'market', label: 'Cycle du Marché', icon: ShoppingBag },
             { id: 'appointments', label: 'Audiences Citoyennes', icon: CalendarCheck },
+            { id: 'stade_res', label: 'Gestion du Stade', icon: Users },
             { id: 'flash', label: 'Bandeau d\'Alerte', icon: Bell },
             { id: 'settings', label: 'Configuration', icon: Settings },
           ].map(item => (
@@ -582,6 +644,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
               {activeTab === 'opportunities' && "Gestionnaire d'Opportunités"}
               {activeTab === 'market' && "Configurateur de Marché"}
               {activeTab === 'appointments' && "Suivi des Rendez-vous"}
+              {activeTab === 'stade_res' && "Demandes Réservation Stade"}
               {activeTab === 'flash' && "Bandeau Flash News"}
               {activeTab === 'settings' && "Paramètres Système"}
             </h1>
@@ -1220,6 +1283,86 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       </button>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'stade_res' && (
+            <div className="space-y-8">
+              <div className="bg-card rounded-[2.5rem] border border-border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-muted text-[10px] font-black uppercase tracking-[0.2em] text-ink/40">
+                        <th className="px-8 py-6">Citoyen</th>
+                        <th className="px-8 py-6">Contact</th>
+                        <th className="px-8 py-6">Date & Créneau</th>
+                        <th className="px-8 py-6">Statut</th>
+                        <th className="px-8 py-6 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {stadeReservations.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-8 py-12 text-center text-ink/40 font-bold">
+                            Aucune demande de réservation pour le moment.
+                          </td>
+                        </tr>
+                      ) : (
+                        stadeReservations.map((res: any) => (
+                          <tr key={res.id} className="group hover:bg-muted/30 transition-all">
+                            <td className="px-8 py-6">
+                              <p className="font-bold text-ink uppercase">{res.nom} {res.prenom}</p>
+                              <p className="text-[10px] text-ink/40 font-bold tracking-widest uppercase">Demandeur</p>
+                            </td>
+                            <td className="px-8 py-6">
+                              <p className="font-bold text-ink text-sm">{res.telephone}</p>
+                            </td>
+                            <td className="px-8 py-6">
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="w-3 h-3 text-primary" />
+                                <span className="text-sm font-bold text-ink">{res.date}</span>
+                              </div>
+                              <p className="text-[10px] font-black text-primary uppercase mt-1 tracking-widest">{res.creneau}</p>
+                            </td>
+                            <td className="px-8 py-6">
+                              <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                res.statut === 'VALIDE' ? 'bg-green-500/10 text-green-500' :
+                                res.statut === 'REFUSE' ? 'bg-red/10 text-red' :
+                                'bg-orange-500/10 text-orange-500'
+                              }`}>
+                                {res.statut}
+                              </span>
+                            </td>
+                            <td className="px-8 py-6 text-right">
+                              {res.statut === 'EN_ATTENTE' && (
+                                <div className="flex items-center justify-end space-x-2">
+                                  <button 
+                                    onClick={() => handleStadeReservationAction(res, 'VALIDE')}
+                                    className="p-3 bg-green-500 text-white rounded-xl shadow-lg shadow-green-500/20 hover:scale-105 transition-all"
+                                    title="Confirmer la réservation"
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleStadeReservationAction(res, 'REFUSE')}
+                                    className="p-3 bg-red text-white rounded-xl shadow-lg shadow-red/20 hover:scale-105 transition-all"
+                                    title="Refuser la réservation"
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
+                              {res.statut !== 'EN_ATTENTE' && (
+                                <span className="text-[10px] font-bold text-ink/20 uppercase tracking-widest">Traité</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
