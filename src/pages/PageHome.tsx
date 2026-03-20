@@ -6,7 +6,13 @@ import PartnersSection from '../components/PartnersSection';
 import MunicipalServices from '../components/MunicipalServices';
 import PhotoGallery from '../components/PhotoGallery';
 import SignalementForm from '../components/SignalementForm';
-import { ChevronRight } from 'lucide-react';
+import { 
+  ChevronRight, 
+  Users, 
+  Building2, 
+  ShoppingBag, 
+  Coins 
+} from 'lucide-react';
 import { newsData } from '../data/config';
 import { Link } from 'react-router-dom';
 
@@ -20,25 +26,25 @@ const PageHome = () => (
           title="État Civil"
           desc="Demandez vos actes de naissance, mariage ou décès en ligne. Suivez l'évolution de votre demande en temps réel."
           url="https://service-public.bj/etat-civil"
-          logo="/img/logo-mairie.jpg"
+          Icon={Users}
         />
         <ServiceCard
           title="Urbanisme & Foncier"
           desc="Permis de construire, certificat d'urbanisme et démarches foncières. Consultez le Plan Directeur d'Urbanisme."
           url="https://zakpota.bj/urbanisme"
-          logo="/img/logo-mairie.jpg"
+          Icon={Building2}
         />
         <ServiceCard
           title="Marchés Publics"
           desc="Consultez les appels d'offres en cours et les résultats des attributions pour la commune de Za-Kpota."
           url="https://marches-publics.bj"
-          logo="/img/logo-mairie.jpg"
+          Icon={ShoppingBag}
         />
         <ServiceCard
           title="Taxe de Développement"
           desc="Payez vos taxes locales et contribuez au développement des infrastructures de notre commune."
           url="https://zakpota.bj/taxes"
-          logo="/img/logo-mairie.jpg"
+          Icon={Coins}
         />
       </div>
     </section>

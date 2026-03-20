@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FileCheck, Building2, Scale, ChevronRight } from 'lucide-react';
+import { Users, Building2, Scale, ChevronRight } from 'lucide-react';
 import MarketCycle from './MarketCycle';
 
 const MunicipalServices = () => {
@@ -60,7 +60,7 @@ const MunicipalServices = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-primary/10 transition-colors" />
           <div className="relative z-10">
             <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-              <FileCheck className="w-7 h-7 text-primary" />
+              <Users className="w-7 h-7 text-primary" />
             </div>
             <h3 className="text-2xl font-black mb-4 tracking-tight text-ink uppercase">État Civil</h3>
             <p className="text-ink-muted leading-relaxed mb-8 text-sm font-medium max-w-sm">
@@ -85,7 +85,7 @@ const MunicipalServices = () => {
             <div className="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
               <Building2 className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
             </div>
-            <h3 className="text-xl font-black mb-3 tracking-tight text-ink uppercase">Urbanisme</h3>
+            <h3 className="text-xl font-black mb-3 tracking-tight text-ink uppercase">Urbanisme & Foncier</h3>
             <p className="text-ink-muted leading-relaxed text-sm font-medium">
               Consultez le plan de lotissement et demandez vos permis de construire.
             </p>

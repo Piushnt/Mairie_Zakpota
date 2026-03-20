@@ -21,7 +21,10 @@ import {
   Search,
   ArrowRight,
   Info,
-  CalendarCheck
+  CalendarCheck,
+  Building2,
+  Coins,
+  Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -48,7 +51,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
   const [opportunites, setOpportunites] = useState(store.opportunites || []);
   const [rendezvous, setRendezvous] = useState(store.rendezvous || []);
   const [configMarche, setConfigMarche] = useState(store.configMarche || { referenceDate: '' });
-
   const [newReport, setNewReport] = useState({
     title: '',
     date: new Date().toISOString().split('T')[0],
@@ -56,6 +58,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     category: 'Sessions',
     fileUrl: ''
   });
+
+  // Synchronize local state with store updates from parent
+  useEffect(() => {
+    setFlashNews(store.flashNews);
+    setServices(store.services || {});
+    setAgenda(store.agenda || []);
+    setReports(store.reports || []);
+    setArrondissements(store.arrondissements || []);
+    setOpportunites(store.opportunites || []);
+    setRendezvous(store.rendezvous || []);
+    setConfigMarche(store.configMarche || { referenceDate: '' });
+  }, [store]);
 
   const [newOpportunity, setNewOpportunity] = useState({
     title: '',
@@ -891,76 +905,88 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
           {activeTab === 'services' && (
             <div className="space-y-12">
-              {Object.entries(services).map(([category, items]: [string, any]) => (
-                <div key={category} className="space-y-8">
-                  <h3 className="text-2xl font-black text-ink capitalize flex items-center">
-                    <span className="w-2 h-8 bg-primary rounded-full mr-4" />
-                    {category.replace('-', ' ')}
-                  </h3>
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    {items.map((service: any) => (
-                      <div key={service.id} className="p-8 bg-muted rounded-3xl border border-border space-y-6">
-                        <div className="flex justify-between items-start">
-                          <h4 className="text-lg font-black text-ink">{service.name}</h4>
-                          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">{service.delay}</span>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Tarif (FCFA)</label>
-                          <input 
-                            type="number" 
-                            value={service.cost}
-                            onChange={(e) => handleUpdateServicePrice(category, service.id, e.target.value)}
-                            className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all font-bold text-primary"
-                            title="Tarif du service"
-                            placeholder="Montant en FCFA"
-                          />
-                        </div>
+              {Object.entries(services).map(([category, items]: [string, any]) => {
+                const CategoryIcon = ({
+                  'etat-civil': Users,
+                  'urbanisme-foncier': Building2,
+                  'marches-publics': ShoppingBag,
+                  'taxe-developpement': Coins,
+                  'divers': FileText
+                } as any)[category] || FileText;
 
-                        <div className="space-y-4">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Pièces à fournir</label>
-                          <div className="space-y-2">
-                            {service.pieces.map((piece: string, idx: number) => (
-                              <div key={idx} className="flex items-center justify-between bg-card p-3 rounded-xl border border-border">
-                                <span className="text-xs text-ink/60">{piece}</span>
-                                <button 
-                                  onClick={() => handleRemovePiece(category, service.id, idx)}
-                                  className="text-red hover:bg-red/5 p-1 rounded-lg transition-colors"
-                                  title={`Supprimer la pièce "${piece}"`}
-                                  aria-label={`Supprimer la pièce "${piece}"`}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ))}
+                return (
+                  <div key={category} className="space-y-8">
+                    <h3 className="text-2xl font-black text-ink capitalize flex items-center">
+                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mr-4">
+                        <CategoryIcon className="w-6 h-6" />
+                      </div>
+                      {category.replace(/-/g, ' ')}
+                    </h3>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                      {items.map((service: any) => (
+                        <div key={service.id} className="p-8 bg-muted rounded-3xl border border-border space-y-6">
+                          <div className="flex justify-between items-start">
+                            <h4 className="text-lg font-black text-ink">{service.name}</h4>
+                            <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">{service.delay}</span>
                           </div>
-                          <div className="flex space-x-2">
+                          
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Tarif (FCFA)</label>
                             <input 
-                              type="text" 
-                              placeholder="Ajouter une pièce..." 
-                              title="Ajouter une nouvelle pièce justificative"
-                              className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-xs outline-none focus:border-primary text-ink"
-                              onKeyDown={(e: any) => {
-                                if (e.key === 'Enter') {
-                                  handleAddPiece(category, service.id, e.target.value);
-                                  e.target.value = '';
-                                }
-                              }}
+                              type="number" 
+                              value={service.cost}
+                              onChange={(e) => handleUpdateServicePrice(category, service.id, e.target.value)}
+                              className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all font-bold text-primary"
+                              title="Tarif du service"
+                              placeholder="Montant en FCFA"
                             />
-                            <button 
-                              className="p-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all"
-                              title="Ajouter une pièce"
-                              aria-label="Ajouter une pièce"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
+                          </div>
+
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Pièces à fournir</label>
+                            <div className="space-y-2">
+                              {service.pieces.map((piece: string, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between bg-card p-3 rounded-xl border border-border">
+                                  <span className="text-xs text-ink/60">{piece}</span>
+                                  <button 
+                                    onClick={() => handleRemovePiece(category, service.id, idx)}
+                                    className="text-red hover:bg-red/5 p-1 rounded-lg transition-colors"
+                                    title={`Supprimer la pièce "${piece}"`}
+                                    aria-label={`Supprimer la pièce "${piece}"`}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex space-x-2">
+                              <input 
+                                type="text" 
+                                placeholder="Ajouter une pièce..." 
+                                title="Ajouter une nouvelle pièce justificative"
+                                className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-xs outline-none focus:border-primary text-ink"
+                                onKeyDown={(e: any) => {
+                                  if (e.key === 'Enter') {
+                                    handleAddPiece(category, service.id, e.currentTarget.value);
+                                    e.currentTarget.value = '';
+                                  }
+                                }}
+                              />
+                              <button 
+                                className="p-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all"
+                                title="Ajouter une pièce"
+                                aria-label="Ajouter une pièce"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <button 
                 onClick={handleSaveServices}
                 disabled={isSaving}
