@@ -205,7 +205,7 @@ const Header = ({
                 <img
                   src="/img/armoirie.png"
                   alt="Armoirie du Bénin"
-                  className="h-10 w-auto object-contain brightness-0 invert opacity-80"
+                  className="h-10 w-auto object-contain"
                 />
               </div>
 
