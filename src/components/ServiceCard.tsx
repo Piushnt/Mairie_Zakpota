@@ -12,7 +12,7 @@ const ServiceCard = ({ title, desc, url, logo }: ServiceCardProps) => (
   <div className="bg-card p-8 rounded-3xl shadow-sm border border-border hover:border-primary/50 transition-all group flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
     <div className="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-primary/5 rounded-2xl p-4 group-hover:bg-primary/10 transition-colors">
       <img 
-        src={logo || "/src/img/logo-mairie.jpg"} 
+        src={logo || "/img/logo-mairie.jpg"} 
         alt={title} 
         className="max-w-full max-h-full object-contain" 
       />

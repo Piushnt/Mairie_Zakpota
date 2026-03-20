@@ -74,6 +74,7 @@ import {
 
 import { initialStoreData } from './data/store';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { supabase } from './lib/supabase';
 import AdminDashboard from './components/AdminDashboard';
 import NotificationBell from './components/NotificationBell';
 import RapportsPage from './components/RapportsPage';
@@ -97,6 +98,7 @@ import PageAgenda from './pages/PageAgenda';
 import PageActualites from './pages/PageActualites';
 import SignalementForm from './components/SignalementForm';
 import SimulateurFiscal from './components/SimulateurFiscal';
+import Login from './pages/Login';
 
 // --- TYPES ---
 type Page = 'home' | 'etat-civil' | 'urbanisme' | 'economie' | 'conseil' | 'actualites' | 'contact' | 'maire' | 'decouvrir' | 'eservices' | 'histoire' | 'arrondissements' | 'publications' | 'agenda' | 'tourisme' | 'stade' | 'signalement' | 'simulateur' | 'admin-portal' | 'opportunites' | 'rendezvous';
@@ -118,7 +120,22 @@ const ADRESSE_MAIRIE = "Hôtel de Ville de Za-Kpota, Centre Ville";
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [store, setStore] = useState(initialStoreData);
+  const [session, setSession] = useState<any>(null);
+
+  // Auth Listener
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -127,6 +144,117 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+
+  // Fetch Data from Supabase
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        
+        // Fetch all tables in parallel
+        const [
+          { data: tarifs },
+          { data: news },
+          { data: rdv },
+          { data: opps },
+          { data: arrs },
+          { data: events },
+          { data: config },
+          { data: reps }
+        ] = await Promise.all([
+          supabase.from('services_tarifs').select('*'),
+          supabase.from('news').select('*').order('date', { ascending: false }),
+          supabase.from('appointments').select('*'),
+          supabase.from('opportunites').select('*'),
+          supabase.from('arrondissements').select('*').order('nom'),
+          supabase.from('agenda_events').select('*').order('date'),
+          supabase.from('site_config').select('*'),
+          supabase.from('reports').select('*').order('date', { ascending: false })
+        ]);
+
+        const newStore = { ...initialStoreData };
+
+        if (tarifs && tarifs.length > 0) {
+          const grouped: any = {};
+          tarifs.forEach(t => {
+            if (!grouped[t.category]) grouped[t.category] = [];
+            grouped[t.category].push(t);
+          });
+          newStore.services = grouped;
+        }
+
+        if (rdv) {
+          newStore.rendezvous = rdv.map(r => ({
+            ...r,
+            name: r.citizen_name,
+            phone: r.citizen_phone,
+            email: r.citizen_email,
+            motif: r.service,
+            date: r.appointment_date,
+            time: r.appointment_time
+          }));
+        }
+
+        if (opps) {
+          newStore.opportunites = opps.map(o => ({
+            ...o,
+            title: o.titre,
+            date: o.date_limite
+          }));
+        }
+
+        if (arrs && arrs.length > 0) {
+          newStore.arrondissements = arrs.map(a => ({
+            ...a,
+            name: a.nom,
+            chef: a.ca,
+            img: a.image_url
+          }));
+        }
+
+        if (events && events.length > 0) {
+          newStore.agenda = events.map(e => ({
+            ...e,
+            img: e.image_url
+          }));
+        }
+
+        if (news) {
+          newStore.news = news.map(n => ({
+            ...n,
+            desc: n.description,
+            cat: n.category,
+            img: n.image_url
+          }));
+        }
+
+        if (reps) {
+          newStore.reports = reps.map(r => ({
+            ...r,
+            fileUrl: r.file_url
+          }));
+        }
+
+        if (config) {
+          const flash = config.find(c => c.key === 'flash_news')?.value;
+          const market = config.find(c => c.key === 'market_config')?.value;
+          const stade = config.find(c => c.key === 'stade_config')?.value;
+          
+          if (flash) newStore.flashNews = flash;
+          if (market) newStore.configMarche = market;
+          if (stade) newStore.stade = stade;
+        }
+
+        setStore(newStore);
+      } catch (error) {
+        console.error('Error loading Supabase data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
 
   // Service Worker Registration
   useEffect(() => {
@@ -145,12 +273,11 @@ export default function App() {
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
-  const handleUpdateStore = (newData: any) => {
+  const handleUpdateStore = async (newData: any) => {
     setStore(newData);
-    // In a real app, you'd persist this to a database
   };
 
-  const handleSendPush = (title: string, message: string) => {
+  const handleSendPush = async (title: string, message: string) => {
     const notification = {
       id: Date.now().toString(),
       title,
@@ -164,7 +291,6 @@ export default function App() {
       notifications: [notification, ...prev.notifications]
     }));
 
-    // Simulate FCM Push
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title, {
         body: message,
@@ -183,37 +309,45 @@ export default function App() {
   };
 
   const handleRendezVousSubmit = async (data: any) => {
-    // Simulate API call
-    console.log('Rendez-vous submitted:', data);
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        setStore(prev => ({
-          ...prev,
-          rendezvous: [
-            ...prev.rendezvous,
-            {
-              id: Date.now().toString(),
-              ...data,
-              statut: 'en_attente',
-              dateDemande: new Date().toISOString()
-            }
-          ]
-        }));
-        resolve();
-      }, 1000);
-    });
+    const { error } = await supabase.from('appointments').insert([{
+      citizen_name: data.nom,
+      citizen_email: data.email,
+      citizen_phone: data.telephone,
+      service: data.service,
+      appointment_date: data.date,
+      appointment_time: data.heure,
+      status: 'en_attente'
+    }]);
+
+    if (error) {
+      console.error('Error submitting appointment:', error);
+      throw error;
+    }
+
+    setStore(prev => ({
+      ...prev,
+      rendezvous: [
+        ...prev.rendezvous,
+        { id: Date.now().toString(), ...data, statut: 'en_attente', dateDemande: new Date().toISOString() }
+      ]
+    }));
   };
 
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/admin-portal" element={
-          <AdminDashboard
-            store={store}
-            onUpdateStore={handleUpdateStore}
-            onSendPush={handleSendPush}
-            onExit={() => window.location.href = '/'}
-          />
+          session ? (
+            <AdminDashboard
+              store={store}
+              onUpdateStore={handleUpdateStore}
+              onSendPush={handleSendPush}
+              onExit={() => window.location.href = '/'}
+            />
+          ) : (
+            <Login />
+          )
         } />
 
         <Route path="/" element={
@@ -246,7 +380,7 @@ export default function App() {
           <Route path="agenda" element={<PageAgenda agenda={store.agenda} />} />
           <Route path="stade" element={<PageStade stade={store.stade} />} />
           <Route path="tourisme" element={<PageTourisme />} />
-          <Route path="actualites" element={<PageActualites news={newsData} />} />
+          <Route path="actualites" element={<PageActualites news={store.news.length > 0 ? store.news : newsData} />} />
           <Route path="signalement" element={<SignalementForm />} />
           <Route path="contact" element={<PageContact NOM_VILLE={NOM_VILLE} ADRESSE_MAIRIE={ADRESSE_MAIRIE} TEL_CONTACT={TEL_CONTACT} EMAIL_CONTACT={EMAIL_CONTACT} />} />
           

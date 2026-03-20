@@ -114,7 +114,7 @@ const Header = ({
             >
               <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center p-1 shadow-lg group-hover:scale-105 transition-transform">
                 <img
-                  src="/src/img/logo-mairie.jpg"
+                  src="/img/logo-mairie.jpg"
                   alt="Logo Za-Kpota"
                   className="w-full h-full object-contain"
                 />
@@ -203,7 +203,7 @@ const Header = ({
               {/* Armoirie */}
               <div className="hidden md:flex items-center">
                 <img
-                  src="/src/img/armoirie.png"
+                  src="/img/armoirie.png"
                   alt="Armoirie du Bénin"
                   className="h-10 w-auto object-contain brightness-0 invert opacity-80"
                 />
@@ -220,93 +220,95 @@ const Header = ({
           </div>
         </div>
 
-        {/* Mobile Sidebar Drawer */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <>
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsMenuOpen(false)}
-                className="fixed inset-0 bg-ink/60 backdrop-blur-sm z-[60] lg:hidden"
-              />
-              
-              {/* Drawer Content */}
-              <motion.div
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed top-0 right-0 h-full w-[280px] bg-card shadow-2xl z-[70] lg:hidden flex flex-col"
-              >
-                <div className="p-6 border-b border-border flex items-center justify-between bg-primary text-white">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-white rounded-lg p-1">
-                      <img src="/src/img/logo-mairie.jpg" alt="Logo" className="w-full h-full object-contain" />
-                    </div>
-                    <span className="font-black uppercase tracking-tighter text-sm">Menu ZA-KPOTA</span>
-                  </div>
-                  <button 
-                    onClick={() => setIsMenuOpen(false)}
-                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                  {navItems.map((item) => (
-                    <div key={item.label} className="space-y-1">
-                      {item.submenu ? (
-                        <div className="space-y-1">
-                          <div className="px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 mt-4 border-b border-primary/5">
-                            {item.label}
-                          </div>
-                          {item.submenu.map((sub) => (
-                            <Link
-                              key={sub.path}
-                              to={sub.path}
-                              onClick={() => setIsMenuOpen(false)}
-                              className={`flex items-center space-x-3 w-full min-h-[48px] px-4 py-3 rounded-xl font-bold transition-all ${
-                                isActive(sub.path) ? 'bg-primary text-white' : 'text-ink-muted hover:bg-muted'
-                              }`}
-                            >
-                              <div className={`w-2 h-2 rounded-full ${isActive(sub.path) ? 'bg-white' : 'bg-primary/20'}`} />
-                              <span className="text-sm">{sub.label}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      ) : (
-                        <Link
-                          to={item.path!}
-                          onClick={() => setIsMenuOpen(false)}
-                          className={`flex items-center space-x-3 w-full min-h-[48px] px-4 py-3 rounded-xl font-bold transition-all ${
-                            isActive(item.path!) ? 'bg-primary text-white' : 'text-ink-muted hover:bg-muted'
-                          }`}
-                        >
-                          <div className={`w-2 h-2 rounded-full ${isActive(item.path!) ? 'bg-white' : 'bg-primary/20'}`} />
-                          <span className="text-sm">{item.label}</span>
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="p-6 border-t border-border bg-muted/30">
-                  <div className="flex justify-between items-center text-ink-muted">
-                    <Facebook className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
-                    <Twitter className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
-                    <Instagram className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
-                    <Youtube className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
-                  </div>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
       </header>
+      
+      {/* Mobile Sidebar Drawer - Decoupled from Header Stacking Context */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMenuOpen(false)}
+              className="fixed inset-0 bg-ink/60 backdrop-blur-sm z-[100] lg:hidden"
+            />
+            
+            {/* Drawer Content */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-[280px] bg-card shadow-2xl z-[110] lg:hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-border flex items-center justify-between bg-primary text-white">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-white rounded-lg p-1">
+                    <img src="/img/logo-mairie.jpg" alt="Logo" className="w-full h-full object-contain" />
+                  </div>
+                  <span className="font-black uppercase tracking-tighter text-sm">Menu ZA-KPOTA</span>
+                </div>
+                <button 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all"
+                  title="Fermer le menu"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                {navItems.map((item) => (
+                  <div key={item.label} className="space-y-1">
+                    {item.submenu ? (
+                      <div className="space-y-1">
+                        <div className="px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 mt-4 border-b border-primary/5">
+                          {item.label}
+                        </div>
+                        {item.submenu.map((sub) => (
+                          <Link
+                            key={sub.path}
+                            to={sub.path}
+                            onClick={() => setIsMenuOpen(false)}
+                            className={`flex items-center space-x-3 w-full min-h-[48px] px-4 py-3 rounded-xl font-bold transition-all ${
+                              isActive(sub.path) ? 'bg-primary text-white' : 'text-ink-muted hover:bg-muted font-bold'
+                            }`}
+                          >
+                            <div className={`w-2 h-2 rounded-full ${isActive(sub.path) ? 'bg-white' : 'bg-primary/20'}`} />
+                            <span className="text-sm">{sub.label}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <Link
+                        to={item.path!}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`flex items-center space-x-3 w-full min-h-[48px] px-4 py-3 rounded-xl font-bold transition-all ${
+                          isActive(item.path!) ? 'bg-primary text-white' : 'text-ink-muted hover:bg-muted font-bold'
+                        }`}
+                      >
+                        <div className={`w-2 h-2 rounded-full ${isActive(item.path!) ? 'bg-white' : 'bg-primary/20'}`} />
+                        <span className="text-sm">{item.label}</span>
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-6 border-t border-border bg-muted/30">
+                <div className="flex justify-between items-center text-ink-muted">
+                  <Facebook className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
+                  <Twitter className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
+                  <Instagram className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
+                  <Youtube className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 };

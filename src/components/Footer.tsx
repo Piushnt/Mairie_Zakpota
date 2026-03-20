@@ -14,7 +14,7 @@ const Footer = ({ ADRESSE_MAIRIE, TEL_CONTACT, EMAIL_CONTACT, NOM_VILLE }: any) 
           <div className="flex items-center space-x-4 mb-8">
             <div className="w-12 h-12 bg-white rounded-xl p-1.5 shadow-xl">
               <img
-                src="/src/img/logo-mairie.jpg"
+                src="/img/logo-mairie.jpg"
                 alt="Logo Mairie"
                 className="w-full h-full object-contain"
               />

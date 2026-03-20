@@ -111,6 +111,7 @@ export const initialStoreData = {
     { id: "2", titre: "Recrutement : Agents de salubrité", type: "recrutement", dateLimite: "2026-03-25", statut: "urgent", description: "La mairie recrute 10 agents pour la brigade verte.", contact: "DRH Mairie" },
     { id: "3", titre: "Foire Agricole de Za-Kpota", type: "foire", dateLimite: "2026-04-05", statut: "ouvert", description: "Exposition-vente des produits locaux.", contact: "Service Économique" }
   ],
+  news: [],
   rendezvous: [],
   configMarche: {
     referenceDate: "2026-03-15", // Date d'un jour de marché connu

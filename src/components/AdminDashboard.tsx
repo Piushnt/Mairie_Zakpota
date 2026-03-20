@@ -24,6 +24,7 @@ import {
   CalendarCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
 interface AdminDashboardProps {
   store: any;
@@ -68,14 +69,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
-  const handleSaveFlashNews = () => {
+  const handleSaveFlashNews = async () => {
     setIsSaving(true);
-    setTimeout(() => {
+    const { error } = await supabase
+      .from('site_config')
+      .upsert({ key: 'flash_news', value: flashNews });
+
+    if (!error) {
       onUpdateStore({ ...store, flashNews });
       onSendPush("Flash Info", "Le bandeau défilant a été mis à jour.");
-      setIsSaving(false);
       showSuccess("Bandeau Flash mis à jour avec succès !");
-    }, 800);
+    } else {
+      console.error(error);
+      setErrorMessage("Échec de la mise à jour du bandeau.");
+    }
+    setIsSaving(false);
   };
 
   const handleUpdateServicePrice = (category: string, serviceId: number, newPrice: string) => {
@@ -123,14 +131,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     }
   };
 
-  const handleSaveServices = () => {
+  const handleSaveServices = async () => {
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      // Collect all services from all categories into one array
+      const allServicesToUpdate: any[] = [];
+      Object.keys(services).forEach(category => {
+        services[category].forEach((s: any) => {
+          allServicesToUpdate.push({
+            id: s.id, // Supabase needs existing UUIDs or it will create new ones
+            category: category,
+            name: s.name,
+            cost: s.cost,
+            pieces: s.pieces,
+            delay: s.delay
+          });
+        });
+      });
+
+      const { error } = await supabase
+        .from('services_tarifs')
+        .upsert(allServicesToUpdate);
+
+      if (error) throw error;
+
       onUpdateStore({ ...store, services });
       onSendPush("Mise à jour Tarifs", "Les tarifs des services municipaux ont été mis à jour.");
-      setIsSaving(false);
       showSuccess("Services et tarifs enregistrés !");
-    }, 800);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Erreur lors de l'enregistrement des services.");
+    }
+    setIsSaving(false);
   };
 
   const handleAddEvent = () => {
@@ -154,37 +186,64 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     setAgenda(agenda.map((e: any) => e.id === id ? { ...e, [field]: value } : e));
   };
 
-  const handleSaveAgenda = () => {
+  const handleSaveAgenda = async () => {
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      const formattedEvents = agenda.map((e: any) => ({
+        id: typeof e.id === 'string' && e.id.length > 20 ? e.id : undefined, // Avoid malformed UUIDs
+        title: e.title,
+        date: e.date,
+        type: e.type,
+        description: e.description,
+        location: e.location,
+        image_url: e.img
+      }));
+
+      const { error } = await supabase
+        .from('agenda_events')
+        .upsert(formattedEvents);
+
+      if (error) throw error;
+
       onUpdateStore({ ...store, agenda });
       onSendPush("Nouvel Événement", "L'agenda municipal a été mis à jour.");
-      setIsSaving(false);
       showSuccess("Agenda mis à jour avec succès !");
-    }, 800);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Erreur lors de l'enregistrement de l'agenda.");
+    }
+    setIsSaving(false);
   };
 
-  const handleAddReport = () => {
+  const handleAddReport = async () => {
     if (!newReport.title || !newReport.fileUrl) {
       setErrorMessage("Veuillez remplir tous les champs obligatoires.");
       setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
     
-    const reportToAdd = {
-      ...newReport,
-      id: Date.now(),
-      year: newReport.date.split('-')[0]
-    };
-    
-    const updatedReports = [reportToAdd, ...reports];
-    setReports(updatedReports);
-    
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      const reportData = {
+        title: newReport.title,
+        date: newReport.date,
+        year: parseInt(newReport.date.split('-')[0]),
+        type: newReport.type,
+        category: newReport.category,
+        file_url: newReport.fileUrl
+      };
+
+      const { data, error } = await supabase
+        .from('reports')
+        .insert([reportData])
+        .select();
+
+      if (error) throw error;
+
+      const updatedReports = [data[0], ...reports];
+      setReports(updatedReports);
       onUpdateStore({ ...store, reports: updatedReports });
       onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`);
-      setIsSaving(false);
       showSuccess("Rapport publié et notification envoyée avec succès !");
       setNewReport({
         title: '',
@@ -193,14 +252,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         category: 'Sessions',
         fileUrl: ''
       });
-    }, 800);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Erreur lors de la publication du rapport.");
+    }
+    setIsSaving(false);
   };
 
-  const handleRemoveReport = (id: number) => {
-    const updatedReports = reports.filter((r: any) => r.id !== id);
-    setReports(updatedReports);
-    onUpdateStore({ ...store, reports: updatedReports });
-    showSuccess("Document supprimé.");
+  const handleRemoveReport = async (id: any) => {
+    const { error } = await supabase.from('reports').delete().eq('id', id);
+    if (!error) {
+      const updatedReports = reports.filter((r: any) => r.id !== id);
+      setReports(updatedReports);
+      onUpdateStore({ ...store, reports: updatedReports });
+      showSuccess("Document supprimé.");
+    }
   };
 
   // --- NEW HANDLERS ---
@@ -209,66 +275,123 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     setArrondissements(arrondissements.map((a: any) => a.id === id ? { ...a, [field]: value } : a));
   };
 
-  const handleSaveArrondissements = () => {
+  const handleSaveArrondissements = async () => {
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      const { error } = await supabase
+        .from('arrondissements')
+        .upsert(arrondissements.map((a: any) => ({
+          id: typeof a.id === 'string' && a.id.length > 20 ? a.id : undefined,
+          nom: a.name || a.nom,
+          ca: a.chef || a.ca,
+          contact: a.contact,
+          image_url: a.image_url || a.img
+        })));
+
+      if (error) throw error;
+
       onUpdateStore({ ...store, arrondissements });
-      setIsSaving(false);
       showSuccess("Informations des arrondissements mises à jour !");
-    }, 800);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Erreur lors de la mise à jour des arrondissements.");
+    }
+    setIsSaving(false);
   };
 
-  const handleAddOpportunity = () => {
+  const handleAddOpportunity = async () => {
     if (!newOpportunity.title || !newOpportunity.description) return;
-    const oppToAdd = { ...newOpportunity, id: Date.now() };
-    const updatedOpps = [oppToAdd, ...opportunites];
-    setOpportunites(updatedOpps);
-    onUpdateStore({ ...store, opportunites: updatedOpps });
-    onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${oppToAdd.title}" a été publiée.`);
-    showSuccess("Opportunité publiée !");
-    setNewOpportunity({
-      title: '',
-      type: 'Marché Public',
-      date: new Date().toISOString().split('T')[0],
-      description: ''
-    });
-  };
-
-  const handleRemoveOpportunity = (id: number) => {
-    const updatedOpps = opportunites.filter((o: any) => o.id !== id);
-    setOpportunites(updatedOpps);
-    onUpdateStore({ ...store, opportunites: updatedOpps });
-    showSuccess("Annonce supprimée.");
-  };
-
-  const handleSaveMarketConfig = () => {
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase
+        .from('opportunites')
+        .insert([{
+          titre: newOpportunity.title,
+          type: newOpportunity.type,
+          description: newOpportunity.description,
+          date_limite: newOpportunity.date
+        }])
+        .select();
+
+      if (error) throw error;
+
+      const updatedOpps = [data[0], ...opportunites];
+      setOpportunites(updatedOpps);
+      onUpdateStore({ ...store, opportunites: updatedOpps });
+      onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${newOpportunity.title}" a été publiée.`);
+      showSuccess("Opportunité publiée !");
+      setNewOpportunity({
+        title: '',
+        type: 'Marché Public',
+        date: new Date().toISOString().split('T')[0],
+        description: ''
+      });
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Erreur lors de la publication.");
+    }
+    setIsSaving(false);
+  };
+
+  const handleRemoveOpportunity = async (id: any) => {
+    const { error } = await supabase.from('opportunites').delete().eq('id', id);
+    if (!error) {
+      const updatedOpps = opportunites.filter((o: any) => o.id !== id);
+      setOpportunites(updatedOpps);
+      onUpdateStore({ ...store, opportunites: updatedOpps });
+      showSuccess("Annonce supprimée.");
+    }
+  };
+
+  const handleSaveMarketConfig = async () => {
+    setIsSaving(true);
+    const { error } = await supabase
+      .from('site_config')
+      .upsert({ key: 'market_config', value: configMarche });
+
+    if (!error) {
       onUpdateStore({ ...store, configMarche });
       onSendPush("Rappel Marché", "Demain, c'est le jour du Grand Marché à Za-Kpota !");
-      setIsSaving(false);
       showSuccess("Configuration du marché enregistrée !");
-    }, 800);
+    } else {
+      console.error(error);
+      setErrorMessage("Erreur de sauvegarde config marché.");
+    }
+    setIsSaving(false);
   };
 
-  const handleValidateAppointment = (id: number) => {
-    const updatedRdv = rendezvous.map((r: any) => {
-      if (r.id === id) {
-        onSendPush("RDV Confirmé", `Votre rendez-vous du ${new Date(r.date).toLocaleDateString()} est validé.`);
-        return { ...r, status: 'Validé' };
-      }
-      return r;
-    });
-    setRendezvous(updatedRdv);
-    onUpdateStore({ ...store, rendezvous: updatedRdv });
-    showSuccess("Rendez-vous validé et citoyen notifié !");
+  const handleValidateAppointment = async (id: any) => {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'Validé' })
+      .eq('id', id);
+
+    if (!error) {
+      const updatedRdv = rendezvous.map((r: any) => {
+        if (r.id === id) {
+          onSendPush("RDV Confirmé", `Votre rendez-vous du ${new Date(r.date_limite || r.date || r.appointment_date).toLocaleDateString()} est validé.`);
+          return { ...r, status: 'Validé' };
+        }
+        return r;
+      });
+      setRendezvous(updatedRdv);
+      onUpdateStore({ ...store, rendezvous: updatedRdv });
+      showSuccess("Rendez-vous validé et citoyen notifié !");
+    }
   };
 
-  const handleCancelAppointment = (id: number) => {
-    const updatedRdv = rendezvous.map((r: any) => r.id === id ? { ...r, status: 'Annulé' } : r);
-    setRendezvous(updatedRdv);
-    onUpdateStore({ ...store, rendezvous: updatedRdv });
-    showSuccess("Rendez-vous annulé.");
+  const handleCancelAppointment = async (id: any) => {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'Annulé' })
+      .eq('id', id);
+
+    if (!error) {
+      const updatedRdv = rendezvous.map((r: any) => r.id === id ? { ...r, status: 'Annulé' } : r);
+      setRendezvous(updatedRdv);
+      onUpdateStore({ ...store, rendezvous: updatedRdv });
+      showSuccess("Rendez-vous annulé.");
+    }
   };
 
   return (
@@ -714,6 +837,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                             <input 
                               type="text" 
                               placeholder="Ajouter une pièce..." 
+                              title="Ajouter une nouvelle pièce justificative"
                               className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-xs outline-none focus:border-primary text-ink"
                               onKeyDown={(e: any) => {
                                 if (e.key === 'Enter') {
@@ -802,6 +926,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                               value={event.date}
                               onChange={(e) => handleUpdateEvent(event.id, 'date', e.target.value)}
                               className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary text-ink"
+                              title="Date de l'événement"
+                              placeholder="AAAA-MM-JJ"
                             />
                           </div>
                           <div className="space-y-1">
@@ -828,6 +954,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                               value={event.location}
                               onChange={(e) => handleUpdateEvent(event.id, 'location', e.target.value)}
                               className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm outline-none focus:border-primary text-ink"
+                              title="Lieu de l'événement"
+                              placeholder="Ex: Stade Municipal"
                             />
                           </div>
                           <button 
@@ -918,8 +1046,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       type="text" 
                       value={newReport.fileUrl}
                       onChange={(e) => setNewReport({...newReport, fileUrl: e.target.value})}
-                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink"
-                      placeholder="https://exemple.com/rapport.pdf"
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-ink min-h-[44px]"
+                      title="URL du fichier (PDF/Image)"
+                      placeholder="https://votre-site.com/doc.pdf"
                     />
                   </div>
                 </div>

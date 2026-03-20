@@ -254,12 +254,12 @@ export const histoireData = {
 };
 
 export const partnersData = [
-  { name: "Gouvernement du Bénin", logo: "/src/img/partenaire/gouvernement.png" },
-  { name: "ANIP Bénin", logo: "/src/img/partenaire/anip_benin.jpg" },
+  { name: "Gouvernement du Bénin", logo: "/img/partenaire/gouvernement.png" },
+  { name: "ANIP Bénin", logo: "/img/partenaire/anip_benin.jpg" },
   { name: "Union Européenne", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Flag_of_Europe.svg/1200px-Flag_of_Europe.svg.png" },
-  { name: "Banque Mondiale", logo: "/src/img/partenaire/banque_mondiale.png" },
-  { name: "PNUD Bénin", logo: "/src/img/partenaire/PNUD_benin.jpg" },
-  { name: "AFD", logo: "/src/img/partenaire/afd.jpg" }
+  { name: "Banque Mondiale", logo: "/img/partenaire/banque_mondiale.png" },
+  { name: "PNUD Bénin", logo: "/img/partenaire/PNUD_benin.jpg" },
+  { name: "AFD", logo: "/img/partenaire/afd.jpg" }
 ];
 
 export const newsData = [
