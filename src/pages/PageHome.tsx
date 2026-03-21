@@ -11,16 +11,18 @@ import {
   Users, 
   Building2, 
   ShoppingBag, 
-  Coins 
+  Coins,
+  FileText,
+  Download
 } from 'lucide-react';
 import { newsData } from '../data/config';
 import { Link } from 'react-router-dom';
 
-const PageHome = () => (
+const PageHome = ({ reports = [] }: { reports?: any[] }) => (
   <main className="pb-20 bg-surface transition-colors duration-300">
     <Hero />
 
-    <section className="container mx-auto px-4 -mt-20 relative z-20">
+    <section className="container mx-auto px-4 -mt-24 relative z-20">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ServiceCard
           title="État Civil"
@@ -31,7 +33,7 @@ const PageHome = () => (
         <ServiceCard
           title="Urbanisme & Foncier"
           desc="Permis de construire, certificat d'urbanisme et démarches foncières. Consultez le Plan Directeur d'Urbanisme."
-          url="https://zakpota.bj/urbanisme"
+          url="/urbanisme"
           Icon={Building2}
         />
         <ServiceCard
@@ -43,9 +45,63 @@ const PageHome = () => (
         <ServiceCard
           title="Taxe de Développement"
           desc="Payez vos taxes locales et contribuez au développement des infrastructures de notre commune."
-          url="https://zakpota.bj/taxes"
+          url="/taxes"
           Icon={Coins}
         />
+      </div>
+    </section>
+
+    {/* Section Documents Officiels */}
+    <section className="container mx-auto px-4 mt-24">
+      <div className="bg-primary/5 rounded-[3rem] p-8 md:p-16 border border-primary/10 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+        
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12 relative z-10">
+          <div className="max-w-xl">
+            <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6">Transparence Municipale</span>
+            <h2 className="text-4xl md:text-5xl font-black text-primary uppercase tracking-tight mb-6">Rapports & Documents Officiels</h2>
+            <p className="text-ink-muted font-medium text-lg leading-relaxed">
+              Consultez les derniers comptes-rendus de sessions, les arrêtés municipaux et les rapports d'activités pour rester informé de la gestion de votre commune.
+            </p>
+            <div className="mt-10">
+              <Link 
+                to="/publications" 
+                className="inline-flex items-center px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-accent hover:text-primary transition-all shadow-xl shadow-primary/20"
+              >
+                Accéder aux archives
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {reports.slice(0, 4).map((report) => (
+              <div 
+                key={report.id} 
+                className="bg-white p-6 rounded-2xl border border-primary/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group"
+              >
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <h4 className="font-bold text-ink truncate group-hover:text-primary transition-colors">{report.title}</h4>
+                    <p className="text-[10px] text-ink-muted font-black uppercase tracking-widest mt-1">{report.type} • {report.date}</p>
+                    <a 
+                      href={report.fileUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="mt-4 inline-flex items-center text-[10px] font-black text-primary uppercase tracking-widest hover:text-accent"
+                    >
+                      <Download className="w-3 h-3 mr-2" />
+                      Télécharger
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
 

@@ -8,7 +8,8 @@ const Hero = () => (
       alt="Za-Kpota Hero"
       className="absolute inset-0 w-full h-full object-cover grayscale-[0.2]"
     />
-    <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/50 to-surface" />
+    <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/40 to-transparent" />
+    <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent" />
 
     <div className="container mx-auto px-4 relative z-10 text-center">
       <motion.div

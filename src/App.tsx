@@ -395,7 +395,7 @@ export default function App() {
             onMarkAsRead={handleMarkAsRead}
           />
         }>
-          <Route index element={<PageHome />} />
+          <Route index element={<PageHome reports={store.reports} />} />
           <Route path="maire" element={<PageMaire />} />
           <Route path="conseil" element={<PageConseil />} />
           <Route path="arrondissements" element={<Arrondissements data={store.arrondissements} />} />
