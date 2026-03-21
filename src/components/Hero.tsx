@@ -8,8 +8,8 @@ const Hero = () => (
       alt="Za-Kpota Hero"
       className="absolute inset-0 w-full h-full object-cover grayscale-[0.2]"
     />
-    <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/40 to-transparent" />
-    <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent" />
+    <div className="absolute inset-0 bg-black/80" />
+    <div className="absolute inset-0 bg-gradient-to-t from-[#006633]/20 to-transparent" />
 
     <div className="container mx-auto px-4 relative z-10 text-center">
       <motion.div
@@ -17,26 +17,21 @@ const Hero = () => (
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <span className="inline-block px-4 py-1 bg-accent/20 text-accent rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-6">Commune de Za-Kpota</span>
-        <h1 className="text-5xl md:text-8xl font-black text-white mb-8 tracking-tighter leading-[0.9]">
-          Bâtir l'Avenir <br />
-          <span className="text-accent underline decoration-white/20 underline-offset-8">Ensemble</span>
+        <h1 className="text-3xl md:text-5xl font-medium text-white mb-6 leading-tight">
+          Accédez en toute simplicité aux services de votre mairie.<br />
+          Bâtissons ensemble une commune moderne et connectée.
         </h1>
-        <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed mb-10">
-          Accédez aux services de votre mairie, suivez les actualités et participez au développement de notre commune.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-12">
           <motion.button 
-            whileHover={{ scale: 0.98 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-10 py-5 bg-accent text-primary font-black uppercase tracking-[0.2em] text-xs rounded-2xl shadow-2xl shadow-accent/20 transition-all hover:bg-white"
+            whileHover={{ scale: 1.05 }}
+            className="px-8 py-3 bg-[#006633] text-white font-bold rounded-lg shadow-lg hover:bg-[#00552b] transition-all"
           >
             Découvrir nos services
           </motion.button>
           <motion.button 
-            whileHover={{ scale: 0.98 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-10 py-5 bg-white/10 backdrop-blur-md text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl border border-white/20 hover:bg-white/20 transition-all"
+            whileHover={{ scale: 1.05 }}
+            className="px-8 py-3 bg-white/10 backdrop-blur-md text-white font-bold rounded-lg border border-white/20 hover:bg-white/20 transition-all"
           >
             Ma Ville
           </motion.button>

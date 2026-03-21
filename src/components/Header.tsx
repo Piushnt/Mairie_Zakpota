@@ -8,16 +8,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 
 const TopBar = ({ ADRESSE_MAIRIE, TEL_CONTACT, EMAIL_CONTACT }: any) => (
-  <div className="bg-[#F8FAFC] border-b border-[#E2E8F0] py-2 hidden lg:block">
-    <div className="container mx-auto px-4 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-ink/40">
-      <div className="flex space-x-6">
-        <span className="flex items-center"><MapPin className="w-3 h-3 mr-2 text-primary" /> {ADRESSE_MAIRIE}</span>
-        <span className="flex items-center"><Phone className="w-3 h-3 mr-2 text-primary" /> {TEL_CONTACT}</span>
-      </div>
-      <div className="flex space-x-6">
-        <a href="#" className="hover:text-primary transition-colors">Préfecture d'Abomey</a>
-        <a href="#" className="hover:text-primary transition-colors">Bénin Révélé</a>
-      </div>
+  <div className="bg-black text-white py-2 hidden lg:block">
+    <div className="container mx-auto px-4 flex justify-center items-center text-[11px] font-medium tracking-wide">
+      <span>Mairie de Za-Kpota - Portail Officiel</span>
     </div>
   </div>
 );
@@ -111,125 +104,109 @@ const Header = ({
         EMAIL_CONTACT={EMAIL_CONTACT} 
       />
       
-      <header className={`fixed inset-x-0 z-50 transition-all duration-700 ${isScrolled ? 'top-2 px-2' : 'top-10 md:top-14 px-4'}`}>
-        <div className="container mx-auto max-w-7xl">
-          <div className={`transition-all duration-700 bg-primary/80 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden group/nav ${
-            isScrolled ? 'rounded-2xl py-1 px-4 lg:px-6' : 'rounded-[2rem] lg:rounded-[3rem] py-3 px-8 shadow-accent/10 shadow-3xl'
-          }`}>
-            <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-transparent to-accent/10 opacity-0 group-hover/nav:opacity-100 transition-opacity duration-1000" />
-            
-            <div className="flex items-center justify-between relative z-10 transition-all duration-500">
-              {/* Left: Logo Mairie */}
-              <Link 
-                to="/"
-                className="flex items-center space-x-3 cursor-pointer group min-h-[44px]"
-                onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
-              >
-                <div className={`bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg group-hover:scale-110 transition-transform duration-500 ${isScrolled ? 'w-10 h-10' : 'w-12 h-12'}`}>
-                  <img
-                    src="/img/logo-mairie.jpg"
-                    alt="Logo Za-Kpota"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className="hidden sm:block">
-                  <h1 className={`font-black uppercase tracking-tighter leading-none transition-all ${isScrolled ? 'text-sm' : 'text-lg'}`}>{DISPLAY_NAME}</h1>
-                  <p className="text-[6px] font-bold uppercase tracking-[0.3em] text-accent mt-1 opacity-90">République du Bénin</p>
-                </div>
-                <div className="sm:hidden">
-                  <h1 className="text-sm font-black uppercase tracking-tighter leading-none">Za-Kpota</h1>
-                </div>
-              </Link>
+      <header className="sticky top-0 z-50 bg-[#006633] text-white py-3 shadow-xl">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Logo & Armoirie Style */}
+            <Link 
+              to="/"
+              className="flex items-center space-x-3 cursor-pointer group"
+              onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
+            >
+              <div className="flex items-center space-x-3">
+                <img
+                  src="/img/armoirie.png"
+                  alt="Armoirie"
+                  className="h-10 w-auto object-contain brightness-0 invert"
+                />
+                <span className="text-sm font-bold tracking-tight border-l border-white/20 pl-3">Armoirie du Bénin</span>
+              </div>
+            </Link>
 
-              {/* Desktop Navigation */}
-              <nav className="hidden lg:flex items-center space-x-2">
-                {navItems.map((item) => (
-                  <div key={item.label} className="relative">
-                    {item.path ? (
-                      <Link
-                        to={item.path}
-                        className={`px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center space-x-2 hover:bg-white/10 ${
-                          isActive(item.path) ? 'text-accent bg-white/5' : 'text-white/90'
-                        }`}
-                        onClick={() => setActiveDropdown(null)}
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-6">
+              {navItems.map((item) => (
+                <div key={item.label} className="relative">
+                  {item.path ? (
+                    <Link
+                      to={item.path}
+                      className={`text-[13px] font-bold transition-all hover:text-accent ${
+                        isActive(item.path) ? 'text-accent border-b-2 border-accent pb-1' : 'text-white'
+                      }`}
+                      onClick={() => setActiveDropdown(null)}
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => toggleDropdown(item.id!)}
+                      className={`text-[13px] font-bold transition-all flex items-center space-x-1 hover:text-accent ${
+                        isParentActive(item) || activeDropdown === item.id ? 'text-accent' : 'text-white'
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      {item.submenu && <ChevronDown className={`w-3 h-3 opacity-50 transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />}
+                    </button>
+                  )}
+
+                  <AnimatePresence>
+                    {item.submenu && activeDropdown === item.id && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-64 bg-white border border-border rounded-xl shadow-2xl z-50 p-2 overflow-hidden"
                       >
-                        <span>{item.label}</span>
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={() => toggleDropdown(item.id!)}
-                        className={`px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center space-x-2 hover:bg-white/10 ${
-                          isParentActive(item) || activeDropdown === item.id ? 'text-accent bg-white/5' : 'text-white/90'
-                        }`}
-                      >
-                        <span>{item.label}</span>
-                        {item.submenu && <ChevronDown className={`w-3 h-3 transition-transform duration-500 ${activeDropdown === item.id ? 'rotate-180' : ''}`} />}
-                      </button>
+                        <div className="grid grid-cols-1 gap-1">
+                          {item.submenu.map((sub) => (
+                            <Link
+                              key={sub.path}
+                              to={sub.path}
+                              onClick={() => setActiveDropdown(null)}
+                              className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all flex items-center justify-between group/sub ${
+                                isActive(sub.path) ? 'bg-primary/5 text-primary' : 'text-ink-muted hover:bg-muted hover:text-primary'
+                              }`}
+                            >
+                              {sub.label}
+                              <ChevronRight className="w-3 h-3 opacity-0 group-hover/sub:opacity-100 group-hover/sub:translate-x-1 transition-all" />
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
                     )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </nav>
 
-                    <AnimatePresence>
-                      {item.submenu && activeDropdown === item.id && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                          className="absolute top-full left-0 mt-4 w-72 bg-white/95 backdrop-blur-3xl border border-primary/10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 p-3 overflow-hidden"
-                        >
-                          <div className="grid grid-cols-1 gap-2">
-                            {item.submenu.map((sub) => (
-                              <Link
-                                key={sub.path}
-                                to={sub.path}
-                                onClick={() => setActiveDropdown(null)}
-                                className={`w-full text-left px-5 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-between group/sub ${
-                                  isActive(sub.path) ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-ink-muted hover:bg-primary/5 hover:text-primary'
-                                }`}
-                              >
-                                {sub.label}
-                                <ChevronRight className={`w-4 h-4 transition-all duration-300 ${isActive(sub.path) ? 'translate-x-1' : 'opacity-0 group-hover/sub:opacity-100 group-hover/sub:translate-x-1'}`} />
-                              </Link>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+            {/* Actions: Profile, Search, DarkMode */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 pr-4 border-r border-white/20">
+                <div className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 transition-all rounded-full pl-1 pr-3 py-1 cursor-pointer">
+                  <div className="w-8 h-8 rounded-full bg-white overflow-hidden p-1 shadow-inner">
+                    <img src="/img/logo-mairie.jpg" alt="Admin" className="w-full h-full object-contain" />
                   </div>
-                ))}
-              </nav>
-
-              {/* Actions & Armoirie */}
-              <div className="flex items-center space-x-4">
-                <div className={`flex items-center gap-2 border-white/20 transition-all ${isScrolled ? 'md:border-r md:pr-4' : 'lg:border-r lg:pr-6'}`}>
-                  <NotificationBell
-                    notifications={notifications}
-                    onMarkAsRead={onMarkAsRead}
-                    onViewAll={() => navigate('/actualites')}
-                  />
-                  <button onClick={onOpenSearch} title="Rechercher" className="w-11 h-11 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all text-white/80 active:scale-95">
-                    <Search className="w-5 h-5" />
-                  </button>
-                  <button onClick={toggleDarkMode} title={isDarkMode ? "Mode clair" : "Mode sombre"} className="w-11 h-11 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all text-white/80 active:scale-95">
-                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                  </button>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black leading-none uppercase tracking-tighter">Mairie de</span>
+                    <span className="text-[9px] font-black leading-none uppercase tracking-tighter">Za-Kpota</span>
+                  </div>
                 </div>
-
-                {/* Armoirie */}
-                <div className="hidden lg:flex items-center">
-                  <motion.img
-                    whileHover={{ rotate: 5, scale: 1.1 }}
-                    src="/img/armoirie.png"
-                    alt="Armoirie"
-                    className="h-12 w-auto object-contain filter drop-shadow-lg"
-                  />
-                </div>
-
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="lg:hidden w-11 h-11 flex items-center justify-center rounded-2xl bg-white/10 text-white active:scale-95 transition-all"
-                >
-                  {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                
+                <button onClick={onOpenSearch} title="Rechercher" className="text-white hover:text-accent transition-colors">
+                  <Search className="w-5 h-5" />
+                </button>
+                <button onClick={toggleDarkMode} title={isDarkMode ? "Mode clair" : "Mode sombre"} className="text-white hover:text-accent transition-colors">
+                  {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </button>
               </div>
+
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                title={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+                className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 text-white"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
             </div>
           </div>
         </div>
