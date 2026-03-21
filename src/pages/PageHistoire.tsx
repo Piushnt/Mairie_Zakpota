@@ -10,13 +10,15 @@ const PageHistoire = () => (
         <h2 className="text-5xl font-black text-ink tracking-tight mb-8">Histoire de Za-Kpota</h2>
         <div className="h-1.5 w-16 bg-accent mb-12 rounded-full" />
         
-        <div className="prose prose-xl prose-primary">
-          <p className="text-2xl font-black italic text-ink/80 leading-relaxed mb-12">
-            {histoireData.origine}
-          </p>
-          <div className="bg-muted p-12 rounded-[3rem] border border-border">
-            <h3 className="text-2xl font-black text-primary mb-6 uppercase tracking-tight">Culture et Traditions</h3>
-            <p className="text-ink-muted text-lg font-medium leading-relaxed">
+        <div className="prose prose-lg dark:prose-invert max-w-none">
+          <div className="bg-primary/5 border-l-4 border-accent p-8 mb-12 rounded-r-3xl">
+            <p className="text-xl font-medium text-ink/90 leading-relaxed italic">
+              "{histoireData.origine}"
+            </p>
+          </div>
+          <div className="bg-muted dark:bg-slate-900 p-10 md:p-14 rounded-[3rem] border border-border">
+            <h3 className="text-2xl font-black text-primary dark:text-[#00c561] mb-6 uppercase tracking-tight">Culture et Traditions</h3>
+            <p className="text-ink-muted dark:text-white/70 text-lg font-medium leading-relaxed">
               {histoireData.culture}
             </p>
           </div>

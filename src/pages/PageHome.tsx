@@ -53,20 +53,20 @@ const PageHome = ({ reports = [] }: { reports?: any[] }) => (
 
     {/* Section Documents Officiels */}
     <section className="container mx-auto px-4 mt-24">
-      <div className="bg-primary/5 rounded-[3rem] p-8 md:p-16 border border-primary/10 overflow-hidden relative">
+      <div className="bg-primary/5 dark:bg-primary/10 rounded-[3rem] p-8 md:p-16 border border-primary/10 dark:border-white/5 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl" />
         
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12 relative z-10">
           <div className="max-w-xl">
-            <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6">Transparence Municipale</span>
-            <h2 className="text-4xl md:text-5xl font-black text-primary uppercase tracking-tight mb-6">Rapports & Documents Officiels</h2>
-            <p className="text-ink-muted font-medium text-lg leading-relaxed">
+            <span className="inline-block px-4 py-1 bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6">Transparence Municipale</span>
+            <h2 className="text-4xl md:text-5xl font-black text-primary dark:text-[#00c561] uppercase tracking-tight mb-6">Rapports & Documents Officiels</h2>
+            <p className="text-ink-muted dark:text-white/60 font-medium text-lg leading-relaxed">
               Consultez les derniers comptes-rendus de sessions, les arrêtés municipaux et les rapports d'activités pour rester informé de la gestion de votre commune.
             </p>
             <div className="mt-10">
               <Link 
                 to="/publications" 
-                className="inline-flex items-center px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-accent hover:text-primary transition-all shadow-xl shadow-primary/20"
+                className="inline-flex items-center px-8 py-4 bg-primary dark:bg-[#00c561] text-white dark:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-accent hover:text-primary transition-all shadow-xl shadow-primary/20 dark:shadow-none"
               >
                 Accéder aux archives
                 <ChevronRight className="w-4 h-4 ml-2" />
@@ -78,20 +78,20 @@ const PageHome = ({ reports = [] }: { reports?: any[] }) => (
             {reports.slice(0, 4).map((report) => (
               <div 
                 key={report.id} 
-                className="bg-white p-6 rounded-2xl border border-primary/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group"
+                className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-primary/5 dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group"
               >
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  <div className="w-12 h-12 bg-primary/5 dark:bg-primary/20 rounded-xl flex items-center justify-center text-primary dark:text-[#00c561] group-hover:bg-primary dark:group-hover:bg-[#00c561] group-hover:text-white dark:group-hover:text-slate-900 transition-colors">
                     <FileText className="w-6 h-6" />
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <h4 className="font-bold text-ink truncate group-hover:text-primary transition-colors">{report.title}</h4>
-                    <p className="text-[10px] text-ink-muted font-black uppercase tracking-widest mt-1">{report.type} • {report.date}</p>
+                    <h4 className="font-bold text-ink dark:text-white truncate group-hover:text-primary dark:group-hover:text-[#00c561] transition-colors">{report.title}</h4>
+                    <p className="text-[10px] text-ink-muted dark:text-white/40 font-black uppercase tracking-widest mt-1">{report.type} • {report.date}</p>
                     <a 
                       href={report.fileUrl} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="mt-4 inline-flex items-center text-[10px] font-black text-primary uppercase tracking-widest hover:text-accent"
+                      className="mt-4 inline-flex items-center text-[10px] font-black text-primary dark:text-[#00c561] uppercase tracking-widest hover:text-accent dark:hover:text-white"
                     >
                       <Download className="w-3 h-3 mr-2" />
                       Télécharger
@@ -106,12 +106,12 @@ const PageHome = ({ reports = [] }: { reports?: any[] }) => (
     </section>
 
     <section className="container mx-auto px-4 mt-24">
-      <div className="flex items-center justify-between mb-12 border-b-2 border-border pb-6">
+      <div className="flex items-center justify-between mb-12 border-b-2 border-border dark:border-white/10 pb-6">
         <div>
-          <h2 className="text-4xl font-black text-primary uppercase tracking-tight">Actualités Municipales</h2>
-          <p className="text-ink-muted mt-2 font-medium">Toute l'actualité de votre commune en temps réel</p>
+          <h2 className="text-4xl font-black text-primary dark:text-[#00c561] uppercase tracking-tight">Actualités Municipales</h2>
+          <p className="text-ink-muted dark:text-white/60 mt-2 font-medium">Toute l'actualité de votre commune en temps réel</p>
         </div>
-        <Link to="/actualites" className="text-xs font-black uppercase tracking-widest text-primary hover:text-accent flex items-center group transition-colors">
+        <Link to="/actualites" className="text-xs font-black uppercase tracking-widest text-primary dark:text-[#00c561] hover:text-accent dark:hover:text-white flex items-center group transition-colors">
           Toutes les actualités <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>

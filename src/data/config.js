@@ -237,18 +237,18 @@ export const arrondissementsData = [
 ];
 
 export const histoireData = {
-  origine: "Le nom Za-Kpota provient de la langue locale, signifiant 'sur la colline de Za'. La commune a été fondée par des migrants venus d'Abomey à la recherche de terres fertiles.",
-  culture: "La commune est célèbre pour ses danses traditionnelles, notamment le Gnon-Nan, et son artisanat de forge et de tissage.",
+  origine: "Za-Kpota tire son nom de la rencontre fraternelle entre trois amis : Dagba, Daka et Aïtchi. Dagba s'était établi près d'un cours d'eau nommé 'Za-Kékéré' (Petit Za). Aïtchi, maître féticheur et menuisier du roi Ghézo, rejoignit ses amis mais dut s'installer plus en hauteur car son fétiche lui interdisait les cris de singes présents dans la vallée. 'Za-Kpota' signifie ainsi 'le lieu de Za situé en hauteur' (Kpota en langue Fon).",
+  culture: "La commune est le berceau de la virtuose Sessimè et possède un riche patrimoine culturel lié au plateau d'Abomey. Les traditions se transmettent à travers les chants, les danses (comme le Gnon-Nan) et les rites ancestraux des rois du Danxomè, de Houégbadja à Agoli-Agbo.",
   sites: [
     { 
-      name: "La Colline Sacrée", 
-      description: "Lieu de rituels ancestraux offrant une vue panoramique imprenable sur la vallée. C'est ici que les fondateurs de la commune auraient établi leur premier campement. Aujourd'hui, elle reste un lieu de recueillement et de célébrations spirituelles majeures pour la communauté.",
+      name: "Le berceau d'Aïtchi", 
+      description: "Situé sur les hauteurs de la commune, ce site historique marque l'emplacement originel choisi par Aïtchi pour fuir les cris de singes de la vallée. C'est le cœur identitaire de Za-Kpota, symbole d'hospitalité et de fraternité.",
       img: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=800"
     },
     { 
-      name: "Le Marché de Za-Kpota", 
-      description: "L'un des plus grands marchés de troc de la région, vibrant d'activités tous les quatre jours. On y trouve des produits agricoles frais, des tissus artisanaux et des outils forgés localement. C'est le véritable poumon économique et social de la commune, où se mêlent traditions et modernité.",
-      img: "https://images.unsplash.com/photo-1533900298318-6b8da08a523e?auto=format&fit=crop&q=80&w=800"
+      name: "Za-Kékéré", 
+      description: "Le site originel sur les bords du petit cours d'eau où Dagba offrit l'hospitalité à ses amis, marquant le début de l'histoire de cette région propice à la culture du maïs et du blé.",
+      img: "https://images.unsplash.com/photo-1523800503107-5bc3ba2a6f81?auto=format&fit=crop&q=80&w=800"
     }
   ]
 };
