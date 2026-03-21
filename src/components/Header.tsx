@@ -47,8 +47,15 @@ const Header = ({
 }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  React.useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const toggleDropdown = (id: string) => {
     setActiveDropdown(activeDropdown === id ? null : id);
@@ -103,123 +110,129 @@ const Header = ({
         TEL_CONTACT={TEL_CONTACT} 
         EMAIL_CONTACT={EMAIL_CONTACT} 
       />
-      <header className="sticky top-0 z-50 bg-primary/80 backdrop-blur-xl border-b border-white/10 text-white py-1 shadow-2xl">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-1">
-            {/* Left: Logo Mairie */}
-            <Link 
-              to="/"
-              className="flex items-center space-x-2 cursor-pointer group min-h-[44px]"
-              onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
-            >
-              <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center p-1 shadow-lg group-hover:scale-105 transition-transform">
-                <img
-                  src="/img/logo-mairie.jpg"
-                  alt="Logo Za-Kpota"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-base font-black uppercase tracking-tighter leading-none">{DISPLAY_NAME}</h1>
-                <p className="text-[6px] font-bold uppercase tracking-[0.2em] text-accent mt-0.5 opacity-80">République du Bénin</p>
-              </div>
-              <div className="sm:hidden">
-                <h1 className="text-xs font-black uppercase tracking-tighter leading-none">Za-Kpota</h1>
-              </div>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              {navItems.map((item) => (
-                <div key={item.label} className="relative">
-                  {item.path ? (
-                    <Link
-                      to={item.path}
-                      className={`px-4 py-3 min-h-[44px] rounded-lg text-xs font-bold transition-all flex items-center space-x-1 hover:bg-white/10 ${
-                        isActive(item.path) ? 'text-accent bg-white/5' : 'text-white/80'
-                      }`}
-                      onClick={() => setActiveDropdown(null)}
-                    >
-                      <span>{item.label}</span>
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={() => toggleDropdown(item.id!)}
-                      className={`px-4 py-3 min-h-[44px] rounded-lg text-xs font-bold transition-all flex items-center space-x-1 hover:bg-white/10 ${
-                        isParentActive(item) || activeDropdown === item.id ? 'text-accent bg-white/5' : 'text-white/80'
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                      {item.submenu && <ChevronDown className={`w-3 h-3 opacity-50 transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />}
-                    </button>
-                  )}
-
-                  <AnimatePresence>
-                    {item.submenu && activeDropdown === item.id && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute top-full left-0 mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-50 p-2 overflow-hidden"
-                      >
-                        <div className="grid grid-cols-1 gap-1">
-                          {item.submenu.map((sub) => (
-                            <Link
-                              key={sub.path}
-                              to={sub.path}
-                              onClick={() => setActiveDropdown(null)}
-                              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between group/sub ${
-                                isActive(sub.path) ? 'bg-primary/10 text-primary' : 'text-ink-muted hover:bg-muted hover:text-primary'
-                              }`}
-                            >
-                              {sub.label}
-                              <ChevronRight className="w-3 h-3 opacity-0 group-hover/sub:opacity-100 group-hover/sub:translate-x-1 transition-all" />
-                            </Link>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-            </nav>
-
-            {/* Actions & Armoirie */}
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-3 border-r border-white/10 pr-3 mr-1">
-                <NotificationBell
-                  notifications={notifications}
-                  onMarkAsRead={onMarkAsRead}
-                  onViewAll={() => navigate('/actualites')}
-                />
-                <button onClick={onOpenSearch} title="Rechercher" className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors text-white/80">
-                  <Search className="w-5 h-5" />
-                </button>
-                <button onClick={toggleDarkMode} title={isDarkMode ? "Activer le mode clair" : "Activer le mode sombre"} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors text-white/80">
-                  {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                </button>
-              </div>
-
-              {/* Armoirie */}
-              <div className="hidden md:flex items-center">
-                <img
-                  src="/img/armoirie.png"
-                  alt="Armoirie du Bénin"
-                  className="h-10 w-auto object-contain"
-                />
-              </div>
-
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                title={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
-                className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 text-white"
+      
+      <header className={`fixed inset-x-0 z-50 transition-all duration-700 ${isScrolled ? 'top-2 px-2' : 'top-10 md:top-14 px-4'}`}>
+        <div className="container mx-auto max-w-7xl">
+          <div className={`transition-all duration-700 bg-primary/80 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden group/nav ${
+            isScrolled ? 'rounded-2xl py-1 px-4 lg:px-6' : 'rounded-[2rem] lg:rounded-[3rem] py-3 px-8 shadow-accent/10 shadow-3xl'
+          }`}>
+            <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-transparent to-accent/10 opacity-0 group-hover/nav:opacity-100 transition-opacity duration-1000" />
+            
+            <div className="flex items-center justify-between relative z-10 transition-all duration-500">
+              {/* Left: Logo Mairie */}
+              <Link 
+                to="/"
+                className="flex items-center space-x-3 cursor-pointer group min-h-[44px]"
+                onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
               >
-                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
+                <div className={`bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg group-hover:scale-110 transition-transform duration-500 ${isScrolled ? 'w-10 h-10' : 'w-12 h-12'}`}>
+                  <img
+                    src="/img/logo-mairie.jpg"
+                    alt="Logo Za-Kpota"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className={`font-black uppercase tracking-tighter leading-none transition-all ${isScrolled ? 'text-sm' : 'text-lg'}`}>{DISPLAY_NAME}</h1>
+                  <p className="text-[6px] font-bold uppercase tracking-[0.3em] text-accent mt-1 opacity-90">République du Bénin</p>
+                </div>
+                <div className="sm:hidden">
+                  <h1 className="text-sm font-black uppercase tracking-tighter leading-none">Za-Kpota</h1>
+                </div>
+              </Link>
+
+              {/* Desktop Navigation */}
+              <nav className="hidden lg:flex items-center space-x-2">
+                {navItems.map((item) => (
+                  <div key={item.label} className="relative">
+                    {item.path ? (
+                      <Link
+                        to={item.path}
+                        className={`px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center space-x-2 hover:bg-white/10 ${
+                          isActive(item.path) ? 'text-accent bg-white/5' : 'text-white/90'
+                        }`}
+                        onClick={() => setActiveDropdown(null)}
+                      >
+                        <span>{item.label}</span>
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => toggleDropdown(item.id!)}
+                        className={`px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center space-x-2 hover:bg-white/10 ${
+                          isParentActive(item) || activeDropdown === item.id ? 'text-accent bg-white/5' : 'text-white/90'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        {item.submenu && <ChevronDown className={`w-3 h-3 transition-transform duration-500 ${activeDropdown === item.id ? 'rotate-180' : ''}`} />}
+                      </button>
+                    )}
+
+                    <AnimatePresence>
+                      {item.submenu && activeDropdown === item.id && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                          className="absolute top-full left-0 mt-4 w-72 bg-white/95 backdrop-blur-3xl border border-primary/10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 p-3 overflow-hidden"
+                        >
+                          <div className="grid grid-cols-1 gap-2">
+                            {item.submenu.map((sub) => (
+                              <Link
+                                key={sub.path}
+                                to={sub.path}
+                                onClick={() => setActiveDropdown(null)}
+                                className={`w-full text-left px-5 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-between group/sub ${
+                                  isActive(sub.path) ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-ink-muted hover:bg-primary/5 hover:text-primary'
+                                }`}
+                              >
+                                {sub.label}
+                                <ChevronRight className={`w-4 h-4 transition-all duration-300 ${isActive(sub.path) ? 'translate-x-1' : 'opacity-0 group-hover/sub:opacity-100 group-hover/sub:translate-x-1'}`} />
+                              </Link>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
+              </nav>
+
+              {/* Actions & Armoirie */}
+              <div className="flex items-center space-x-4">
+                <div className={`flex items-center gap-2 border-white/20 transition-all ${isScrolled ? 'md:border-r md:pr-4' : 'lg:border-r lg:pr-6'}`}>
+                  <NotificationBell
+                    notifications={notifications}
+                    onMarkAsRead={onMarkAsRead}
+                    onViewAll={() => navigate('/actualites')}
+                  />
+                  <button onClick={onOpenSearch} title="Rechercher" className="w-11 h-11 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all text-white/80 active:scale-95">
+                    <Search className="w-5 h-5" />
+                  </button>
+                  <button onClick={toggleDarkMode} title={isDarkMode ? "Mode clair" : "Mode sombre"} className="w-11 h-11 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all text-white/80 active:scale-95">
+                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  </button>
+                </div>
+
+                {/* Armoirie */}
+                <div className="hidden lg:flex items-center">
+                  <motion.img
+                    whileHover={{ rotate: 5, scale: 1.1 }}
+                    src="/img/armoirie.png"
+                    alt="Armoirie"
+                    className="h-12 w-auto object-contain filter drop-shadow-lg"
+                  />
+                </div>
+
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="lg:hidden w-11 h-11 flex items-center justify-center rounded-2xl bg-white/10 text-white active:scale-95 transition-all"
+                >
+                  {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
       </header>
       
       {/* Mobile Sidebar Drawer - Decoupled from Header Stacking Context */}

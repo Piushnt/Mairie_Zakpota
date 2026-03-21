@@ -83,6 +83,7 @@ import MarketLogic from './components/MarketLogic';
 import Opportunities from './components/Opportunities';
 import RendezVous from './components/RendezVous';
 import NewsCard from './components/NewsCard';
+import ScrollToTop from './components/ScrollToTop';
 
 // Nouvelles extractions
 import Layout from './components/Layout';
@@ -366,6 +367,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/admin-portal" element={
