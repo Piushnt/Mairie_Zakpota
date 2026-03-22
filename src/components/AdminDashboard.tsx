@@ -62,6 +62,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     category: 'Sessions',
     fileUrl: ''
   });
+  const [customPushTitle, setCustomPushTitle] = useState('');
+  const [customPushMessage, setCustomPushMessage] = useState('');
 
   // Synchronize local state with store updates from parent
   useEffect(() => {
@@ -740,21 +742,57 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                   Une notification push sera également envoyée automatiquement à tous les citoyens abonnés.
                 </p>
               </div>
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col gap-4 border-b border-border pb-8">
                 <button 
                   onClick={handleSaveFlashNews}
                   disabled={isSaving}
-                  className="flex-1 flex items-center justify-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 min-h-[44px]"
+                  className="w-full flex items-center justify-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 min-h-[44px]"
                 >
                   {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-                  <span>Enregistrer & Notifier</span>
+                  <span>Enregistrer le Bandeau & Notifier</span>
                 </button>
+              </div>
+
+              <div className="space-y-6 pt-4">
+                <h3 className="text-xl font-black text-ink">Alerte Push Personnalisée</h3>
+                <p className="text-sm text-ink-muted">Envoyez une notification sur le téléphone de tous les citoyens abonnés.</p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Titre de l'alerte</label>
+                    <input 
+                      type="text" 
+                      value={customPushTitle}
+                      onChange={(e) => setCustomPushTitle(e.target.value)}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-sm text-ink min-h-[44px]"
+                      placeholder="Ex: Alerte Méteo, Nouveau Conseil..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Message de l'alerte</label>
+                    <textarea 
+                      value={customPushMessage}
+                      onChange={(e) => setCustomPushMessage(e.target.value)}
+                      rows={3}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-sm text-ink min-h-[44px] resize-none"
+                      placeholder="Contenu de la notification..."
+                    />
+                  </div>
+                </div>
                 <button 
-                  onClick={() => onSendPush("Test Alerte Générale", "Ceci est un test de notification en temps réel !", "/")}
-                  className="flex items-center justify-center space-x-3 px-8 py-4 bg-red text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red/90 transition-all shadow-xl shadow-red/20 min-h-[44px]"
+                  onClick={() => {
+                    if (customPushTitle && customPushMessage) {
+                      onSendPush(customPushTitle, customPushMessage, "/");
+                      setCustomPushTitle('');
+                      setCustomPushMessage('');
+                      showSuccess("Alerte Push envoyée avec succès à tous les abonnés !");
+                    } else {
+                      setErrorMessage("Veuillez remplir le titre et le message de l'alerte.");
+                    }
+                  }}
+                  className="w-full flex items-center justify-center space-x-3 px-8 py-4 bg-red text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red/90 transition-all shadow-xl shadow-red/20 min-h-[44px]"
                 >
                   <Bell className="w-4 h-4" />
-                  <span>Tester Alerte Générale</span>
+                  <span>Diffuser l'Alerte Manuellement</span>
                 </button>
               </div>
             </div>

@@ -5,6 +5,7 @@ import Header from './Header';
 import Footer from './Footer';
 import FlashNews from './FlashNews';
 import SearchModal from './SearchModal';
+import PushNotificationPrompt from './PushNotificationPrompt';
 
 interface LayoutProps {
   NOM_VILLE: string;
@@ -17,6 +18,7 @@ interface LayoutProps {
   setIsSearchOpen: (v: boolean) => void;
   notifications: any[];
   onMarkAsRead: (id: string) => void;
+  flashNews?: string;
 }
 
 const Layout = ({
@@ -29,13 +31,14 @@ const Layout = ({
   isSearchOpen,
   setIsSearchOpen,
   notifications,
-  onMarkAsRead
+  onMarkAsRead,
+  flashNews
 }: LayoutProps) => {
   const location = useLocation();
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}>
-      <FlashNews news="La plateforme de digitalisation des services de la mairie de Za-Kpota est désormais opérationnelle. Gagnez du temps en effectuant vos démarches en ligne !" />
+      <FlashNews news={flashNews || "Bienvenue sur le portail de la mairie de Za-Kpota."} />
       
       <Header 
         isDarkMode={isDarkMode}
@@ -74,6 +77,8 @@ const Layout = ({
         isOpen={isSearchOpen} 
         onClose={() => setIsSearchOpen(false)} 
       />
+      
+      <PushNotificationPrompt />
     </div>
   );
 };

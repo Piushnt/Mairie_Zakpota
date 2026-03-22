@@ -391,6 +391,7 @@ export default function App() {
             setIsSearchOpen={setIsSearchOpen}
             notifications={store.notifications}
             onMarkAsRead={handleMarkAsRead}
+            flashNews={store.flashNews}
           />
         }>
           <Route index element={<PageHome reports={store.reports} />} />
@@ -400,7 +401,7 @@ export default function App() {
           <Route path="histoire" element={<PageHistoire />} />
           <Route path="publications" element={<RapportsPage store={store} />} />
           
-          <Route path="services/:type" element={<PageService services={servicesData} />} />
+          <Route path="services/:type" element={<PageService services={Object.keys(store.services || {}).length > 0 ? store.services : servicesData} />} />
 
           <Route path="simulateur" element={<SimulateurFiscal />} />
           <Route path="rendezvous" element={<RendezVous onSubmit={handleRendezVousSubmit} />} />
