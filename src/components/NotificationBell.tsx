@@ -91,7 +91,7 @@ const NotificationBell = ({ notifications, onMarkAsRead, onViewAll }: Notificati
               </div>
 
               {notifications.length > 0 && (
-                <div className="p-3 bg-muted text-center">
+                <div className="p-3 bg-muted text-center border-b border-border">
                   <button 
                     onClick={() => {
                       onViewAll();
@@ -100,6 +100,22 @@ const NotificationBell = ({ notifications, onMarkAsRead, onViewAll }: Notificati
                     className="text-xs font-bold text-primary hover:underline"
                   >
                     Voir toutes les alertes
+                  </button>
+                </div>
+              )}
+
+              {('Notification' in window) && Notification.permission !== 'granted' && (
+                <div className="p-4 bg-primary/10 text-center">
+                  <p className="text-xs text-ink-muted mb-3 font-medium">Ne manquez aucune information importante de la mairie.</p>
+                  <button 
+                    onClick={async () => {
+                      const { subscribeToPushNotifications } = await import('../lib/pushNotifications');
+                      await subscribeToPushNotifications();
+                      setIsOpen(false); // Force remount or close to refresh state
+                    }}
+                    className="w-full bg-primary text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+                  >
+                    Activer les alertes Push
                   </button>
                 </div>
               )}

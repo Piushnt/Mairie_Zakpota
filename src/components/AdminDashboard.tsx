@@ -22,6 +22,7 @@ import {
   Search,
   ArrowRight,
   Info,
+  Menu,
   CalendarCheck,
   Building2,
   Coins,
@@ -42,6 +43,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Local form states
   const [flashNews, setFlashNews] = useState(store.flashNews);
@@ -572,9 +574,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
   return (
     <div className="min-h-screen bg-muted flex flex-col lg:flex-row transition-colors duration-300">
+      
+      {/* Mobile Topbar */}
+      <div className="lg:hidden bg-card border-b border-border p-4 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
+            <LayoutDashboard className="w-5 h-5" />
+          </div>
+          <h2 className="font-black text-ink uppercase tracking-widest text-xs">Portail S.E.</h2>
+        </div>
+        <button 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 bg-muted text-ink rounded-lg"
+        >
+          {isSidebarOpen ? <XCircle className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-full lg:w-72 bg-card border-r border-border p-8 flex flex-col transition-colors">
-        <div className="flex items-center space-x-4 mb-12">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border p-6 flex flex-col transition-transform duration-300 lg:static lg:transform-none ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="hidden lg:flex items-center space-x-4 mb-12">
           <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
             <LayoutDashboard className="w-6 h-6" />
           </div>
@@ -592,17 +619,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
             { id: 'arrondissements', label: 'Arrondissements', icon: MapPin },
             { id: 'opportunities', label: 'Opportunités & Appels', icon: Briefcase },
             { id: 'market', label: 'Cycle du Marché', icon: ShoppingBag },
-            { id: 'appointments', label: 'Audiences Citoyennes', icon: CalendarCheck },
-            { id: 'stade_res', label: 'Gestion du Stade', icon: Users },
-            { id: 'flash', label: 'Bandeau d\'Alerte', icon: Bell },
+            { id: 'appointments', label: 'Audiences', icon: CalendarCheck },
+            { id: 'stade_res', label: 'Gestion Stade', icon: Users },
+            { id: 'flash', label: 'Alertes & Push', icon: Bell },
             { id: 'settings', label: 'Configuration', icon: Settings },
           ].map(item => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center space-x-4 px-6 py-4 rounded-2xl font-bold transition-all min-h-[44px] ${
+              onClick={() => {
+                setActiveTab(item.id);
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center space-x-4 px-4 py-3 rounded-2xl font-bold transition-all min-h-[44px] ${
                 activeTab === item.id 
-                  ? 'bg-primary text-white shadow-xl shadow-primary/20 translate-x-2' 
+                  ? 'bg-primary text-white shadow-xl shadow-primary/20 lg:translate-x-2' 
                   : 'text-ink/40 hover:text-primary hover:bg-primary/5'
               }`}
             >
@@ -645,7 +675,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
               {activeTab === 'market' && "Configurateur de Marché"}
               {activeTab === 'appointments' && "Suivi des Rendez-vous"}
               {activeTab === 'stade_res' && "Demandes Réservation Stade"}
-              {activeTab === 'flash' && "Bandeau Flash News"}
+              {activeTab === 'flash' && "Alertes Flash & Push"}
               {activeTab === 'settings' && "Paramètres Système"}
             </h1>
             <p className="text-ink/40 font-medium">Interface de gestion simplifiée pour les agents de la mairie.</p>
@@ -704,20 +734,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                 />
               </div>
               <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 flex items-start space-x-4">
-                <Info className="w-6 h-6 text-primary mt-1" />
+                <Info className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
                 <p className="text-sm text-ink/60 leading-relaxed">
                   Ce message apparaîtra instantanément dans le bandeau défilant en haut de toutes les pages du site. 
-                  Une notification push sera également envoyée aux citoyens abonnés.
+                  Une notification push sera également envoyée automatiquement à tous les citoyens abonnés.
                 </p>
               </div>
-              <button 
-                onClick={handleSaveFlashNews}
-                disabled={isSaving}
-                className="flex items-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 min-h-[44px]"
-              >
-                {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-                <span>Enregistrer & Notifier</span>
-              </button>
+              <div className="flex flex-col md:flex-row gap-4">
+                <button 
+                  onClick={handleSaveFlashNews}
+                  disabled={isSaving}
+                  className="flex-1 flex items-center justify-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 min-h-[44px]"
+                >
+                  {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>Enregistrer & Notifier</span>
+                </button>
+                <button 
+                  onClick={() => onSendPush("Test Alerte Générale", "Ceci est un test de notification en temps réel !", "/")}
+                  className="flex items-center justify-center space-x-3 px-8 py-4 bg-red text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red/90 transition-all shadow-xl shadow-red/20 min-h-[44px]"
+                >
+                  <Bell className="w-4 h-4" />
+                  <span>Tester Alerte Générale</span>
+                </button>
+              </div>
             </div>
           )}
 

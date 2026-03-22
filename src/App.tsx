@@ -271,7 +271,7 @@ export default function App() {
     setStore(newData);
   };
 
-  const handleSendPush = async (title: string, message: string) => {
+  const handleSendPush = async (title: string, message: string, urlPath: string = '/') => {
     const notification = {
       id: Date.now().toString(),
       title,
@@ -285,11 +285,20 @@ export default function App() {
       notifications: [notification, ...prev.notifications]
     }));
 
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {
-        body: message,
-        icon: '/favicon.ico'
+    try {
+      await fetch('/api/send-push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: title,
+          body: message,
+          url: urlPath
+        })
       });
+    } catch (e) {
+      console.error('Erreur lors de l\'envoi du Push serveur', e);
     }
   };
 

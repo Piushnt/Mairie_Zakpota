@@ -1,68 +1,55 @@
+// Script Service Worker pour intercepter les notifications Web Push
 
-const CACHE_NAME = 'mairie-zakpota-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/logo.jpg'
-];
-
-// Install Event
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
+  self.skipWaiting();
 });
 
-// Activate Event
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('push', function(event) {
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      const options = {
+        body: data.body,
+        icon: data.icon || '/logo.jpg',
+        badge: data.badge || '/logo.jpg',
+        vibrate: [100, 50, 100],
+        data: data.data || {}
+      };
+
+      event.waitUntil(
+        self.registration.showNotification(data.title, options)
       );
-    })
-  );
+    } catch (e) {
+      // If payload is not valid JSON, show generic
+      event.waitUntil(
+        self.registration.showNotification(event.data.text(), {
+          icon: '/logo.jpg'
+        })
+      );
+    }
+  }
 });
 
-// Fetch Event
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
-});
-
-// Push Event
-self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : { title: 'Mairie de Za-Kpota', body: 'Nouvelle notification' };
-  
-  const options = {
-    body: data.body,
-    icon: '/favicon.ico', // Update with real icon path
-    badge: '/favicon.ico',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    },
-    actions: [
-      { action: 'explore', title: 'Voir les détails', icon: 'checkmark.png' },
-      { action: 'close', title: 'Fermer', icon: 'xmark.png' },
-    ]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
-});
-
-// Notification Click Event
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', function(event) {
   event.notification.close();
+
+  const targetUrl = event.notification.data?.url || '/';
+
   event.waitUntil(
-    clients.openWindow('/')
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      for (let i = 0; i < clientList.length; i++) {
+        let client = clientList[i];
+        if (client.url === targetUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
   );
 });
