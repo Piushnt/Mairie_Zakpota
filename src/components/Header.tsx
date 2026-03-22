@@ -113,13 +113,12 @@ const Header = ({
               className="flex items-center space-x-3 cursor-pointer group"
               onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
             >
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center">
                 <img
                   src="/img/armoirie.png"
                   alt="Armoirie"
-                  className="h-10 w-auto object-contain brightness-0 invert"
+                  className="h-12 w-auto object-contain"
                 />
-                <span className="text-sm font-bold tracking-tight border-l border-white/20 pl-3">Armoirie du Bénin</span>
               </div>
             </Link>
 
@@ -181,8 +180,8 @@ const Header = ({
 
             {/* Actions: Profile, Search, DarkMode */}
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3 pr-4 border-r border-white/20">
-                <div className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 transition-all rounded-full pl-1 pr-3 py-1 cursor-pointer">
+              <div className="flex items-center space-x-3 pr-2 md:pr-4 md:border-r border-white/20">
+                <div className="hidden md:flex items-center space-x-2 bg-white/10 hover:bg-white/20 transition-all rounded-full pl-1 pr-3 py-1 cursor-pointer">
                   <div className="w-8 h-8 rounded-full bg-white overflow-hidden p-1 shadow-inner">
                     <img src="/img/logo-mairie.jpg" alt="Admin" className="w-full h-full object-contain" />
                   </div>

@@ -15,8 +15,8 @@
   --color-red: #E03C31;
   
   /* Semantic UI Colors - Light Mode */
-  --color-ink: #0F172A; /* Slate 900 */
-  --color-ink-muted: #64748B; /* Slate 500 */
+  --color-ink: #000000; /* Black */
+  --color-ink-muted: #334155; /* Slate 700 */
   --color-surface: #FFFFFF;
   --color-paper: #F8FAFC; /* Slate 50 */
   --color-muted: #F1F5F9; /* Slate 100 */
