@@ -263,20 +263,7 @@ export default function App() {
     loadData();
   }, []);
 
-  // Service Worker Registration
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => {
-            console.log('SW registered: ', registration);
-          })
-          .catch(registrationError => {
-            console.log('SW registration failed: ', registrationError);
-          });
-      });
-    }
-  }, []);
+  // Service Worker removed to prevent stale cache on Vercel
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
