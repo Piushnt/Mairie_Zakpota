@@ -268,7 +268,7 @@ export default function App() {
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
   const handleUpdateStore = async (newData: any) => {
-    setStore(newData);
+    setStore(prev => ({ ...prev, ...newData }));
   };
 
   const handleSendPush = async (title: string, message: string, urlPath: string = '/') => {
