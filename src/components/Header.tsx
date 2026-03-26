@@ -67,6 +67,7 @@ const Header = ({
     {
       label: 'Services Publics', id: 'services', submenu: [
         { label: 'État Civil', path: '/services/etat-civil' },
+        { label: 'Formulaires (Guichet)', path: '/formulaires' },
         { label: 'Urbanisme', path: '/services/urbanisme' },
         { label: 'Simulateur Fiscal', path: '/simulateur' },
         { label: 'Prise de RDV', path: '/rendezvous' },
