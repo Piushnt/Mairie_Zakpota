@@ -26,7 +26,9 @@ import {
   CalendarCheck,
   Building2,
   Coins,
-  Users
+  Users,
+  FileSignature,
+  Calculator
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -55,6 +57,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
   const [rendezvous, setRendezvous] = useState(store.rendezvous || []);
   const [stadeReservations, setStadeReservations] = useState(store.reservationsStade || []);
   const [configMarche, setConfigMarche] = useState(store.configMarche || { referenceDate: '' });
+  const [formulaires, setFormulaires] = useState(store.formulaires || []);
+  const [taxSettings, setTaxSettings] = useState(store.tax_settings || {
+    tfu_rates: { taux_bati: 6, taux_non_bati: 5 },
+    patente_rates: { droit_fixe_base: 10000, droit_proportionnel: 10 }
+  });
+  
+  const [newFormulaire, setNewFormulaire] = useState({
+    title: '',
+    category: 'État-civil',
+    drive_link: '',
+    description: ''
+  });
   const [newReport, setNewReport] = useState({
     title: '',
     date: new Date().toISOString().split('T')[0],
@@ -76,6 +90,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     setRendezvous(store.rendezvous || []);
     setStadeReservations(store.reservationsStade || []);
     setConfigMarche(store.configMarche || { referenceDate: '' });
+    setFormulaires(store.formulaires || []);
+    if (store.tax_settings && Object.keys(store.tax_settings).length > 0) {
+      setTaxSettings(store.tax_settings);
+    }
   }, [store]);
 
   const [newOpportunity, setNewOpportunity] = useState({
@@ -451,6 +469,65 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     }
   };
 
+  const handleSaveTaxSettings = async () => {
+    setIsSaving(true);
+    setErrorMessage('');
+    try {
+      await supabase.from('tax_settings').upsert({ key: 'tfu_rates', value: taxSettings.tfu_rates });
+      await supabase.from('tax_settings').upsert({ key: 'patente_rates', value: taxSettings.patente_rates });
+      
+      onUpdateStore({ tax_settings: taxSettings });
+      showSuccess("Paramètres fiscaux enregistrés !");
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(`Erreur sauvegarde taxes: ${err.message}`);
+    }
+    setIsSaving(false);
+  };
+
+  const handleAddFormulaire = async () => {
+    if (!newFormulaire.title || !newFormulaire.drive_link) {
+      setErrorMessage("Veuillez remplir le titre et le lien.");
+      return;
+    }
+    setIsSaving(true);
+    setErrorMessage('');
+    try {
+      const { data, error } = await supabase
+        .from('formulaires')
+        .insert([newFormulaire])
+        .select();
+
+      if (error) throw error;
+      if (data && data.length > 0) {
+        const updatedForms = [data[0], ...formulaires];
+        setFormulaires(updatedForms);
+        onUpdateStore({ formulaires: updatedForms });
+        showSuccess("Formulaire ajouté !");
+        setNewFormulaire({ title: '', category: 'État-civil', drive_link: '', description: '' });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(`Erreur: ${err.message}`);
+    }
+    setIsSaving(false);
+  };
+
+  const handleDeleteFormulaire = async (id: string) => {
+    if (!window.confirm("Voulez-vous supprimer ce formulaire ?")) return;
+    try {
+      const { error } = await supabase.from('formulaires').delete().eq('id', id);
+      if (error) throw error;
+      const updated = formulaires.filter((f: any) => f.id !== id);
+      setFormulaires(updated);
+      onUpdateStore({ formulaires: updated });
+      showSuccess("Formulaire supprimé !");
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(`Erreur: ${err.message}`);
+    }
+  };
+
   const handleSaveMarketConfig = async () => {
     setIsSaving(true);
     setErrorMessage(null);
@@ -623,6 +700,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
             { id: 'market', label: 'Cycle du Marché', icon: ShoppingBag },
             { id: 'appointments', label: 'Audiences', icon: CalendarCheck },
             { id: 'stade_res', label: 'Gestion Stade', icon: Users },
+            { id: 'formulaires', label: 'Guichet Numérique', icon: FileSignature },
+            { id: 'taxes', label: 'Paramètres Fiscaux', icon: Calculator },
             { id: 'flash', label: 'Alertes & Push', icon: Bell },
             { id: 'settings', label: 'Configuration', icon: Settings },
           ].map(item => (
@@ -794,6 +873,159 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                   <Bell className="w-4 h-4" />
                   <span>Diffuser l'Alerte Manuellement</span>
                 </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'formulaires' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-card rounded-3xl p-8 border border-border shadow-xl">
+                <h3 className="text-xl font-black text-ink mb-6">Ajouter un Formulaire</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Titre</label>
+                    <input 
+                      type="text" 
+                      value={newFormulaire.title}
+                      onChange={(e) => setNewFormulaire({...newFormulaire, title: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: Demande de Permis"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Catégorie</label>
+                    <select 
+                      title="Catégorie du formulaire"
+                      value={newFormulaire.category}
+                      onChange={(e) => setNewFormulaire({...newFormulaire, category: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                    >
+                      <option>État-civil</option>
+                      <option>Urbanisme</option>
+                      <option>Économie</option>
+                      <option>Affaires Sociales</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Lien Google Drive (PDF)</label>
+                    <input 
+                      type="url" 
+                      value={newFormulaire.drive_link}
+                      onChange={(e) => setNewFormulaire({...newFormulaire, drive_link: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="https://drive.google.com/..."
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Description (Optionnel)</label>
+                    <textarea 
+                      value={newFormulaire.description}
+                      onChange={(e) => setNewFormulaire({...newFormulaire, description: e.target.value})}
+                      rows={2}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm resize-none"
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={handleAddFormulaire}
+                  disabled={isSaving}
+                  className="px-8 py-4 bg-ink text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-ink/90 transition-all shadow-xl disabled:opacity-50 min-h-[44px] flex items-center justify-center space-x-2"
+                >
+                  {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus className="w-4 h-4" />}
+                  <span>Ajouter au Guichet</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-xl font-black text-ink mb-6">Formulaires Existants</h3>
+                {formulaires.map((f: any) => (
+                  <div key={f.id} className="bg-card p-6 rounded-2xl border border-border flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-full mb-2 inline-block">
+                        {f.category}
+                      </span>
+                      <h4 className="font-bold text-ink">{f.title}</h4>
+                      {f.description && <p className="text-xs text-ink-muted mt-1">{f.description}</p>}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <a href={f.drive_link} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-primary hover:underline">
+                        Voir le lien
+                      </a>
+                      <button title="Supprimer" onClick={() => handleDeleteFormulaire(f.id)} className="p-3 text-red hover:bg-red/10 rounded-xl transition-all">
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'taxes' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-card rounded-3xl p-8 border border-border shadow-xl">
+                <h3 className="text-xl font-black text-ink mb-6 flex items-center gap-2">
+                  <Calculator className="w-6 h-6 text-primary" /> Configuration du Simulateur
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                  {/* TFU */}
+                  <div className="space-y-6 bg-muted/50 p-6 rounded-2xl border border-border/50">
+                    <h4 className="font-bold text-ink mb-4 border-b border-border pb-2">Taxe Foncière Unique (Taux en %)</h4>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-ink/40">Taux Bâti</label>
+                      <input 
+                        type="number" 
+                        value={taxSettings.tfu_rates?.taux_bati || ''}
+                        onChange={(e) => setTaxSettings({...taxSettings, tfu_rates: { ...taxSettings.tfu_rates, taux_bati: parseFloat(e.target.value) }})}
+                        className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-ink/40">Taux Non Bâti</label>
+                      <input 
+                        type="number" 
+                        value={taxSettings.tfu_rates?.taux_non_bati || ''}
+                        onChange={(e) => setTaxSettings({...taxSettings, tfu_rates: { ...taxSettings.tfu_rates, taux_non_bati: parseFloat(e.target.value) }})}
+                        className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Patentes */}
+                  <div className="space-y-6 bg-muted/50 p-6 rounded-2xl border border-border/50">
+                    <h4 className="font-bold text-ink mb-4 border-b border-border pb-2">Contribution des Patentes (FCFA)</h4>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-ink/40">Droit Fixe de Base</label>
+                      <input 
+                        type="number" 
+                        value={taxSettings.patente_rates?.droit_fixe_base || ''}
+                        onChange={(e) => setTaxSettings({...taxSettings, patente_rates: { ...taxSettings.patente_rates, droit_fixe_base: parseFloat(e.target.value) }})}
+                        className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-ink/40">Droit Proportionnel (%)</label>
+                      <input 
+                        type="number" 
+                        value={taxSettings.patente_rates?.droit_proportionnel || ''}
+                        onChange={(e) => setTaxSettings({...taxSettings, patente_rates: { ...taxSettings.patente_rates, droit_proportionnel: parseFloat(e.target.value) }})}
+                        className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex border-t border-border pt-8 justify-end">
+                  <button 
+                    onClick={handleSaveTaxSettings}
+                    disabled={isSaving}
+                    className="flex items-center justify-center space-x-3 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 min-h-[44px]"
+                  >
+                    {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                    <span>Mettre à jour les taux officiels</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

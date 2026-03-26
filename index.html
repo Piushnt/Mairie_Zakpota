@@ -11,13 +11,38 @@
     <!-- SEO & Meta Tags -->
     <title>Mairie de Za-Kpota - Portail Officiel | République du Bénin</title>
     <meta name="description" content="Portail officiel de la Mairie de Za-Kpota. Accédez aux services d'état civil, urbanisme, et suivez l'actualité de la commune." />
-    <meta name="keywords" content="Za-Kpota, Mairie, Bénin, Services Publics, État Civil, Administration" />
+    <meta name="keywords" content="Mairie de Za-Kpota, Commune du Bénin, Services Municipaux, SE Za-Kpota, État-civil Bénin, Zou" />
     
     <!-- Open Graph (Réseaux Sociaux) -->
     <meta property="og:title" content="Mairie de Za-Kpota - Portail Officiel" />
     <meta property="og:description" content="Votre mairie connectée pour un service citoyen de qualité." />
-    <meta property="og:image" content="/logo.jpg" />
+    <meta property="og:image" content="https://mairie-zakpota.vercel.app/logo.jpg" />
+    <meta property="og:url" content="https://mairie-zakpota.vercel.app" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mairie de Za-Kpota" />
+
+    <!-- Données Structurées JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "GovernmentOrganization",
+      "name": "Mairie de Za-Kpota",
+      "url": "https://mairie-zakpota.vercel.app",
+      "logo": "https://mairie-zakpota.vercel.app/logo.jpg",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Hôtel de Ville de Za-Kpota, Centre Ville",
+        "addressLocality": "Za-Kpota",
+        "addressRegion": "Zou",
+        "addressCountry": "BJ"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+229 97 00 00 00",
+        "contactType": "Secrétariat Exécutif"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

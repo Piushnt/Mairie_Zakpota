@@ -17,9 +17,14 @@ import {
 } from 'lucide-react';
 import { newsData } from '../data/config';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 const PageHome = ({ reports = [] }: { reports?: any[] }) => (
   <main className="pb-20 bg-surface transition-colors duration-300">
+    <Helmet>
+      <title>Accueil - Mairie de Za-Kpota</title>
+      <meta name="description" content="Découvrez les services, l'actualité et les opportunités de la Mairie de Za-Kpota." />
+    </Helmet>
     <Hero />
 
     <section className="container mx-auto px-4 -mt-24 relative z-20">

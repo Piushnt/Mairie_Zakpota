@@ -118,5 +118,7 @@ export const initialStoreData = {
     referenceDate: "2026-03-15", // Date d'un jour de marché connu
     cycleDays: 5,
     reminderDays: 1
-  }
+  },
+  formulaires: [],
+  tax_settings: {}
 };

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 import {
   Search,
   Menu,
@@ -99,6 +100,7 @@ import PageAgenda from './pages/PageAgenda';
 import PageActualites from './pages/PageActualites';
 import SignalementForm from './components/SignalementForm';
 import SimulateurFiscal from './components/SimulateurFiscal';
+import PageFormulaires from './pages/PageFormulaires';
 import Login from './pages/Login';
 
 // --- TYPES ---
@@ -162,7 +164,9 @@ export default function App() {
           { data: events },
           { data: config },
           { data: reps },
-          { data: stadeRes }
+          { data: stadeRes },
+          { data: forms },
+          { data: taxes }
         ] = await Promise.all([
           supabase.from('services_tarifs').select('*'),
           supabase.from('news').select('*').order('date', { ascending: false }),
@@ -172,7 +176,9 @@ export default function App() {
           supabase.from('agenda_events').select('*').order('date'),
           supabase.from('site_config').select('*'),
           supabase.from('reports').select('*').order('date', { ascending: false }),
-          supabase.from('reservations_stade').select('*').order('created_at', { ascending: false })
+          supabase.from('reservations_stade').select('*').order('created_at', { ascending: false }),
+          supabase.from('formulaires').select('*').order('created_at', { ascending: false }),
+          supabase.from('tax_settings').select('*')
         ]);
 
         const newStore = { ...initialStoreData };
@@ -250,6 +256,15 @@ export default function App() {
 
         if (stadeRes) {
           newStore.reservationsStade = stadeRes;
+        }
+
+        if (forms) {
+          newStore.formulaires = forms;
+        }
+
+        if (taxes) {
+          const taxSettingsObj = taxes.reduce((acc: any, curr: any) => ({ ...acc, [curr.key]: curr.value }), {});
+          newStore.tax_settings = taxSettingsObj;
         }
 
         setStore(newStore);
@@ -362,8 +377,9 @@ export default function App() {
   };
 
   return (
-    <BrowserRouter>
-      <ScrollToTop />
+    <HelmetProvider>
+      <BrowserRouter>
+        <ScrollToTop />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/admin-portal" element={
@@ -403,7 +419,8 @@ export default function App() {
           
           <Route path="services/:type" element={<PageService services={Object.keys(store.services || {}).length > 0 ? store.services : servicesData} />} />
 
-          <Route path="simulateur" element={<SimulateurFiscal />} />
+          <Route path="simulateur" element={<SimulateurFiscal settings={store.tax_settings} />} />
+          <Route path="formulaires" element={<PageFormulaires formulaires={store.formulaires} />} />
           <Route path="rendezvous" element={<RendezVous onSubmit={handleRendezVousSubmit} />} />
           <Route path="economie" element={<MarketLogic config={store.configMarche} />} />
           <Route path="opportunites" element={<Opportunities data={store.opportunites} />} />
@@ -433,5 +450,6 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </HelmetProvider>
   );
 }
