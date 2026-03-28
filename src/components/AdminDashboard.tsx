@@ -28,7 +28,8 @@ import {
   Coins,
   Users,
   FileSignature,
-  Calculator
+  Calculator,
+  Map as MapIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -69,6 +70,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     drive_link: '',
     description: ''
   });
+  
+  const [locations, setLocations] = useState(store.locations || []);
+  const [newLocation, setNewLocation] = useState({
+    name: '',
+    category: 'Administration',
+    description: '',
+    lat: 7.1915,
+    lng: 2.2635,
+    image_url: ''
+  });
+
   const [newReport, setNewReport] = useState({
     title: '',
     date: new Date().toISOString().split('T')[0],
@@ -94,6 +106,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     if (store.tax_settings && Object.keys(store.tax_settings).length > 0) {
       setTaxSettings(store.tax_settings);
     }
+    setLocations(store.locations || []);
   }, [store]);
 
   const [newOpportunity, setNewOpportunity] = useState({
@@ -528,6 +541,56 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     }
   };
 
+  const handleAddLocation = async () => {
+    if (!newLocation.name || !newLocation.lat || !newLocation.lng) {
+      setErrorMessage("Veuillez remplir le nom et les coordonnées GPS.");
+      return;
+    }
+    setIsSaving(true);
+    setErrorMessage('');
+    try {
+      const { data, error } = await supabase
+        .from('locations')
+        .insert([newLocation])
+        .select();
+
+      if (error) throw error;
+      if (data && data.length > 0) {
+        const updated = [data[0], ...locations];
+        setLocations(updated);
+        onUpdateStore({ locations: updated });
+        showSuccess("Lieu ajouté à la carte !");
+        setNewLocation({
+          name: '',
+          category: 'Administration',
+          description: '',
+          lat: 7.1915,
+          lng: 2.2635,
+          image_url: ''
+        });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(`Erreur: ${err.message}`);
+    }
+    setIsSaving(false);
+  };
+
+  const handleDeleteLocation = async (id: string) => {
+    if (!window.confirm("Voulez-vous supprimer ce lieu de la carte ?")) return;
+    try {
+      const { error } = await supabase.from('locations').delete().eq('id', id);
+      if (error) throw error;
+      const updated = locations.filter((l: any) => l.id !== id);
+      setLocations(updated);
+      onUpdateStore({ locations: updated });
+      showSuccess("Lieu supprimé !");
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(`Erreur: ${err.message}`);
+    }
+  };
+
   const handleSaveMarketConfig = async () => {
     setIsSaving(true);
     setErrorMessage(null);
@@ -695,6 +758,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
             { id: 'services', label: 'Tarifs des Actes', icon: FileText },
             { id: 'agenda', label: 'Planning du Stade', icon: Calendar },
             { id: 'reports', label: 'Rapports Officiels', icon: FileText },
+            { id: 'mapping', label: 'Lieux & Carte', icon: MapPin },
             { id: 'arrondissements', label: 'Arrondissements', icon: MapPin },
             { id: 'opportunities', label: 'Opportunités & Appels', icon: Briefcase },
             { id: 'market', label: 'Cycle du Marché', icon: ShoppingBag },
@@ -1025,6 +1089,130 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                     {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                     <span>Mettre à jour les taux officiels</span>
                   </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'mapping' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-card rounded-3xl p-8 border border-border shadow-xl">
+                <h3 className="text-xl font-black text-ink mb-6 flex items-center gap-2">
+                  <MapIcon className="w-6 h-6 text-primary" /> Ajouter un Lieu sur la Carte
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Nom de l'infrastructure</label>
+                    <input 
+                      title="Nom du lieu"
+                      type="text" 
+                      value={newLocation.name}
+                      onChange={(e) => setNewLocation({...newLocation, name: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: Centre de Santé de Za-Kpota"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Catégorie</label>
+                    <select 
+                      title="Catégorie du lieu"
+                      value={newLocation.category}
+                      onChange={(e) => setNewLocation({...newLocation, category: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                    >
+                      <option>Administration</option>
+                      <option>Santé</option>
+                      <option>Éducation</option>
+                      <option>Sport</option>
+                      <option>Tourisme</option>
+                      <option>Autre</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Latitude</label>
+                    <input 
+                      title="Latitude"
+                      type="number" 
+                      step="any"
+                      value={newLocation.lat}
+                      onChange={(e) => setNewLocation({...newLocation, lat: parseFloat(e.target.value)})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="7.1915"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Longitude</label>
+                    <input 
+                      title="Longitude"
+                      type="number" 
+                      step="any"
+                      value={newLocation.lng}
+                      onChange={(e) => setNewLocation({...newLocation, lng: parseFloat(e.target.value)})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="2.2635"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">URL Image (Optionnel)</label>
+                    <input 
+                      title="Lien image"
+                      type="url" 
+                      value={newLocation.image_url}
+                      onChange={(e) => setNewLocation({...newLocation, image_url: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Description</label>
+                    <textarea 
+                      title="Description du lieu"
+                      value={newLocation.description}
+                      onChange={(e) => setNewLocation({...newLocation, description: e.target.value})}
+                      rows={3}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm resize-none"
+                      placeholder="Détails sur l'infrastructure..."
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={handleAddLocation}
+                  disabled={isSaving}
+                  className="px-8 py-4 bg-ink text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-ink/90 transition-all shadow-xl disabled:opacity-50 min-h-[44px] flex items-center justify-center space-x-2"
+                >
+                  {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus className="w-4 h-4" />}
+                  <span>Ajouter le lieu</span>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-xl font-black text-ink flex items-center gap-2">
+                  <Info className="w-5 h-5 text-primary" /> Lieux Répertoriés ({locations.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {locations.map((loc: any) => (
+                    <div key={loc.id} className="bg-card p-6 rounded-2xl border border-border flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center text-primary">
+                          <MapIcon className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-primary/60 bg-primary/5 px-2 py-1 rounded">
+                            {loc.category}
+                          </span>
+                          <h4 className="font-bold text-ink block mt-1">{loc.name}</h4>
+                          <p className="text-[10px] text-ink/40 font-medium">GPS: {Number(loc.lat).toFixed(4)}, {Number(loc.lng).toFixed(4)}</p>
+                        </div>
+                      </div>
+                      <button 
+                        title="Supprimer ce lieu"
+                        onClick={() => handleDeleteLocation(loc.id)} 
+                        className="p-3 text-red hover:bg-red/5 rounded-xl transition-all"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

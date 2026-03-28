@@ -59,6 +59,7 @@ const Header = ({
       label: 'La Mairie', id: 'mairie', submenu: [
         { label: 'Le Maire', path: '/maire' },
         { label: 'Le Conseil Municipal', path: '/conseil' },
+        { label: 'Carte de la Commune', path: '/carte' },
         { label: 'Les Arrondissements', path: '/arrondissements' },
         { label: 'Histoire et Culture', path: '/histoire' },
         { label: 'Transparence & Rapports', path: '/publications' },

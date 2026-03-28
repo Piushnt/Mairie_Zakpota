@@ -98,6 +98,7 @@ import PageContact from './pages/PageContact';
 import PageService from './pages/PageService';
 import PageAgenda from './pages/PageAgenda';
 import PageActualites from './pages/PageActualites';
+const PageCarte = React.lazy(() => import('./pages/PageCarte'));
 import SignalementForm from './components/SignalementForm';
 import SimulateurFiscal from './components/SimulateurFiscal';
 import PageFormulaires from './pages/PageFormulaires';
@@ -166,7 +167,8 @@ export default function App() {
           { data: reps },
           { data: stadeRes },
           { data: forms },
-          { data: taxes }
+          { data: taxes },
+          { data: locs }
         ] = await Promise.all([
           supabase.from('services_tarifs').select('*'),
           supabase.from('news').select('*').order('date', { ascending: false }),
@@ -178,7 +180,8 @@ export default function App() {
           supabase.from('reports').select('*').order('date', { ascending: false }),
           supabase.from('reservations_stade').select('*').order('created_at', { ascending: false }),
           supabase.from('formulaires').select('*').order('created_at', { ascending: false }),
-          supabase.from('tax_settings').select('*')
+          supabase.from('tax_settings').select('*'),
+          supabase.from('locations').select('*').order('name')
         ]);
 
         const newStore = { ...initialStoreData };
@@ -265,6 +268,10 @@ export default function App() {
         if (taxes) {
           const taxSettingsObj = taxes.reduce((acc: any, curr: any) => ({ ...acc, [curr.key]: curr.value }), {});
           newStore.tax_settings = taxSettingsObj;
+        }
+
+        if (locs) {
+          newStore.locations = locs;
         }
 
         setStore(newStore);
@@ -427,6 +434,11 @@ export default function App() {
           <Route path="agenda" element={<PageAgenda agenda={store.agenda} />} />
           <Route path="stade" element={<PageStade stade={store.stade} onReserve={handleStadeReservation} />} />
           <Route path="tourisme" element={<PageTourisme />} />
+          <Route path="carte" element={
+            <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center font-black animate-pulse uppercase tracking-widest text-primary">Chargement de la carte...</div>}>
+              <PageCarte locations={store.locations} />
+            </React.Suspense>
+          } />
           <Route path="actualites" element={<PageActualites news={store.news.length > 0 ? store.news : newsData} />} />
           <Route path="signalement" element={<SignalementForm />} />
           <Route path="contact" element={<PageContact NOM_VILLE={NOM_VILLE} ADRESSE_MAIRIE={ADRESSE_MAIRIE} TEL_CONTACT={TEL_CONTACT} EMAIL_CONTACT={EMAIL_CONTACT} />} />

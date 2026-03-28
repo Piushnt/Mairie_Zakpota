@@ -120,5 +120,6 @@ export const initialStoreData = {
     reminderDays: 1
   },
   formulaires: [],
-  tax_settings: {}
+  tax_settings: {},
+  locations: []
 };
