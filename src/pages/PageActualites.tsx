@@ -1,25 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { newsData } from '../data/config';
+import { Search, ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react';
 import NewsCard from '../components/NewsCard';
 
 interface PageActualitesProps {
   news: any[];
 }
 
-export default function PageActualites({ news }: PageActualitesProps) {
+export default function PageActualites({ news = [] }: PageActualitesProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Toutes');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
   const categories = [
-    'Toutes', 'Gouvernance', 'Infrastructure', 'Santé', 'Économie', 
-    'Jeunesse', 'Éducation', 'Social', 'Environnement'
+    'Toutes', 'Administration', 'Travaux', 'Sport', 'Santé', 'Annonces'
   ];
 
-  const filteredNews = news.filter(n => {
+  // Trier par date la plus récente en haut
+  const sortedNews = [...news].sort((a, b) => {
+    const dateA = new Date(a.date || a.created_at).getTime();
+    const dateB = new Date(b.date || b.created_at).getTime();
+    return dateB - dateA;
+  });
+
+  const filteredNews = sortedNews.filter(n => {
     const matchesSearch = (n.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (n.desc?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (n.cat?.toLowerCase() || '').includes(searchQuery.toLowerCase());
@@ -42,52 +47,47 @@ export default function PageActualites({ news }: PageActualitesProps) {
         <div className="container mx-auto px-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-16">
           <div className="max-w-xl">
-            <h1 className="text-5xl font-black text-primary mb-4">Actualités Municipales</h1>
-            <p className="text-ink-muted text-lg">Restez informé de la vie citoyenne à Za-Kpota.</p>
+            <h1 className="text-5xl font-black text-primary mb-4 leading-tight">Flux Citoyen & Actualités</h1>
+            <p className="text-ink-muted text-lg font-medium opacity-80">Suivez les projets et la vie de la commune de Za-Kpota en temps réel.</p>
           </div>
           
-          <div className="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
-            <div className="relative flex-1 md:w-80">
+          <div className="w-full lg:w-96">
+            <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-muted" />
               <input 
                 type="text"
-                placeholder="Rechercher..."
+                placeholder="Rechercher une actu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-card border border-border rounded-2xl outline-none focus:border-primary transition-all shadow-sm text-ink"
+                className="w-full pl-12 pr-4 py-4 bg-card border border-border rounded-2xl outline-none focus:border-primary transition-all shadow-xl shadow-primary/5 text-ink font-bold"
               />
-            </div>
-            
-            <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 no-scrollbar">
-              <select 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                title="Filtrer par catégorie"
-                className="px-6 py-4 bg-card border border-border rounded-2xl outline-none focus:border-primary transition-all shadow-sm font-bold text-sm text-ink/70 cursor-pointer min-w-[160px]"
-              >
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
             </div>
           </div>
         </div>
 
-        {/* Category Pills for quick access */}
-        <div className="flex flex-wrap gap-2 mb-12">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${
-                selectedCategory === cat 
-                  ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-                  : 'bg-card text-ink/50 border border-border hover:border-primary/30'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+        {/* Système de Filtrage Horizontal Scrollable */}
+        <div className="relative mb-12 group">
+          <div className="flex items-center gap-3 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
+            <div className="flex items-center space-x-2 mr-4 text-ink-muted opacity-50 shrink-0">
+               <LayoutGrid className="w-4 h-4" />
+               <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Filtrer par :</span>
+            </div>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shrink-0 whitespace-nowrap ${
+                  selectedCategory === cat 
+                    ? 'bg-primary text-white shadow-xl shadow-primary/30 border-transparent' 
+                    : 'bg-card text-ink/40 border border-border hover:border-primary/50'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          {/* Gradient indicators for scroll on mobile */}
+          <div className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-surface to-transparent pointer-events-none md:hidden" />
         </div>
 
         {currentNews.length > 0 ? (

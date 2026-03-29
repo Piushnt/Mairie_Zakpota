@@ -8,7 +8,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('push', function(event) {
+self.addEventListener('push', function (event) {
   if (event.data) {
     try {
       const data = event.data.json();
@@ -35,13 +35,13 @@ self.addEventListener('push', function(event) {
   }
 });
 
-self.addEventListener('notificationclick', function(event) {
+self.addEventListener('notificationclick', function (event) {
   event.notification.close();
 
   const targetUrl = event.notification.data?.url || '/';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
       for (let i = 0; i < clientList.length; i++) {
         let client = clientList[i];
         if (client.url === targetUrl && 'focus' in client) {

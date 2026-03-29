@@ -29,6 +29,7 @@ import {
   Users,
   FileSignature,
   Calculator,
+  Newspaper,
   Map as MapIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,7 +38,7 @@ import { supabase } from '../lib/supabase';
 interface AdminDashboardProps {
   store: any;
   onUpdateStore: (newData: any) => void;
-  onSendPush: (title: string, message: string, urlPath?: string) => void;
+  onSendPush: (title: string, message: string, urlPath?: string, imageUrl?: string, tag?: string) => void;
   onExit: () => void;
 }
 
@@ -57,6 +58,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
   const [opportunites, setOpportunites] = useState(store.opportunites || []);
   const [rendezvous, setRendezvous] = useState(store.rendezvous || []);
   const [stadeReservations, setStadeReservations] = useState(store.reservationsStade || []);
+  const [news, setNews] = useState(store.news || []);
   const [configMarche, setConfigMarche] = useState(store.configMarche || { referenceDate: '' });
   const [formulaires, setFormulaires] = useState(store.formulaires || []);
   const [taxSettings, setTaxSettings] = useState(store.tax_settings || {
@@ -88,6 +90,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     category: 'Sessions',
     fileUrl: ''
   });
+
+  const [newNews, setNewNews] = useState({
+    title: '',
+    description: '',
+    category: 'Administration',
+    image_url: ''
+  });
+
   const [customPushTitle, setCustomPushTitle] = useState('');
   const [customPushMessage, setCustomPushMessage] = useState('');
   const [customPushUrl, setCustomPushUrl] = useState('');
@@ -108,6 +118,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       setTaxSettings(store.tax_settings);
     }
     setLocations(store.locations || []);
+    setNews(store.news || []);
   }, [store]);
 
   const [newOpportunity, setNewOpportunity] = useState({
@@ -749,6 +760,72 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     setCustomPushUrl('');
   };
 
+  const handleSaveNews = async () => {
+    if (!newNews.title || !newNews.description || !newNews.image_url) {
+      setErrorMessage("Veuillez remplir tous les champs de l'actualité.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data, error } = await supabase
+        .from('news')
+        .insert([{
+          title: newNews.title,
+          description: newNews.description,
+          category: newNews.category,
+          image_url: newNews.image_url,
+          date: new Date().toISOString().split('T')[0]
+        }])
+        .select();
+
+      if (error) throw error;
+
+      const freshNews = {
+        ...data[0],
+        desc: data[0].description,
+        cat: data[0].category,
+        img: data[0].image_url
+      };
+
+      const updatedNews = [freshNews, ...news];
+      setNews(updatedNews);
+      onUpdateStore({ news: updatedNews });
+
+      // Rich Push Notification - Envoi avec image et tag
+      onSendPush(
+        newNews.title, 
+        newNews.description.substring(0, 100) + "...", 
+        "/actualites", 
+        newNews.image_url, 
+        "news-alert"
+      );
+
+      showSuccess("Actualité publiée et notification envoyée !");
+      setNewNews({
+        title: '',
+        description: '',
+        category: 'Administration',
+        image_url: ''
+      });
+    } catch (error: any) {
+      console.error(error);
+      setErrorMessage("Erreur lors de la publication.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteNews = async (id: string) => {
+    const { error } = await supabase.from('news').delete().eq('id', id);
+    if (!error) {
+      const updated = news.filter((n: any) => n.id !== id);
+      setNews(updated);
+      onUpdateStore({ news: updated });
+      showSuccess("Actualité supprimée.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-muted flex flex-col lg:flex-row transition-colors duration-300">
       
@@ -796,6 +873,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
             { id: 'mapping', label: 'Lieux & Carte', icon: MapPin },
             { id: 'arrondissements', label: 'Arrondissements', icon: MapPin },
             { id: 'opportunities', label: 'Opportunités & Appels', icon: Briefcase },
+            { id: 'news', label: 'Actualités Mairie', icon: Newspaper },
             { id: 'market', label: 'Cycle du Marché', icon: ShoppingBag },
             { id: 'appointments', label: 'Audiences', icon: CalendarCheck },
             { id: 'stade_res', label: 'Gestion Stade', icon: Users },
@@ -853,6 +931,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
               {activeTab === 'arrondissements' && "Éditeur d'Arrondissements"}
               {activeTab === 'opportunities' && "Gestionnaire d'Opportunités"}
               {activeTab === 'market' && "Configurateur de Marché"}
+              {activeTab === 'news' && "Actualités & Communiqués"}
               {activeTab === 'appointments' && "Suivi des Rendez-vous"}
               {activeTab === 'stade_res' && "Demandes Réservation Stade"}
               {activeTab === 'flash' && "Alertes Flash & Push"}
@@ -1371,6 +1450,110 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                         className="p-2 text-red hover:bg-red/5 rounded-lg transition-colors min-h-[44px] min-w-[44px]"
                         title="Supprimer cette opportunité"
                         aria-label="Supprimer cette opportunité"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'news' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="max-w-3xl p-8 bg-card rounded-3xl border border-border shadow-xl space-y-8">
+                <h3 className="text-xl font-black text-ink flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                    <Newspaper className="w-5 h-5" />
+                  </div>
+                  Publier une Actualité
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Titre de l'Actualité</label>
+                    <input 
+                      type="text" 
+                      value={newNews.title}
+                      onChange={(e) => setNewNews({...newNews, title: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px] text-ink font-bold"
+                      placeholder="Ex: Inauguration du nouveau marché"
+                      title="Titre de l'article"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Catégorie</label>
+                    <select 
+                      value={newNews.category}
+                      onChange={(e) => setNewNews({...newNews, category: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px] text-ink font-bold"
+                      title="Catégorie de l'actualité"
+                    >
+                      <option value="Administration">🏛️ Administration</option>
+                      <option value="Travaux">🏗️ Travaux</option>
+                      <option value="Sport">⚽ Sport</option>
+                      <option value="Santé">🏥 Santé</option>
+                      <option value="Annonces">📢 Annonces</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">URL de l'Image de couverture</label>
+                    <input 
+                      type="text" 
+                      value={newNews.image_url}
+                      onChange={(e) => setNewNews({...newNews, image_url: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px] text-ink"
+                      placeholder="Lien Direct (ex: Unsplash, PostImg...)"
+                      title="URL de l'image"
+                    />
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Contenu / Détails</label>
+                    <textarea 
+                      value={newNews.description}
+                      onChange={(e) => setNewNews({...newNews, description: e.target.value})}
+                      rows={5}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm resize-none text-ink font-medium leading-relaxed"
+                      title="Détails de l'actualité"
+                      placeholder="Décrivez l'événement en quelques lignes..."
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={handleSaveNews}
+                  disabled={isSaving}
+                  className="w-full flex items-center justify-center space-x-3 px-8 py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 min-h-[44px]"
+                >
+                  {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>Publier & Notifier les Citoyens</span>
+                </button>
+              </div>
+
+              <div className="space-y-6 pb-20">
+                <h3 className="text-xl font-black text-ink flex items-center gap-2">
+                   Flux des Actualités ({news.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {news.map((item: any) => (
+                    <div key={item.id} className="p-6 bg-card rounded-[2rem] border border-border flex items-center justify-between shadow-sm hover:shadow-md transition-all group">
+                      <div className="flex items-center space-x-4 overflow-hidden">
+                        <div className="relative w-16 h-16 shrink-0 group-hover:scale-105 transition-transform duration-500">
+                           <img src={item.img} alt="" className="w-full h-full rounded-2xl object-cover" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="font-bold text-ink truncate text-sm">{item.title}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                             <span className="text-[9px] font-black uppercase tracking-widest text-primary/60 bg-primary/5 px-2 py-0.5 rounded">
+                               {item.cat}
+                             </span>
+                             <span className="text-[9px] text-ink/40 font-bold">{item.date}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteNews(item.id)}
+                        className="p-3 text-ink/20 hover:text-red hover:bg-red/5 rounded-xl transition-all min-h-[44px] min-w-[44px] shrink-0"
+                        title="Supprimer cette actualité"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>

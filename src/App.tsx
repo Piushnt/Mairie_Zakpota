@@ -155,7 +155,7 @@ export default function App() {
     async function loadData() {
       try {
         setLoading(true);
-        
+
         // Fetch all tables in parallel
         const [
           { data: tarifs },
@@ -252,7 +252,7 @@ export default function App() {
           const flash = config.find(c => c.key === 'flash_news')?.value;
           const market = config.find(c => c.key === 'market_config')?.value;
           const stade = config.find(c => c.key === 'stade_config')?.value;
-          
+
           if (flash) newStore.flashNews = flash;
           if (market) newStore.configMarche = market;
           if (stade) newStore.stade = stade;
@@ -294,7 +294,7 @@ export default function App() {
     setStore(prev => ({ ...prev, ...newData }));
   };
 
-  const handleSendPush = async (title: string, message: string, urlPath: string = '/') => {
+  const handleSendPush = async (title: string, message: string, urlPath: string = '/', imageUrl?: string, tag?: string) => {
     const notification = {
       id: Date.now().toString(),
       title,
@@ -309,6 +309,10 @@ export default function App() {
     }));
 
     try {
+      if (!('serviceWorker' in navigator)) return;
+      
+      console.log('Simulation Envoi Push:', { title, message, urlPath, imageUrl, tag });
+      
       await fetch('/api/send-push', {
         method: 'POST',
         headers: {
@@ -317,7 +321,9 @@ export default function App() {
         body: JSON.stringify({
           title: title,
           body: message,
-          url: urlPath
+          url: urlPath,
+          image: imageUrl,
+          tag: tag
         })
       });
     } catch (e) {
@@ -388,81 +394,81 @@ export default function App() {
     <HelmetProvider>
       <BrowserRouter>
         <ScrollToTop />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/admin-portal" element={
-          session ? (
-            <AdminDashboard
-              store={store}
-              onUpdateStore={handleUpdateStore}
-              onSendPush={handleSendPush}
-              onExit={() => window.location.href = '/'}
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin-portal" element={
+            session ? (
+              <AdminDashboard
+                store={store}
+                onUpdateStore={handleUpdateStore}
+                onSendPush={handleSendPush}
+                onExit={() => window.location.href = '/'}
+              />
+            ) : (
+              <Login />
+            )
+          } />
+
+          <Route path="/" element={
+            <Layout
+              NOM_VILLE={NOM_VILLE}
+              ADRESSE_MAIRIE={ADRESSE_MAIRIE}
+              TEL_CONTACT={TEL_CONTACT}
+              EMAIL_CONTACT={EMAIL_CONTACT}
+              isDarkMode={isDarkMode}
+              toggleDarkMode={toggleDarkMode}
+              isSearchOpen={isSearchOpen}
+              setIsSearchOpen={setIsSearchOpen}
+              notifications={store.notifications}
+              onMarkAsRead={handleMarkAsRead}
+              flashNews={store.flashNews}
             />
-          ) : (
-            <Login />
-          )
-        } />
+          }>
+            <Route index element={<PageHome reports={store.reports} />} />
+            <Route path="maire" element={<PageMaire />} />
+            <Route path="conseil" element={<PageConseil />} />
+            <Route path="arrondissements" element={<Arrondissements data={store.arrondissements} />} />
+            <Route path="histoire" element={<PageHistoire />} />
+            <Route path="publications" element={<RapportsPage store={store} />} />
 
-        <Route path="/" element={
-          <Layout 
-            NOM_VILLE={NOM_VILLE}
-            ADRESSE_MAIRIE={ADRESSE_MAIRIE}
-            TEL_CONTACT={TEL_CONTACT}
-            EMAIL_CONTACT={EMAIL_CONTACT}
-            isDarkMode={isDarkMode}
-            toggleDarkMode={toggleDarkMode}
-            isSearchOpen={isSearchOpen}
-            setIsSearchOpen={setIsSearchOpen}
-            notifications={store.notifications}
-            onMarkAsRead={handleMarkAsRead}
-            flashNews={store.flashNews}
-          />
-        }>
-          <Route index element={<PageHome reports={store.reports} />} />
-          <Route path="maire" element={<PageMaire />} />
-          <Route path="conseil" element={<PageConseil />} />
-          <Route path="arrondissements" element={<Arrondissements data={store.arrondissements} />} />
-          <Route path="histoire" element={<PageHistoire />} />
-          <Route path="publications" element={<RapportsPage store={store} />} />
-          
-          <Route path="services/:type" element={<PageService services={Object.keys(store.services || {}).length > 0 ? store.services : servicesData} />} />
+            <Route path="services/:type" element={<PageService services={Object.keys(store.services || {}).length > 0 ? store.services : servicesData} />} />
 
-          <Route path="simulateur" element={<SimulateurFiscal settings={store.tax_settings} />} />
-          <Route path="formulaires" element={<PageFormulaires formulaires={store.formulaires} />} />
-          <Route path="rendezvous" element={<RendezVous onSubmit={handleRendezVousSubmit} />} />
-          <Route path="economie" element={<MarketLogic config={store.configMarche} />} />
-          <Route path="opportunites" element={<Opportunities data={store.opportunites} />} />
-          <Route path="agenda" element={<PageAgenda agenda={store.agenda} />} />
-          <Route path="stade" element={<PageStade stade={store.stade} onReserve={handleStadeReservation} />} />
-          <Route path="tourisme" element={<PageTourisme />} />
-          <Route path="carte" element={
-            <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center font-black animate-pulse uppercase tracking-widest text-primary">Chargement de la carte...</div>}>
-              <PageCarte locations={store.locations} />
-            </React.Suspense>
-          } />
-          <Route path="actualites" element={<PageActualites news={store.news.length > 0 ? store.news : newsData} />} />
-          <Route path="signalement" element={<SignalementForm />} />
-          <Route path="contact" element={<PageContact NOM_VILLE={NOM_VILLE} ADRESSE_MAIRIE={ADRESSE_MAIRIE} TEL_CONTACT={TEL_CONTACT} EMAIL_CONTACT={EMAIL_CONTACT} />} />
-          
-          <Route path="*" element={
-            <div className="py-20 container mx-auto px-4 min-h-[60vh] text-center">
-              <h1 className="text-4xl font-black text-primary mb-8 uppercase tracking-tighter">
-                Page non trouvée
-              </h1>
-              <p className="text-ink-muted italic mb-12">
-                Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
-              </p>
-              <Link
-                to="/"
-                className="bg-primary text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-accent hover:text-primary transition-all shadow-xl"
-              >
-                Retour à l'accueil
-              </Link>
-            </div>
-          } />
-        </Route>
-      </Routes>
-      <PushPrompt />
+            <Route path="simulateur" element={<SimulateurFiscal settings={store.tax_settings} />} />
+            <Route path="formulaires" element={<PageFormulaires formulaires={store.formulaires} />} />
+            <Route path="rendezvous" element={<RendezVous onSubmit={handleRendezVousSubmit} />} />
+            <Route path="economie" element={<MarketLogic config={store.configMarche} />} />
+            <Route path="opportunites" element={<Opportunities data={store.opportunites} />} />
+            <Route path="agenda" element={<PageAgenda agenda={store.agenda} />} />
+            <Route path="stade" element={<PageStade stade={store.stade} onReserve={handleStadeReservation} />} />
+            <Route path="tourisme" element={<PageTourisme />} />
+            <Route path="carte" element={
+              <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center font-black animate-pulse uppercase tracking-widest text-primary">Chargement de la carte...</div>}>
+                <PageCarte locations={store.locations} />
+              </React.Suspense>
+            } />
+            <Route path="actualites" element={<PageActualites news={store.news.length > 0 ? store.news : newsData} />} />
+            <Route path="signalement" element={<SignalementForm />} />
+            <Route path="contact" element={<PageContact NOM_VILLE={NOM_VILLE} ADRESSE_MAIRIE={ADRESSE_MAIRIE} TEL_CONTACT={TEL_CONTACT} EMAIL_CONTACT={EMAIL_CONTACT} />} />
+
+            <Route path="*" element={
+              <div className="py-20 container mx-auto px-4 min-h-[60vh] text-center">
+                <h1 className="text-4xl font-black text-primary mb-8 uppercase tracking-tighter">
+                  Page non trouvée
+                </h1>
+                <p className="text-ink-muted italic mb-12">
+                  Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
+                </p>
+                <Link
+                  to="/"
+                  className="bg-primary text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-accent hover:text-primary transition-all shadow-xl"
+                >
+                  Retour à l'accueil
+                </Link>
+              </div>
+            } />
+          </Route>
+        </Routes>
+        <PushPrompt />
       </BrowserRouter>
     </HelmetProvider>
   );

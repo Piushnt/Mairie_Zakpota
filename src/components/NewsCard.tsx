@@ -8,6 +8,17 @@ export default function NewsCard({ news }: { news: any }) {
   const [isLiked, setIsLiked] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
 
+  const getCategoryColor = (cat: string) => {
+    switch (cat?.toLowerCase()) {
+      case 'administration': return 'bg-blue-600';
+      case 'travaux': return 'bg-orange-500';
+      case 'sport': return 'bg-green-600';
+      case 'santé': return 'bg-red-500';
+      case 'annonces': return 'bg-purple-600';
+      default: return 'bg-primary';
+    }
+  };
+
   const shareUrl = window.location.href;
   const shareText = `Découvrez cette actualité de la Mairie de Za-Kpota : ${news.title}`;
 
@@ -35,11 +46,11 @@ export default function NewsCard({ news }: { news: any }) {
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col h-full border border-border"
+      className="bg-card rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 group flex flex-col h-full border border-border"
     >
-      <div className="relative overflow-hidden h-56 shrink-0">
-        <img src={news.img} alt={news.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-        <div className="absolute top-4 left-4 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">
+      <div className="relative overflow-hidden h-64 shrink-0">
+        <img src={news.img} alt={news.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+        <div className={`absolute top-4 left-4 ${getCategoryColor(news.cat)} text-white text-[10px] font-black px-4 py-1.5 rounded-xl uppercase tracking-widest shadow-lg`}>
           {news.cat}
         </div>
       </div>
