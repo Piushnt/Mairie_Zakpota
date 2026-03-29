@@ -37,7 +37,7 @@ import { supabase } from '../lib/supabase';
 interface AdminDashboardProps {
   store: any;
   onUpdateStore: (newData: any) => void;
-  onSendPush: (title: string, message: string) => void;
+  onSendPush: (title: string, message: string, urlPath?: string) => void;
   onExit: () => void;
 }
 
@@ -90,6 +90,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
   });
   const [customPushTitle, setCustomPushTitle] = useState('');
   const [customPushMessage, setCustomPushMessage] = useState('');
+  const [customPushUrl, setCustomPushUrl] = useState('');
 
   // Synchronize local state with store updates from parent
   useEffect(() => {
@@ -150,6 +151,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       updatedServices[category] = categoryItems;
       setServices(updatedServices);
     }
+  };
+
+  const handleAddService = (category: string) => {
+    const newService = {
+      id: `temp-${Date.now()}`,
+      name: "Nouveau Service",
+      description: "",
+      cost: 0,
+      delay: "24h",
+      pieces: [],
+      link: null,
+      category: category
+    };
+    
+    const updatedServices = { ...services };
+    if (!updatedServices[category]) {
+      updatedServices[category] = [];
+    }
+    updatedServices[category] = [newService, ...updatedServices[category]];
+    setServices(updatedServices);
   };
 
   const handleAddPiece = (category: string, serviceId: number, piece: string) => {
@@ -333,7 +354,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         const updatedReports = [freshReport, ...reports];
         setReports(updatedReports);
         onUpdateStore({ reports: updatedReports });
-        onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`);
+        onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`, "/publications");
         showSuccess("Rapport publié avec succès !");
         setNewReport({
           title: '',
@@ -412,7 +433,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         onUpdateStore({ arrondissements: updatedArrs });
       }
 
-      onSendPush("Informations Mises à Jour", "Les contacts des arrondissements ont été actualisés.");
+      onSendPush("Informations Mises à Jour", "Les contacts des arrondissements ont été actualisés.", "/arrondissements");
       showSuccess("Arrondissements enregistrés avec succès !");
     } catch (error: any) {
       console.error('Supabase Error:', error);
@@ -451,7 +472,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         const updatedOpps = [freshOpp, ...opportunites];
         setOpportunites(updatedOpps);
         onUpdateStore({ opportunites: updatedOpps });
-        onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${newOpportunity.title}" a été publiée.`);
+        onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${newOpportunity.title}" a été publiée.`, "/opportunites");
         showSuccess("Opportunité publiée avec succès !");
         setNewOpportunity({
           title: '',
@@ -559,6 +580,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         const updated = [data[0], ...locations];
         setLocations(updated);
         onUpdateStore({ locations: updated });
+        onSendPush("Nouveau Lieu Ajouté", `${newLocation.name} a été ajouté sur la carte communale.`, "/carte");
         showSuccess("Lieu ajouté à la carte !");
         setNewLocation({
           name: '',
@@ -602,7 +624,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       if (error) throw error;
 
       onUpdateStore({ configMarche });
-      onSendPush("Rappel Marché", "La configuration du cycle du marché a été mise à jour.");
+      onSendPush("Rappel Marché", "La configuration du cycle du marché a été mise à jour.", "/marche");
       showSuccess("Configuration du marché enregistrée !");
     } catch (error: any) {
       console.error('Supabase Error:', error);
@@ -658,7 +680,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
       onSendPush(
         newStatus === 'VALIDE' ? "Réservation Confirmée" : "Réservation Refusée",
-        `La demande de ${reservation.nom} pour le ${reservation.date} a été traitée.`
+        `La demande de ${reservation.nom} pour le ${reservation.date} a été traitée.`,
+        "/stade"
       );
       
       showSuccess(newStatus === 'VALIDE' ? "Réservation validée et ajoutée à l'agenda !" : "Réservation refusée.");
@@ -680,7 +703,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
       const updatedRdv = rendezvous.map((r: any) => {
         if (r.id === id) {
-          onSendPush("RDV Confirmé", `Votre rendez-vous est validé.`);
+          onSendPush("RDV Confirmé", `Votre rendez-vous est validé.`, "/audiences");
           return { ...r, status: 'Validé' };
         }
         return r;
@@ -712,6 +735,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     } catch (error: any) {
       setErrorMessage(`Erreur annulation: ${error.message}`);
     }
+  };
+
+  const handleSendCustomPush = () => {
+    if (!customPushTitle || !customPushMessage) {
+      setErrorMessage("Veuillez remplir le titre et le message.");
+      return;
+    }
+    onSendPush(customPushTitle, customPushMessage, customPushUrl || '/');
+    showSuccess("Notification envoyée avec succès !");
+    setCustomPushTitle('');
+    setCustomPushMessage('');
+    setCustomPushUrl('');
   };
 
   return (
@@ -897,21 +932,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
               </div>
 
               <div className="space-y-6 pt-4">
-                <h3 className="text-xl font-black text-ink">Alerte Push Personnalisée</h3>
-                <p className="text-sm text-ink-muted">Envoyez une notification sur le téléphone de tous les citoyens abonnés.</p>
-                <div className="space-y-4">
+                <h3 className="text-xl font-black text-ink mb-6 flex items-center gap-2">
+                  <Bell className="w-6 h-6 text-primary" /> Alerte Rapide (Push Globale)
+                </h3>
+                <div className="grid grid-cols-1 gap-6 mb-8">
                   <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Titre de l'alerte</label>
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Titre de l'Alerte</label>
                     <input 
                       type="text" 
                       value={customPushTitle}
                       onChange={(e) => setCustomPushTitle(e.target.value)}
-                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-sm text-ink min-h-[44px]"
-                      placeholder="Ex: Alerte Méteo, Nouveau Conseil..."
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: Alerte Méteo Grave"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Message de l'alerte</label>
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Message</label>
                     <textarea 
                       value={customPushMessage}
                       onChange={(e) => setCustomPushMessage(e.target.value)}
@@ -920,18 +956,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       placeholder="Contenu de la notification..."
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Lien de redirection (Optionnel)</label>
+                    <input 
+                      type="text" 
+                      value={customPushUrl}
+                      onChange={(e) => setCustomPushUrl(e.target.value)}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: /carte, /agenda, ou https://..."
+                    />
+                  </div>
                 </div>
                 <button 
-                  onClick={() => {
-                    if (customPushTitle && customPushMessage) {
-                      onSendPush(customPushTitle, customPushMessage, "/");
-                      setCustomPushTitle('');
-                      setCustomPushMessage('');
-                      showSuccess("Alerte Push envoyée avec succès à tous les abonnés !");
-                    } else {
-                      setErrorMessage("Veuillez remplir le titre et le message de l'alerte.");
-                    }
-                  }}
+                  onClick={handleSendCustomPush}
                   className="w-full flex items-center justify-center space-x-3 px-8 py-4 bg-red text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red/90 transition-all shadow-xl shadow-red/20 min-h-[44px]"
                 >
                   <Bell className="w-4 h-4" />
@@ -1121,10 +1158,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
                     >
                       <option>Administration</option>
-                      <option>Santé</option>
                       <option>Éducation</option>
-                      <option>Sport</option>
-                      <option>Tourisme</option>
+                      <option>Santé</option>
+                      <option>Lieux de Culte</option>
+                      <option>Marchés & Commerce</option>
+                      <option>Loisirs & Stade</option>
                       <option>Autre</option>
                     </select>
                   </div>
@@ -1476,18 +1514,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
                 return (
                   <div key={category} className="space-y-8">
-                    <h3 className="text-2xl font-black text-ink capitalize flex items-center">
-                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mr-4">
-                        <CategoryIcon className="w-6 h-6" />
-                      </div>
-                      {category.replace(/-/g, ' ')}
-                    </h3>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <h3 className="text-2xl font-black text-ink capitalize flex items-center">
+                        <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mr-4">
+                          <CategoryIcon className="w-6 h-6" />
+                        </div>
+                        {category.replace(/-/g, ' ')}
+                      </h3>
+                      <button 
+                        onClick={() => handleAddService(category)}
+                        className="px-6 py-3 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-xl font-black uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" /> Ajouter un Acte
+                      </button>
+                    </div>
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                       {items.map((service: any) => (
                         <div key={service.id} className="p-8 bg-muted rounded-3xl border border-border space-y-6">
                           <div className="flex justify-between items-start">
-                            <h4 className="text-lg font-black text-ink">{service.name}</h4>
-                            <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">{service.delay}</span>
+                            <input
+                              type="text"
+                              value={service.name}
+                              onChange={(e) => {
+                                const newServices = {...services};
+                                const idx = newServices[category].findIndex((s:any) => s.id === service.id);
+                                if(idx > -1) newServices[category][idx].name = e.target.value;
+                                setServices(newServices);
+                              }}
+                              className="font-black text-ink bg-transparent outline-none border-b border-border border-dashed focus:border-primary/50 text-lg w-full max-w-[70%]"
+                              title="Nom de l'acte"
+                            />
+                            <input 
+                              type="text"
+                              value={service.delay}
+                              onChange={(e) => {
+                                const newServices = {...services};
+                                const idx = newServices[category].findIndex((s:any) => s.id === service.id);
+                                if(idx > -1) newServices[category][idx].delay = e.target.value;
+                                setServices(newServices);
+                              }}
+                              className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest outline-none w-24 text-center"
+                              title="Délai estimé"
+                            />
                           </div>
                           
                           <div className="space-y-2">

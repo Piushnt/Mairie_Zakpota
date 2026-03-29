@@ -17,7 +17,7 @@ self.addEventListener('push', function(event) {
         icon: data.icon || '/logo.jpg',
         badge: data.badge || '/logo.jpg',
         vibrate: [100, 50, 100],
-        data: data.data || {}
+        data: { url: data.url || '/' }
       };
 
       event.waitUntil(
@@ -27,7 +27,8 @@ self.addEventListener('push', function(event) {
       // If payload is not valid JSON, show generic
       event.waitUntil(
         self.registration.showNotification(event.data.text(), {
-          icon: '/logo.jpg'
+          icon: '/logo.jpg',
+          data: { url: '/' }
         })
       );
     }

@@ -103,6 +103,7 @@ import SignalementForm from './components/SignalementForm';
 import SimulateurFiscal from './components/SimulateurFiscal';
 import PageFormulaires from './pages/PageFormulaires';
 import Login from './pages/Login';
+import PushPrompt from './components/PushPrompt';
 
 // --- TYPES ---
 type Page = 'home' | 'etat-civil' | 'urbanisme' | 'economie' | 'conseil' | 'actualites' | 'contact' | 'maire' | 'decouvrir' | 'eservices' | 'histoire' | 'arrondissements' | 'publications' | 'agenda' | 'tourisme' | 'stade' | 'signalement' | 'simulateur' | 'admin-portal' | 'opportunites' | 'rendezvous';
@@ -461,7 +462,8 @@ export default function App() {
           } />
         </Route>
       </Routes>
-    </BrowserRouter>
+      <PushPrompt />
+      </BrowserRouter>
     </HelmetProvider>
   );
 }

@@ -9,9 +9,10 @@ import {
   ChevronRight, 
   Info,
   Maximize2,
-  Minimize2
+  Minimize2,
+  MapPin
 } from 'lucide-react';
-import LazyMap from '../components/LazyMap';
+import LazyMap, { getIconConfig } from '../components/LazyMap';
 
 interface PageCarteProps {
   locations: any[];
@@ -22,9 +23,25 @@ const PageCarte: React.FC<PageCarteProps> = ({ locations = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const categories = useMemo(() => {
+  const dynamicCategories = useMemo(() => {
     return Array.from(new Set(locations.map(loc => loc.category))).filter(Boolean);
   }, [locations]);
+
+  const allCategories = [
+    'Administration',
+    'Éducation',
+    'Santé',
+    'Lieux de Culte',
+    'Marchés & Commerce',
+    'Loisirs & Stade',
+    'Autre'
+  ];
+
+  // Garder seulement les catégories qui ont des lieux, plus celles existantes par défaut
+  const categories = useMemo(() => {
+    const combined = new Set([...allCategories, ...dynamicCategories]);
+    return Array.from(combined);
+  }, [dynamicCategories]);
 
   const filteredLocations = useMemo(() => {
     return locations.filter(loc => {
@@ -150,7 +167,30 @@ const PageCarte: React.FC<PageCarteProps> = ({ locations = [] }) => {
             </button>
           )}
 
-          <div className="absolute bottom-6 right-6 z-[30] pointer-events-none">
+          <div className="absolute bottom-6 right-6 z-[30] pointer-events-none flex flex-col items-end gap-4">
+            {/* Légende interactive */}
+            <div className="bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-2xl pointer-events-auto border border-border/50 hidden md:block w-48 transition-all hover:scale-105">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-ink/40 mb-3 flex items-center justify-between">
+                Légende <MapPin className="w-3 h-3" />
+              </h4>
+              <div className="space-y-3">
+                {['Administration', 'Éducation', 'Santé', 'Lieux de Culte', 'Marchés & Commerce', 'Loisirs & Stade'].map(cat => {
+                  const config = getIconConfig(cat);
+                  return (
+                    <div key={cat} className="flex items-center gap-3">
+                      <div 
+                        className="w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+                        style={{ backgroundColor: config.color, color: 'white' }}
+                      >
+                        {React.cloneElement(config.icon as React.ReactElement, { size: 10 })}
+                      </div>
+                      <span className="text-[10px] font-bold text-ink truncate flex-1">{cat}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-xl flex items-center space-x-3 pointer-events-auto">
               <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
               <span className="text-[10px] font-black uppercase tracking-widest text-ink">Données Temps Réel</span>
