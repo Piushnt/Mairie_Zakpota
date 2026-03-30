@@ -25,7 +25,7 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
       <title>Accueil - Mairie de Za-Kpota</title>
       <meta name="description" content="Découvrez les services, l'actualité et les opportunités de la Mairie de Za-Kpota." />
     </Helmet>
-    <Hero />
+    <Hero news={news} />
 
     <section className="container mx-auto px-4 -mt-24 relative z-20">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -110,44 +110,7 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
       </div>
     </section>
 
-    <section className="container mx-auto px-4 mt-24">
-      <div className="flex items-center justify-between mb-12 border-b-2 border-border dark:border-white/10 pb-6">
-        <div>
-          <h2 className="text-4xl font-black text-primary dark:text-[#00c561] uppercase tracking-tight">Actualités Municipales</h2>
-          <p className="text-ink-muted dark:text-white/60 mt-2 font-medium">Toute l'actualité de votre commune en temps réel</p>
-        </div>
-        <Link to="/actualites" className="text-xs font-black uppercase tracking-widest text-primary dark:text-[#00c561] hover:text-accent dark:hover:text-white flex items-center group transition-colors">
-          Toutes les actualités <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
-        </Link>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {news.slice(0, 3).map((item) => (
-          <Link 
-            key={item.id} 
-            to={`/news/${item.id}`}
-            className="flex items-center space-x-4 bg-card p-4 rounded-3xl border border-border hover:border-primary/30 hover:shadow-xl transition-all group"
-          >
-            <div className="flex-1 min-w-0">
-              <span className="inline-block px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[8px] font-black uppercase tracking-widest mb-2">
-                {item.cat || item.category}
-              </span>
-              <h3 className="text-sm font-black text-ink leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                {item.title}
-              </h3>
-              <p className="text-[10px] text-ink-muted mt-2 font-medium">Lire la suite...</p>
-            </div>
-            <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
-              <img 
-                src={item.img || item.image_url} 
-                alt={item.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-            </div>
-          </Link>
-        ))}
-      </div>
-    </section>
 
     <PartnersSection />
 
