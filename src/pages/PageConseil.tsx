@@ -35,7 +35,9 @@ const PageConseil = ({ council }: { council: any[] }) => {
             </div>
             <div className="p-8 text-center">
               <h3 className="text-xl font-black text-ink mb-2 uppercase tracking-tight">{member.name}</h3>
-              <p className="text-primary font-black uppercase tracking-widest text-[10px] mb-6">{member.role}</p>
+              <p className="text-primary font-black uppercase tracking-widest text-[10px] mb-6">
+                {member.council_roles?.title || member.role}
+              </p>
               <button className="w-full py-4 bg-muted hover:bg-primary hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
                 Voir le profil détaillé
               </button>

@@ -173,7 +173,8 @@ export default function App() {
           { data: forms },
           { data: taxes },
           { data: locs },
-          { data: counRes }
+          { data: counRes },
+          { data: roles }
         ] = await Promise.all([
           supabase.from('services_tarifs').select('*'),
           supabase.from('news').select('*').order('date', { ascending: false }),
@@ -187,7 +188,8 @@ export default function App() {
           supabase.from('formulaires').select('*').order('created_at', { ascending: false }),
           supabase.from('tax_settings').select('*'),
           supabase.from('locations').select('*').order('name'),
-          supabase.from('council').select('*').order('created_at', { ascending: true })
+          supabase.from('council').select('*, council_roles(*)'),
+          supabase.from('council_roles').select('*').order('importance_order', { ascending: true })
         ]);
 
         const newStore = { ...initialStoreData };
@@ -285,10 +287,20 @@ export default function App() {
         }
 
         if (counRes) {
-          newStore.council = counRes.map(c => ({
+          // Sort council by role importance
+          const sortedCouncil = [...counRes].sort((a, b) => {
+            const orderA = a.council_roles?.importance_order ?? 99;
+            const orderB = b.council_roles?.importance_order ?? 99;
+            return orderA - orderB;
+          });
+          newStore.council = sortedCouncil.map(c => ({
             ...c,
             photo: c.photo_url
           }));
+        }
+
+        if (roles) {
+          newStore.council_roles = roles;
         }
 
         setStore(newStore);
@@ -437,7 +449,7 @@ export default function App() {
               flashNews={store.flashNews}
             />
           }>
-            <Route index element={<PageHome reports={store.reports} />} />
+            <Route index element={<PageHome reports={store.reports} news={store.news} />} />
             <Route path="maire" element={<PageMaire />} />
             <Route path="conseil" element={<PageConseil council={store.council} />} />
             <Route path="arrondissements" element={<Arrondissements data={store.arrondissements} />} />

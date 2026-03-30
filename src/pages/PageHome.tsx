@@ -19,7 +19,7 @@ import { newsData } from '../data/config';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
-const PageHome = ({ reports = [] }: { reports?: any[] }) => (
+const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }) => (
   <main className="pb-20 bg-surface transition-colors duration-300">
     <Helmet>
       <title>Accueil - Mairie de Za-Kpota</title>
@@ -121,11 +121,30 @@ const PageHome = ({ reports = [] }: { reports?: any[] }) => (
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-        {newsData.slice(0, 3).map((news) => (
-          <div key={news.id}>
-            <NewsCard news={news} />
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {news.slice(0, 3).map((item) => (
+          <Link 
+            key={item.id} 
+            to={`/news/${item.id}`}
+            className="flex items-center space-x-4 bg-card p-4 rounded-3xl border border-border hover:border-primary/30 hover:shadow-xl transition-all group"
+          >
+            <div className="flex-1 min-w-0">
+              <span className="inline-block px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[8px] font-black uppercase tracking-widest mb-2">
+                {item.cat || item.category}
+              </span>
+              <h3 className="text-sm font-black text-ink leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                {item.title}
+              </h3>
+              <p className="text-[10px] text-ink-muted mt-2 font-medium">Lire la suite...</p>
+            </div>
+            <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
+              <img 
+                src={item.img || item.image_url} 
+                alt={item.title}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+            </div>
+          </Link>
         ))}
       </div>
     </section>

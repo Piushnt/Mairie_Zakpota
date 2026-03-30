@@ -123,5 +123,6 @@ export const initialStoreData = {
   tax_settings: {},
   locations: [],
   audiences: [],
-  council: []
+  council: [],
+  council_roles: []
 };

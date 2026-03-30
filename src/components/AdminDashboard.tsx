@@ -89,7 +89,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     name: '',
     role: '',
     photo_url: '',
-    bio: ''
+    bio: '',
+    role_id: ''
   });
 
   const [newReport, setNewReport] = useState({
@@ -862,14 +863,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     }
     setIsSaving(true);
     try {
-      const { data, error } = await supabase.from('council').insert([newCouncilMember]).select();
+      const payload = {
+        name: newCouncilMember.name,
+        role: newCouncilMember.role,
+        photo_url: newCouncilMember.photo_url,
+        bio: newCouncilMember.bio,
+        role_id: newCouncilMember.role_id || null
+      };
+
+      const { data, error } = await supabase.from('council').insert([payload]).select('*, council_roles(*)');
       if (error) throw error;
-      const updated = [...council, data[0]];
-      setCouncil(updated);
-      onUpdateStore({ council: updated });
+      
+      const freshMember = data[0];
+      const updated = [...council, { ...freshMember, photo: freshMember.photo_url }];
+      
+      // Sort by importance
+      const sorted = [...updated].sort((a, b) => {
+        const orderA = a.council_roles?.importance_order ?? 99;
+        const orderB = b.council_roles?.importance_order ?? 99;
+        return orderA - orderB;
+      });
+
+      setCouncil(sorted);
+      onUpdateStore({ council: sorted });
       showSuccess("Membre du conseil ajouté !");
-      setNewCouncilMember({ name: '', role: '', photo_url: '', bio: '' });
+      setNewCouncilMember({ name: '', role: '', photo_url: '', bio: '', role_id: '' });
     } catch (e) {
+      console.error(e);
       setErrorMessage("Erreur lors de l'ajout.");
     } finally {
       setIsSaving(false);
@@ -1140,6 +1160,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       value={newFormulaire.category}
                       onChange={(e) => setNewFormulaire({...newFormulaire, category: e.target.value})}
                       className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      aria-label="Sélectionner la catégorie"
                     >
                       <option>État-civil</option>
                       <option>Urbanisme</option>
@@ -1217,6 +1238,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       <label className="text-xs font-black uppercase tracking-widest text-ink/40">Taux Bâti</label>
                       <input 
                         type="number" 
+                        title="Taux Bâti (%)"
+                        placeholder="Ex: 6"
                         value={taxSettings.tfu_rates?.taux_bati || ''}
                         onChange={(e) => setTaxSettings({...taxSettings, tfu_rates: { ...taxSettings.tfu_rates, taux_bati: parseFloat(e.target.value) }})}
                         className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
@@ -1226,6 +1249,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       <label className="text-xs font-black uppercase tracking-widest text-ink/40">Taux Non Bâti</label>
                       <input 
                         type="number" 
+                        title="Taux Non Bâti (%)"
+                        placeholder="Ex: 5"
                         value={taxSettings.tfu_rates?.taux_non_bati || ''}
                         onChange={(e) => setTaxSettings({...taxSettings, tfu_rates: { ...taxSettings.tfu_rates, taux_non_bati: parseFloat(e.target.value) }})}
                         className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
@@ -1240,6 +1265,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       <label className="text-xs font-black uppercase tracking-widest text-ink/40">Droit Fixe de Base</label>
                       <input 
                         type="number" 
+                        title="Droit Fixe de Base (FCFA)"
+                        placeholder="Ex: 10000"
                         value={taxSettings.patente_rates?.droit_fixe_base || ''}
                         onChange={(e) => setTaxSettings({...taxSettings, patente_rates: { ...taxSettings.patente_rates, droit_fixe_base: parseFloat(e.target.value) }})}
                         className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
@@ -1249,6 +1276,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       <label className="text-xs font-black uppercase tracking-widest text-ink/40">Droit Proportionnel (%)</label>
                       <input 
                         type="number" 
+                        title="Droit Proportionnel (%)"
+                        placeholder="Ex: 10"
                         value={taxSettings.patente_rates?.droit_proportionnel || ''}
                         onChange={(e) => setTaxSettings({...taxSettings, patente_rates: { ...taxSettings.patente_rates, droit_proportionnel: parseFloat(e.target.value) }})}
                         className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
@@ -1778,14 +1807,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-black uppercase tracking-widest text-ink/40">Poste / Rôle</label>
-                    <input 
-                      title="Rôle du membre"
-                      type="text" 
-                      value={newCouncilMember.role}
-                      onChange={(e) => setNewCouncilMember({...newCouncilMember, role: e.target.value})}
-                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
-                      placeholder="Ex: Premier Adjoint au Maire"
-                    />
+                    <select 
+                      title="Sélectionner le rôle"
+                      value={newCouncilMember.role_id}
+                      onChange={(e) => {
+                        const selectedRole = store.council_roles?.find((r: any) => r.id === e.target.value);
+                        setNewCouncilMember({
+                          ...newCouncilMember, 
+                          role_id: e.target.value,
+                          role: selectedRole ? selectedRole.title : ''
+                        });
+                      }}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px] font-bold"
+                    >
+                      <option value="">Sélectionner un poste...</option>
+                      {store.council_roles?.map((role: any) => (
+                        <option key={role.id} value={role.id}>{role.title}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-xs font-black uppercase tracking-widest text-ink/40">URL Photo</label>
@@ -1826,7 +1865,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                         </div>
                         <div>
                           <h4 className="font-bold text-ink block">{member.name}</h4>
-                          <p className="text-[10px] text-primary font-black uppercase tracking-widest">{member.role}</p>
+                          <p className="text-[10px] text-primary font-black uppercase tracking-widest">
+                            {member.council_roles?.title || member.role}
+                          </p>
                         </div>
                       </div>
                       <button 
