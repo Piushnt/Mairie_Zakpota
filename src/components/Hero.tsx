@@ -78,7 +78,7 @@ const Hero: React.FC<HeroProps> = ({ news = [] }) => {
                 {items[current].title}
               </h1>
 
-              <p className="text-lg md:text-xl text-white/70 mb-10 max-w-2xl mx-auto font-medium leading-relaxed line-clamp-2 md:line-clamp-none">
+              <p className="text-lg md:text-xl text-white/70 mb-10 max-w-2xl mx-auto font-medium leading-relaxed line-clamp-3">
                 {items[current].desc || items[current].description}
               </p>
 
