@@ -148,13 +148,13 @@ const PageCarte: React.FC<PageCarteProps> = ({ locations = [] }) => {
         </aside>
 
         {/* Map Area */}
-        <div className="flex-1 relative bg-muted min-h-[500px] lg:min-h-0">
+        <div className="flex-1 relative bg-muted h-[500px] lg:h-auto lg:min-h-0">
           <LazyMap 
             center={MAP_CENTER} 
             zoom={DEFAULT_ZOOM} 
             markers={filteredLocations}
             height="100%"
-            className="w-full h-full"
+            className="w-full absolute inset-0"
           />
           
           {isFullscreen && (

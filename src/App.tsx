@@ -105,6 +105,7 @@ import SimulateurFiscal from './components/SimulateurFiscal';
 import PageFormulaires from './pages/PageFormulaires';
 import Login from './pages/Login';
 import PushPrompt from './components/PushPrompt';
+import { parseImageUrl } from './utils/imageParser';
 
 // --- TYPES ---
 type Page = 'home' | 'etat-civil' | 'urbanisme' | 'economie' | 'conseil' | 'actualites' | 'contact' | 'maire' | 'decouvrir' | 'eservices' | 'histoire' | 'arrondissements' | 'publications' | 'agenda' | 'tourisme' | 'stade' | 'signalement' | 'simulateur' | 'admin-portal' | 'opportunites' | 'rendezvous';
@@ -237,12 +238,16 @@ export default function App() {
         }
 
         if (news) {
-          newStore.news = news.map(n => ({
-            ...n,
-            desc: n.description,
-            cat: n.category,
-            img: n.image_url || FALLBACK_NEWS_IMG
-          }));
+          newStore.news = news.map(n => {
+            const parsed = parseImageUrl(n.image_url);
+            return {
+              ...n,
+              desc: n.description,
+              cat: n.category,
+              img: parsed || FALLBACK_NEWS_IMG,
+              image_url: parsed || FALLBACK_NEWS_IMG
+            };
+          });
         }
 
         if (reps) {
@@ -333,7 +338,7 @@ export default function App() {
           title: title,
           body: message,
           url: urlPath,
-          image: imageUrl,
+          image: parseImageUrl(imageUrl),
           tag: tag
         })
       });

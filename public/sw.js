@@ -16,6 +16,7 @@ self.addEventListener('push', function (event) {
         body: data.body,
         icon: data.icon || '/logo.jpg',
         badge: data.badge || '/logo.jpg',
+        image: data.image || undefined,
         vibrate: [100, 50, 100],
         data: { url: data.url || '/' }
       };
