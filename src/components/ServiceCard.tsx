@@ -7,15 +7,16 @@ interface ServiceCardProps {
   desc: string;
   url: string;
   Icon: any;
+  iconColor?: string;
 }
 
-const ServiceCard = ({ title, desc, url, Icon }: ServiceCardProps) => {
+const ServiceCard = ({ title, desc, url, Icon, iconColor }: ServiceCardProps) => {
   return (
     <motion.div
       whileHover={{ y: -5 }}
-      className="bg-card p-6 shadow-md dark:shadow-2xl border-l-4 border-primary dark:border-accent flex items-start space-x-6 h-full transition-all group border border-border dark:border-white/5"
+      className="bg-card p-6 shadow-md dark:shadow-2xl border-l-4 border-primary dark:border-accent flex items-start space-x-6 h-full transition-all group border border-border dark:border-white/5 rounded-2xl"
     >
-      <div className="flex-shrink-0 w-20 h-20 bg-muted dark:bg-white/5 rounded-lg p-4 flex items-center justify-center text-primary dark:text-[#00c561] group-hover:bg-primary group-hover:text-white dark:group-hover:bg-[#00c561] dark:group-hover:text-slate-900 transition-colors duration-500">
+      <div className={`flex-shrink-0 w-20 h-20 bg-muted dark:bg-white/5 rounded-2xl p-4 flex items-center justify-center ${iconColor || 'text-primary dark:text-[#00c561]'} group-hover:bg-primary group-hover:text-white dark:group-hover:bg-[#00c561] dark:group-hover:text-slate-900 transition-all duration-500`}>
         <Icon className="w-10 h-10" />
       </div>
       

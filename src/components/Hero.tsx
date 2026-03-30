@@ -30,7 +30,7 @@ const Hero: React.FC<HeroProps> = ({ news = [] }) => {
   }, [nextSlide]);
 
   return (
-    <section className="relative h-[650px] lg:h-[750px] w-full overflow-hidden bg-slate-900">
+    <section className="relative h-[450px] lg:h-[550px] w-full overflow-hidden bg-slate-900">
       <AnimatePresence mode="wait">
         <motion.div
           key={current}

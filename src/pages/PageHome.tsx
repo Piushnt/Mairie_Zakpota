@@ -27,31 +27,35 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
     </Helmet>
     <Hero news={news} />
 
-    <section className="container mx-auto px-4 -mt-24 relative z-20">
+    <section className="container mx-auto px-4 mt-16 relative z-20">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ServiceCard
           title="État Civil"
           desc="Demandez vos actes de naissance, mariage ou décès en ligne. Suivez l'évolution de votre demande en temps réel."
           url="https://service-public.bj/etat-civil"
           Icon={Users}
+          iconColor="text-[#008751]"
         />
         <ServiceCard
           title="Urbanisme & Foncier"
           desc="Permis de construire, certificat d'urbanisme et démarches foncières. Consultez le Plan Directeur d'Urbanisme."
           url="/urbanisme"
           Icon={Building2}
+          iconColor="text-[#FCD116]"
         />
         <ServiceCard
           title="Marchés Publics"
           desc="Consultez les appels d'offres en cours et les résultats des attributions pour la commune de Za-Kpota."
           url="https://marches-publics.bj"
           Icon={ShoppingBag}
+          iconColor="text-[#E8112D]"
         />
         <ServiceCard
           title="Taxe de Développement"
           desc="Payez vos taxes locales et contribuez au développement des infrastructures de notre commune."
           url="/taxes"
           Icon={Coins}
+          iconColor="text-[#008751]"
         />
       </div>
     </section>
