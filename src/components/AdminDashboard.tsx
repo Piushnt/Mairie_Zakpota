@@ -60,6 +60,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
   const [stadeReservations, setStadeReservations] = useState(store.reservationsStade || []);
   const [news, setNews] = useState(store.news || []);
   const [configMarche, setConfigMarche] = useState(store.configMarche || { referenceDate: '' });
+  const [audiences, setAudiences] = useState(store.audiences || []);
+  const [council, setCouncil] = useState(store.council || []);
   const [formulaires, setFormulaires] = useState(store.formulaires || []);
   const [taxSettings, setTaxSettings] = useState(store.tax_settings || {
     tfu_rates: { taux_bati: 6, taux_non_bati: 5 },
@@ -81,6 +83,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     lat: 7.1915,
     lng: 2.2635,
     image_url: ''
+  });
+  
+  const [newCouncilMember, setNewCouncilMember] = useState({
+    name: '',
+    role: '',
+    photo_url: '',
+    bio: ''
   });
 
   const [newReport, setNewReport] = useState({
@@ -826,6 +835,57 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     }
   };
 
+  const handleUpdateAudienceStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from('audiences').update({ status }).eq('id', id);
+    if (!error) {
+      const updated = audiences.map((a: any) => a.id === id ? { ...a, status } : a);
+      setAudiences(updated);
+      onUpdateStore({ audiences: updated });
+      showSuccess(`Statut mis à jour : ${status}`);
+    }
+  };
+
+  const handleDeleteAudience = async (id: string) => {
+    const { error } = await supabase.from('audiences').delete().eq('id', id);
+    if (!error) {
+      const updated = audiences.filter((a: any) => a.id !== id);
+      setAudiences(updated);
+      onUpdateStore({ audiences: updated });
+      showSuccess("Message/Demande supprimé.");
+    }
+  };
+
+  const handleSaveCouncilMember = async () => {
+    if (!newCouncilMember.name || !newCouncilMember.role) {
+      setErrorMessage("Veuillez remplir le nom et le poste.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const { data, error } = await supabase.from('council').insert([newCouncilMember]).select();
+      if (error) throw error;
+      const updated = [...council, data[0]];
+      setCouncil(updated);
+      onUpdateStore({ council: updated });
+      showSuccess("Membre du conseil ajouté !");
+      setNewCouncilMember({ name: '', role: '', photo_url: '', bio: '' });
+    } catch (e) {
+      setErrorMessage("Erreur lors de l'ajout.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteCouncilMember = async (id: string) => {
+    const { error } = await supabase.from('council').delete().eq('id', id);
+    if (!error) {
+      const updated = council.filter((c: any) => c.id !== id);
+      setCouncil(updated);
+      onUpdateStore({ council: updated });
+      showSuccess("Membre supprimé.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-muted flex flex-col lg:flex-row transition-colors duration-300">
       
@@ -879,6 +939,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
             { id: 'stade_res', label: 'Gestion Stade', icon: Users },
             { id: 'formulaires', label: 'Guichet Numérique', icon: FileSignature },
             { id: 'taxes', label: 'Paramètres Fiscaux', icon: Calculator },
+            { id: 'council', label: 'Conseil Municipal', icon: Users },
             { id: 'flash', label: 'Alertes & Push', icon: Bell },
             { id: 'settings', label: 'Configuration', icon: Settings },
           ].map(item => (
@@ -1602,10 +1663,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
           {activeTab === 'appointments' && (
             <div className="space-y-8">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-black text-ink">Demandes d'Audience</h3>
+                <h3 className="text-2xl font-black text-ink">Demandes d'Audience & Messages</h3>
                 <div className="flex space-x-2">
                   <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest">
-                    {rendezvous.filter((r: any) => r.status === 'En attente').length} En attente
+                    {audiences.filter((a: any) => a.status === 'En attente').length} En attente
                   </span>
                 </div>
               </div>
@@ -1614,72 +1675,170 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b border-border">
+                      <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Type</th>
                       <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Citoyen</th>
-                      <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Motif</th>
-                      <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Date & Heure</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Objet / Motif</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Date</th>
                       <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Statut</th>
                       <th className="text-right py-4 px-6 text-[10px] font-black uppercase tracking-widest text-ink/40">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {rendezvous.length === 0 ? (
+                    {audiences.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="py-12 text-center text-ink/40 font-medium">Aucune demande de rendez-vous pour le moment.</td>
+                        <td colSpan={6} className="py-12 text-center text-ink/40 font-medium">Aucune demande d'audience ou message pour le moment.</td>
                       </tr>
                     ) : (
-                      rendezvous.map((rdv: any) => (
-                        <tr key={rdv.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                      audiences.map((aud: any) => (
+                        <tr key={aud.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                           <td className="py-4 px-6">
-                            <p className="font-bold text-ink">{rdv.name}</p>
-                            <p className="text-xs text-ink/40">{rdv.phone}</p>
+                            <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${
+                              aud.type === 'rdv' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
+                            }`}>
+                              {aud.type === 'rdv' ? 'RDV' : 'CONTACT'}
+                            </span>
                           </td>
                           <td className="py-4 px-6">
-                            <span className="px-3 py-1 bg-muted border border-border rounded-lg text-xs font-bold text-ink/60">{rdv.motif}</span>
+                            <p className="font-bold text-ink">{aud.name}</p>
+                            <p className="text-[10px] text-ink/40 font-medium">{aud.email || aud.phone}</p>
                           </td>
                           <td className="py-4 px-6">
-                            <div className="flex items-center space-x-2 text-sm font-bold text-ink">
-                              <Calendar className="w-4 h-4 text-primary" />
-                              <span>{new Date(rdv.date).toLocaleDateString()}</span>
-                              <Clock className="w-4 h-4 text-primary ml-2" />
-                              <span>{rdv.time}</span>
+                            <p className="text-xs font-bold text-ink mb-1">{aud.subject || 'Aucun objet'}</p>
+                            <p className="text-[10px] text-ink/40 font-medium line-clamp-1">{aud.message}</p>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex flex-col text-[10px] font-bold text-ink">
+                              {aud.type === 'rdv' ? (
+                                <>
+                                  <div className="flex items-center space-x-1">
+                                    <Calendar className="w-3 h-3 text-primary" />
+                                    <span>{new Date(aud.appointment_date).toLocaleDateString()}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1 mt-1 text-primary">
+                                    <Clock className="w-3 h-3" />
+                                    <span>{aud.appointment_time}</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <span>{new Date(aud.created_at).toLocaleDateString()}</span>
+                              )}
                             </div>
                           </td>
                           <td className="py-4 px-6">
                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                              rdv.status === 'Validé' ? 'bg-primary/10 text-primary' :
-                              rdv.status === 'Annulé' ? 'bg-red/10 text-red' :
+                              aud.status === 'Validé' ? 'bg-primary/10 text-primary' :
+                              aud.status === 'Annulé' ? 'bg-red/10 text-red' :
                               'bg-accent/20 text-primary'
                             }`}>
-                              {rdv.status}
+                              {aud.status}
                             </span>
                           </td>
                           <td className="py-4 px-6 text-right space-x-2">
-                            {rdv.status === 'En attente' && (
-                              <>
-                                <button 
-                                  onClick={() => handleValidateAppointment(rdv.id)}
-                                  className="p-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all min-h-[44px] min-w-[44px]"
-                                  title="Valider le rendez-vous"
-                                  aria-label="Valider le rendez-vous"
-                                >
-                                  <CheckCircle className="w-5 h-5" />
-                                </button>
-                                <button 
-                                  onClick={() => handleCancelAppointment(rdv.id)}
-                                  className="p-2 bg-red/10 text-red rounded-xl hover:bg-red hover:text-white transition-all min-h-[44px] min-w-[44px]"
-                                  title="Annuler le rendez-vous"
-                                  aria-label="Annuler le rendez-vous"
-                                >
-                                  <Trash2 className="w-5 h-5" />
-                                </button>
-                              </>
-                            )}
+                             <button 
+                                onClick={() => handleUpdateAudienceStatus(aud.id, 'Validé')}
+                                className="p-2 text-primary hover:bg-primary/5 rounded-lg transition-all"
+                                title="Valider / Marquer comme lu"
+                              >
+                                <CheckCircle className="w-5 h-5" />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteAudience(aud.id)}
+                                className="p-2 text-red hover:bg-red/5 rounded-lg transition-all"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
                           </td>
                         </tr>
                       ))
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'council' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-card rounded-3xl p-8 border border-border shadow-xl">
+                <h3 className="text-xl font-black text-ink mb-6 flex items-center gap-2">
+                  <Users className="w-6 h-6 text-primary" /> Nouveau Membre du Conseil
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Nom Complet</label>
+                    <input 
+                      title="Nom du membre"
+                      type="text" 
+                      value={newCouncilMember.name}
+                      onChange={(e) => setNewCouncilMember({...newCouncilMember, name: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: M. Jean Robert SOSSOU"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Poste / Rôle</label>
+                    <input 
+                      title="Rôle du membre"
+                      type="text" 
+                      value={newCouncilMember.role}
+                      onChange={(e) => setNewCouncilMember({...newCouncilMember, role: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: Premier Adjoint au Maire"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">URL Photo</label>
+                    <input 
+                      title="Photo du membre"
+                      type="url" 
+                      value={newCouncilMember.photo_url}
+                      onChange={(e) => setNewCouncilMember({...newCouncilMember, photo_url: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={handleSaveCouncilMember}
+                  disabled={isSaving}
+                  className="px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl disabled:opacity-50 min-h-[44px] flex items-center justify-center space-x-2"
+                >
+                  {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus className="w-4 h-4" />}
+                  <span>Ajouter au Conseil</span>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-xl font-black text-ink flex items-center gap-2">
+                  <Info className="w-5 h-5 text-primary" /> Membres Actuels ({council.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {council.map((member: any) => (
+                    <div key={member.id} className="bg-card p-6 rounded-2xl border border-border flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-muted rounded-xl overflow-hidden shadow-inner font-bold">
+                          {member.photo_url ? (
+                            <img src={member.photo_url} alt={member.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-primary/20"><User /></div>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-ink block">{member.name}</h4>
+                          <p className="text-[10px] text-primary font-black uppercase tracking-widest">{member.role}</p>
+                        </div>
+                      </div>
+                      <button 
+                        title="Supprimer ce membre"
+                        onClick={() => handleDeleteCouncilMember(member.id)} 
+                        className="p-3 text-red hover:bg-red/5 rounded-xl transition-all"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}

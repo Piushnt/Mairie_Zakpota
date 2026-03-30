@@ -34,14 +34,32 @@ const SimulateurFiscal = ({ settings = {} }: { settings?: any }) => {
     if (!receiptRef.current) return;
     setIsExporting(true);
     try {
-      const canvas = await html2canvas(receiptRef.current, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
+      const element = receiptRef.current;
+      const canvas = await (html2canvas as any)(element, { 
+        scale: 3, 
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      });
+      
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Simulation_Fiscale_${taxType}_ZaKpota.pdf`);
+      const imgWidth = pdfWidth - 20; // Marges
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.setProperties({
+        title: `Simulation Fiscale - Za-Kpota`,
+        subject: 'Calcul de taxes locales',
+        author: 'Mairie de Za-Kpota'
+      });
+
+      pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`Simulation_Fiscale_${taxType}_ZaKpota_${new Date().getTime()}.pdf`);
     } catch (err) {
       console.error('Erreur lors de l\'export PDF:', err);
     } finally {

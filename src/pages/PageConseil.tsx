@@ -2,8 +2,11 @@ import React from 'react';
 import { conseilMunicipal } from '../data/config';
 import { Mail, Phone, ExternalLink } from 'lucide-react';
 
-const PageConseil = () => (
-  <main className="pt-12 pb-24 bg-surface">
+const PageConseil = ({ council }: { council: any[] }) => {
+  const displayCouncil = council && council.length > 0 ? council : conseilMunicipal;
+  
+  return (
+    <main className="pt-12 pb-24 bg-surface">
     <div className="container mx-auto px-4">
       <div className="max-w-3xl mx-auto text-center mb-20">
         <h4 className="text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-4">Gouvernance</h4>
@@ -15,7 +18,7 @@ const PageConseil = () => (
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {conseilMunicipal.map((member, i) => (
+        {displayCouncil.map((member, i) => (
           <div key={i} className="bg-card rounded-3xl overflow-hidden shadow-sm border border-border group hover:border-primary/50 transition-all hover:shadow-2xl">
             <div className="aspect-square overflow-hidden relative">
               <img 
@@ -69,5 +72,6 @@ const PageConseil = () => (
     </div>
   </main>
 );
+};
 
 export default PageConseil;

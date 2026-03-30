@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, ArrowRight, Heart, Share2, MessageCircle, Send, Mail } from 'lucide-react';
 
 export default function NewsCard({ news }: { news: any }) {
+  const navigate = useNavigate();
   const [likes, setLikes] = useState(Math.floor(Math.random() * 50) + 10);
   const [shares, setShares] = useState(Math.floor(Math.random() * 20) + 5);
   const [isLiked, setIsLiked] = useState(false);
@@ -66,7 +68,10 @@ export default function NewsCard({ news }: { news: any }) {
         </p>
         
         <div className="flex items-center justify-between mt-auto pt-6 border-t border-border relative">
-          <button className="text-sm font-bold text-primary flex items-center group/btn">
+          <button 
+            onClick={() => navigate(`/news/${news.id}`)}
+            className="text-sm font-bold text-primary flex items-center group/btn"
+          >
             Lire <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-2 transition-transform" />
           </button>
           

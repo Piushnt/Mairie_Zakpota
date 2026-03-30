@@ -6,11 +6,33 @@ interface PageContactProps {
   ADRESSE_MAIRIE: string;
   TEL_CONTACT: string;
   EMAIL_CONTACT: string;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 import LazyMap from '../components/LazyMap';
 
-const PageContact = ({ NOM_VILLE, ADRESSE_MAIRIE, TEL_CONTACT, EMAIL_CONTACT }: PageContactProps) => {
+const PageContact = ({ NOM_VILLE, ADRESSE_MAIRIE, TEL_CONTACT, EMAIL_CONTACT, onSubmit }: PageContactProps) => {
+  const [formData, setFormData] = React.useState({
+    nom: '',
+    email: '',
+    sujet: '',
+    message: ''
+  });
+  const [status, setStatus] = React.useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    try {
+      await onSubmit(formData);
+      setStatus('success');
+      setFormData({ nom: '', email: '', sujet: '', message: '' });
+      setTimeout(() => setStatus('idle'), 5000);
+    } catch (error) {
+      setStatus('error');
+    }
+  };
+
   const MAP_CENTER: [number, number] = [7.1915, 2.2635];
   
   return (
@@ -57,14 +79,54 @@ const PageContact = ({ NOM_VILLE, ADRESSE_MAIRIE, TEL_CONTACT, EMAIL_CONTACT }: 
         <div className="mt-20 grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="bg-muted p-12 lg:p-16 rounded-[3rem] border border-border">
             <h3 className="text-2xl font-black text-ink mb-10 tracking-tight uppercase">Formulaire de Message</h3>
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input type="text" placeholder="Votre Nom" className="w-full bg-card border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all text-sm font-bold" />
-                <input type="email" placeholder="Votre Email" className="w-full bg-card border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all text-sm font-bold" />
+                <input 
+                  required
+                  type="text" 
+                  placeholder="Votre Nom" 
+                  value={formData.nom}
+                  onChange={(e) => setFormData({...formData, nom: e.target.value})}
+                  className="w-full bg-card border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all text-sm font-bold" 
+                />
+                <input 
+                  required
+                  type="email" 
+                  placeholder="Votre Email" 
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full bg-card border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all text-sm font-bold" 
+                />
               </div>
-              <input type="text" placeholder="Sujet" className="w-full bg-card border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all text-sm font-bold" />
-              <textarea rows={6} placeholder="Votre Message" className="w-full bg-card border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all resize-none text-sm font-bold"></textarea>
-              <button className="w-full py-5 bg-primary text-white font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-primary/90 transition-all shadow-xl shadow-primary/20">Envoyer le message</button>
+              <input 
+                required
+                type="text" 
+                placeholder="Sujet" 
+                value={formData.sujet}
+                onChange={(e) => setFormData({...formData, sujet: e.target.value})}
+                className="w-full bg-card border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all text-sm font-bold" 
+              />
+              <textarea 
+                required
+                rows={6} 
+                placeholder="Votre Message" 
+                value={formData.message}
+                onChange={(e) => setFormData({...formData, message: e.target.value})}
+                className="w-full bg-card border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all resize-none text-sm font-bold"
+              ></textarea>
+              
+              {status === 'success' && (
+                <div className="p-4 bg-green-500/10 text-green-600 rounded-2xl text-xs font-bold text-center">
+                  Votre message a été envoyé avec succès ! Nous vous répondrons sous peu.
+                </div>
+              )}
+
+              <button 
+                disabled={status === 'loading'}
+                className="w-full py-5 bg-primary text-white font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+              >
+                {status === 'loading' ? 'Envoi en cours...' : 'Envoyer le message'}
+              </button>
             </form>
           </div>
           

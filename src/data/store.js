@@ -121,5 +121,7 @@ export const initialStoreData = {
   },
   formulaires: [],
   tax_settings: {},
-  locations: []
+  locations: [],
+  audiences: [],
+  council: []
 };

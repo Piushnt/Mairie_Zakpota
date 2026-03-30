@@ -81,9 +81,10 @@ const ChangeView = ({ center, zoom }: { center: [number, number]; zoom: number }
   const map = useMap();
   useEffect(() => {
     map.setView(center, zoom);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       map.invalidateSize();
-    }, 100);
+    }, 400); // Augmenté pour laisser le temps au layout mobile de se stabiliser
+    return () => clearTimeout(timer);
   }, [center, zoom, map]);
   return null;
 };
@@ -145,7 +146,7 @@ const LazyMap: React.FC<LazyMapProps> = ({
   center, 
   zoom, 
   markers = [], 
-  height = '400px', 
+  height = '500px', // Par défaut 500px pour éviter les conteneurs à 0px
   className = '',
   interactive = true 
 }) => {
