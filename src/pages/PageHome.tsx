@@ -62,8 +62,8 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
 
     {/* Section Documents Officiels */}
     <section className="container mx-auto px-4 mt-24">
-      <div className="bg-primary/5 dark:bg-primary/10 rounded-[3rem] p-8 md:p-16 border border-primary/10 dark:border-white/5 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+      <div className="bg-card dark:bg-slate-800 rounded-[3rem] p-8 md:p-16 border border-border dark:border-white/5 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl opacity-50 dark:opacity-20" />
         
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12 relative z-10">
           <div className="max-w-xl">

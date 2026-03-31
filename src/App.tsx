@@ -295,7 +295,8 @@ export default function App() {
           });
           newStore.council = sortedCouncil.map(c => ({
             ...c,
-            photo: c.photo_url
+            photo: parseImageUrl(c.photo_url),
+            photo_url: parseImageUrl(c.photo_url)
           }));
         }
 
@@ -428,6 +429,8 @@ export default function App() {
                 onUpdateStore={handleUpdateStore}
                 onSendPush={handleSendPush}
                 onExit={() => window.location.href = '/'}
+                isDarkMode={isDarkMode}
+                toggleDarkMode={toggleDarkMode}
               />
             ) : (
               <Login />

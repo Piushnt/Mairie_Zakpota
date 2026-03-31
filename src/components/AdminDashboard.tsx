@@ -30,7 +30,9 @@ import {
   FileSignature,
   Calculator,
   Newspaper,
-  Map as MapIcon
+  Map as MapIcon,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -41,9 +43,11 @@ interface AdminDashboardProps {
   onUpdateStore: (newData: any) => void;
   onSendPush: (title: string, message: string, urlPath?: string, imageUrl?: string, tag?: string) => void;
   onExit: () => void;
+  isDarkMode?: boolean;
+  toggleDarkMode?: () => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, onSendPush, onExit }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, onSendPush, onExit, isDarkMode, toggleDarkMode }) => {
   const [activeTab, setActiveTab] = useState('services');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -130,6 +134,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     }
     setLocations(store.locations || []);
     setNews(store.news || []);
+    setAudiences(store.audiences || []);
+    setCouncil(store.council || []);
   }, [store]);
 
   const [newOpportunity, setNewOpportunity] = useState({
@@ -937,12 +943,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
           </div>
           <h2 className="font-black text-ink uppercase tracking-widest text-xs">Portail S.E.</h2>
         </div>
-        <button 
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 bg-muted text-ink rounded-lg"
-        >
-          {isSidebarOpen ? <XCircle className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center space-x-2">
+          {toggleDarkMode && (
+            <button 
+              onClick={toggleDarkMode}
+              className="p-2 bg-muted text-ink rounded-lg"
+              title={isDarkMode ? "Passer en mode clair" : "Passer en mode sombre"}
+            >
+              {isDarkMode ? <Sun className="w-5 h-5 text-[#00c561]" /> : <Moon className="w-5 h-5 text-primary" />}
+            </button>
+          )}
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 bg-muted text-ink rounded-lg"
+          >
+            {isSidebarOpen ? <XCircle className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar Overlay */}
@@ -1042,6 +1059,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
           </div>
 
           <div className="flex items-center space-x-4">
+            {toggleDarkMode && (
+              <button 
+                onClick={toggleDarkMode}
+                className="w-12 h-12 bg-card border border-border rounded-xl flex items-center justify-center text-primary dark:text-[#00c561] hover:bg-primary/5 transition-colors"
+                title={isDarkMode ? "Passer en mode clair" : "Passer en mode sombre"}
+              >
+                {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+            )}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink/40" />
               <input 
