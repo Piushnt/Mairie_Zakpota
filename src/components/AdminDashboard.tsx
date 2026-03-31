@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
-import { parseImageUrl } from '../utils/imageParser';
+import { parseImageUrl, getOptimizedNetworkUrl } from '../utils/imageParser';
 
 interface AdminDashboardProps {
   store: any;
@@ -832,8 +832,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       onSendPush(
         newNews.title, 
         newNews.description.substring(0, 100) + "...", 
-        "/actualites", 
-        newNews.image_url, 
+        `/news/${data[0].id}`, 
+        getOptimizedNetworkUrl(newNews.image_url), 
         "news-alert"
       );
 

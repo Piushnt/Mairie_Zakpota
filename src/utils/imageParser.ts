@@ -23,3 +23,23 @@ export function parseImageUrl(url: string | undefined): string {
   
   return cleanUrl;
 }
+
+export function getOptimizedNetworkUrl(url: string | undefined): string {
+  const parsed = parseImageUrl(url);
+  if (!parsed) return '';
+
+  // Google Drive Thumbnail API for lighter images
+  if (parsed.includes('drive.google.com/uc?id=')) {
+    const id = parsed.split('id=')[1];
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
+  }
+
+  // Unsplash formatting for WebP compression
+  if (parsed.includes('images.unsplash.com')) {
+    if (!parsed.includes('&w=') && !parsed.includes('?w=')) {
+      return `${parsed}${parsed.includes('?') ? '&' : '?'}w=800&q=70&fm=webp`;
+    }
+  }
+
+  return parsed;
+}

@@ -14,10 +14,11 @@ self.addEventListener('push', function (event) {
       const data = event.data.json();
       const options = {
         body: data.body,
-        icon: data.icon || '/logo.jpg',
-        badge: data.badge || '/logo.jpg',
+        icon: data.icon || '/img/logo-mairie.jpg',
+        badge: data.badge || '/badge.png',
         image: data.image || undefined,
-        vibrate: [100, 50, 100],
+        vibrate: [200, 100, 200, 100, 200, 100, 400],
+        requireInteraction: true,
         data: { url: data.url || '/' }
       };
 
@@ -28,7 +29,9 @@ self.addEventListener('push', function (event) {
       // If payload is not valid JSON, show generic
       event.waitUntil(
         self.registration.showNotification(event.data.text(), {
-          icon: '/logo.jpg',
+          icon: '/img/logo-mairie.jpg',
+          badge: '/badge.png',
+          vibrate: [200, 100, 200, 100, 200, 100, 400],
           data: { url: '/' }
         })
       );
