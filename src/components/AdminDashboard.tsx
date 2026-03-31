@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import { parseImageUrl } from '../utils/imageParser';
 
 interface AdminDashboardProps {
   store: any;
@@ -276,6 +277,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de l'enregistrement des services"}`);
     }
     setIsSaving(false);
+  };
+
+  const handleRemoveService = async (category: string, id: string) => {
+    try {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(String(id))) {
+        const { error } = await supabase.from('services_tarifs').delete().eq('id', id);
+        if (error) throw error;
+      }
+      
+      const newServices = { ...services };
+      newServices[category] = newServices[category].filter((s: any) => s.id !== id);
+      setServices(newServices);
+      onUpdateStore({ services: newServices });
+      showSuccess("Acte supprimé localement. Assurez-vous d'enregistrer les tarifs pour synchroniser.");
+    } catch (error: any) {
+      console.error(error);
+      setErrorMessage("Échec de la suppression.");
+    }
   };
 
   const handleAddEvent = () => {
@@ -866,7 +886,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       const payload = {
         name: newCouncilMember.name,
         role: newCouncilMember.role,
-        photo_url: newCouncilMember.photo_url,
+        photo_url: parseImageUrl(newCouncilMember.photo_url),
         bio: newCouncilMember.bio,
         role_id: newCouncilMember.role_id || null
       };
@@ -1500,6 +1520,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       <option>Événement</option>
                     </select>
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Date Limite</label>
+                    <input 
+                      type="date" 
+                      value={newOpportunity.date}
+                      onChange={(e) => setNewOpportunity({...newOpportunity, date: e.target.value})}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-ink min-h-[44px]"
+                      title="Date limite"
+                    />
+                  </div>
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-ink/40">Description</label>
                     <textarea 
@@ -1858,7 +1888,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-muted rounded-xl overflow-hidden shadow-inner font-bold">
                           {member.photo_url ? (
-                            <img src={member.photo_url} alt={member.name} className="w-full h-full object-cover" />
+                            <img src={parseImageUrl(member.photo_url)} alt={member.name} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-primary/20"><User /></div>
                           )}
@@ -1939,6 +1969,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                               className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest outline-none w-24 text-center"
                               title="Délai estimé"
                             />
+                            <button 
+                               onClick={() => handleRemoveService(category, service.id)}
+                               className="p-2 text-red hover:bg-red/5 rounded-lg transition-all"
+                               title="Supprimer cet acte"
+                               aria-label="Supprimer cet acte"
+                            >
+                               <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                           
                           <div className="space-y-2">
