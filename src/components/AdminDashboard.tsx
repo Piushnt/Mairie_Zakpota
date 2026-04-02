@@ -32,7 +32,11 @@ import {
   Newspaper,
   Map as MapIcon,
   Moon,
-  Sun
+  Sun,
+  BarChart2,
+  Users2,
+  Hammer,
+  Vote
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -72,6 +76,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     tfu_rates: { taux_bati: 6, taux_non_bati: 5 },
     patente_rates: { droit_fixe_base: 10000, droit_proportionnel: 10 }
   });
+  
+  // Za-Kpota 2.0 States
+  const [dossiers, setDossiers] = useState<any[]>([]);
+  const [artisans, setArtisans] = useState<any[]>([]);
+  const [sondages, setSondages] = useState<any[]>([]);
+  const [newArtisan, setNewArtisan] = useState({ nom: '', metier: 'Menuisier', arrondissement: 'Za-Kpota', telephone: '', is_verified: true });
+  const [newSondage, setNewSondage] = useState({ titre: '', description: '', options: [{ label: '', votes: 0 }, { label: '', votes: 0 }] });
+  const [newDossier, setNewDossier] = useState({ code: '', citoyen_nom: '', type: 'Acte de Naissance', statut: 'Dépôt' });
   
   const [newFormulaire, setNewFormulaire] = useState({
     title: '',
@@ -136,8 +148,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     setNews(store.news || []);
     setAudiences(store.audiences || []);
     setCouncil(store.council || []);
+    
+    // Fetch v2.0 data
+    fetchV2Data();
   }, [store]);
 
+  const fetchV2Data = async () => {
+    const { data: doss } = await supabase.from('dossiers').select('*').order('created_at', { ascending: false });
+    const { data: arts } = await supabase.from('artisans').select('*').order('nom', { ascending: true });
+    const { data: sond } = await supabase.from('sondages').select('*').order('created_at', { ascending: false });
+    
+    if (doss) setDossiers(doss);
+    if (arts) setArtisans(arts);
+    if (sond) setSondages(sond);
+  };
+  
   const [newOpportunity, setNewOpportunity] = useState({
     title: '',
     type: 'Marché Public',
@@ -932,6 +957,68 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     }
   };
 
+  // --- ZA-KPOTA 2.0 HANDLERS ---
+  
+  const handleAddDossier = async () => {
+    if (!newDossier.code || !newDossier.citoyen_nom) return;
+    setIsSaving(true);
+    const { data, error } = await supabase.from('dossiers').insert([newDossier]).select();
+    if (!error && data) {
+      setDossiers([data[0], ...dossiers]);
+      setNewDossier({ code: '', citoyen_nom: '', type: 'Acte de Naissance', statut: 'Dépôt' });
+      showSuccess("Dossier créé !");
+    }
+    setIsSaving(false);
+  };
+
+  const handleUpdateDossierStatus = async (id: string, statut: string) => {
+    const { error } = await supabase.from('dossiers').update({ statut }).eq('id', id);
+    if (!error) {
+      setDossiers(dossiers.map(d => d.id === id ? { ...d, statut } : d));
+      showSuccess("Statut du dossier mis à jour !");
+    }
+  };
+
+  const handleAddArtisan = async () => {
+    if (!newArtisan.nom || !newArtisan.telephone) return;
+    setIsSaving(true);
+    const { data, error } = await supabase.from('artisans').insert([newArtisan]).select();
+    if (!error && data) {
+      setArtisans([...artisans, data[0]]);
+      setNewArtisan({ nom: '', metier: 'Menuisier', arrondissement: 'Za-Kpota', telephone: '', is_verified: true });
+      showSuccess("Artisan ajouté à l'annuaire !");
+    }
+    setIsSaving(false);
+  };
+
+  const handleDeleteArtisan = async (id: string) => {
+    const { error } = await supabase.from('artisans').delete().eq('id', id);
+    if (!error) {
+      setArtisans(artisans.filter(a => a.id !== id));
+      showSuccess("Artisan supprimé.");
+    }
+  };
+
+  const handleAddSondage = async () => {
+    if (!newSondage.titre) return;
+    setIsSaving(true);
+    const { data, error } = await supabase.from('sondages').insert([{ ...newSondage, is_active: true }]).select();
+    if (!error && data) {
+      setSondages([data[0], ...sondages]);
+      setNewSondage({ titre: '', description: '', options: [{ label: '', votes: 0 }, { label: '', votes: 0 }] });
+      showSuccess("Sondage publié !");
+    }
+    setIsSaving(false);
+  };
+
+  const handleDeleteSondage = async (id: string) => {
+    const { error } = await supabase.from('sondages').delete().eq('id', id);
+    if (!error) {
+      setSondages(sondages.filter(s => s.id !== id));
+      showSuccess("Sondage supprimé.");
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-muted flex flex-col lg:flex-row transition-colors duration-300">
       
@@ -997,6 +1084,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
             { id: 'formulaires', label: 'Guichet Numérique', icon: FileSignature },
             { id: 'taxes', label: 'Paramètres Fiscaux', icon: Calculator },
             { id: 'council', label: 'Conseil Municipal', icon: Users },
+            { id: 'dossiers', label: 'Suivi Dossiers', icon: FileText },
+            { id: 'artisans', label: 'Annuaire Artisans', icon: Hammer },
+            { id: 'sondages', label: 'Sondages Citoyens', icon: Vote },
+            { id: 'analytics', label: 'Statistiques', icon: BarChart2 },
             { id: 'flash', label: 'Alertes & Push', icon: Bell },
             { id: 'settings', label: 'Configuration', icon: Settings },
           ].map(item => (
@@ -1053,6 +1144,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
               {activeTab === 'appointments' && "Suivi des Rendez-vous"}
               {activeTab === 'stade_res' && "Demandes Réservation Stade"}
               {activeTab === 'flash' && "Alertes Flash & Push"}
+              {activeTab === 'dossiers' && "Suivi des Dossiers Citoyens"}
+              {activeTab === 'artisans' && "Gestion de l'Annuaire Artisans"}
+              {activeTab === 'sondages' && "Sondages & Consultations"}
+              {activeTab === 'analytics' && "Tableau de Bord Analytique"}
               {activeTab === 'settings' && "Paramètres Système"}
             </h1>
             <p className="text-ink/40 font-medium">Interface de gestion simplifiée pour les agents de la mairie.</p>
@@ -2375,6 +2470,335 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'dossiers' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-card rounded-3xl p-8 border border-border shadow-xl">
+                <h3 className="text-xl font-black text-ink mb-6 flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-primary" /> Nouveau Dossier à Suivre
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Code Suivi</label>
+                    <input 
+                      type="text" 
+                      value={newDossier.code}
+                      onChange={(e) => setNewDossier({...newDossier, code: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: ZK-2024-001"
+                      title="Code de suivi unique"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Nom du Citoyen</label>
+                    <input 
+                      type="text" 
+                      value={newDossier.citoyen_nom}
+                      onChange={(e) => setNewDossier({...newDossier, citoyen_nom: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: Koffi AKAKPO"
+                      title="Nom complet du demandeur"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Type de Demande</label>
+                    <select 
+                      value={newDossier.type}
+                      onChange={(e) => setNewDossier({...newDossier, type: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      title="Nature de l'acte"
+                    >
+                      <option>Acte de Naissance</option>
+                      <option>Certificat de Résidence</option>
+                      <option>Permis de Construire</option>
+                      <option>Attestation Foncière</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Statut Initial</label>
+                    <select 
+                      value={newDossier.statut}
+                      onChange={(e) => setNewDossier({...newDossier, statut: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      title="État d'avancement"
+                    >
+                      <option>Dépôt</option>
+                      <option>Vérification</option>
+                      <option>Signature</option>
+                      <option>Prêt</option>
+                    </select>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleAddDossier}
+                  disabled={isSaving}
+                  className="px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl disabled:opacity-50 min-h-[44px] flex items-center justify-center space-x-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Enregistrer le Dossier</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                {dossiers.map((d: any) => (
+                  <div key={d.id} className="p-6 bg-muted rounded-2xl border border-border flex items-center justify-between">
+                    <div>
+                      <h4 className="font-black text-ink">{d.code} — {d.citoyen_nom}</h4>
+                      <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">{d.type} • Créé le {new Date(d.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <select 
+                        value={d.statut}
+                        onChange={(e) => handleUpdateDossierStatus(d.id, e.target.value)}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border-none outline-none ${
+                          d.statut === 'Prêt' ? 'bg-green-500 text-white' : 'bg-primary/10 text-primary'
+                        }`}
+                        title="Modifier le statut"
+                      >
+                        <option>Dépôt</option>
+                        <option>Vérification</option>
+                        <option>Signature</option>
+                        <option>Prêt</option>
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'artisans' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-card rounded-3xl p-8 border border-border shadow-xl">
+                <h3 className="text-xl font-black text-ink mb-6 flex items-center gap-2">
+                  <Hammer className="w-6 h-6 text-primary" /> Ajouter un Artisan
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Nom & Prénoms</label>
+                    <input 
+                      type="text" 
+                      value={newArtisan.nom}
+                      onChange={(e) => setNewArtisan({...newArtisan, nom: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: Michel KPODANH"
+                      title="Nom de l'artisan"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Métier</label>
+                    <select 
+                      value={newArtisan.metier}
+                      onChange={(e) => setNewArtisan({...newArtisan, metier: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      title="Corps de métier"
+                    >
+                      <option>Menuisier</option>
+                      <option>Maçon</option>
+                      <option>Couturier</option>
+                      <option>Mécanicien</option>
+                      <option>Électricien</option>
+                      <option>Agriculture</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Téléphone</label>
+                    <input 
+                      type="tel" 
+                      value={newArtisan.telephone}
+                      onChange={(e) => setNewArtisan({...newArtisan, telephone: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="+229 97 00 00 00"
+                      title="Numéro de contact"
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={handleAddArtisan}
+                  disabled={isSaving}
+                  className="px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl disabled:opacity-50 min-h-[44px] flex items-center justify-center space-x-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Ajouter à l'Annuaire</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {artisans.map((art: any) => (
+                  <div key={art.id} className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-border flex items-center justify-between shadow-sm">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center text-primary">
+                        <Hammer className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-ink dark:text-white">{art.nom}</h4>
+                        <p className="text-[10px] text-primary font-black uppercase tracking-widest">{art.metier} • {art.telephone}</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteArtisan(art.id)}
+                      className="p-3 text-red hover:bg-red/5 rounded-xl transition-all"
+                      title="Supprimer l'artisan"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'sondages' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-card rounded-3xl p-8 border border-border shadow-xl">
+                <h3 className="text-xl font-black text-ink mb-6 flex items-center gap-2">
+                  <Vote className="w-6 h-6 text-primary" /> Créer un Sondage
+                </h3>
+                <div className="space-y-6 max-w-2xl">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Titre du Sondage</label>
+                    <input 
+                      type="text" 
+                      value={newSondage.titre}
+                      onChange={(e) => setNewSondage({...newSondage, titre: e.target.value})}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: Priorité pour le budget 2025"
+                      title="Titre du sondage"
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">Options de réponse</label>
+                    {newSondage.options.map((opt, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <input 
+                          type="text" 
+                          value={opt.label}
+                          onChange={(e) => {
+                            const newOptions = [...newSondage.options];
+                            newOptions[idx].label = e.target.value;
+                            setNewSondage({...newSondage, options: newOptions});
+                          }}
+                          className="flex-1 bg-muted border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary"
+                          placeholder={`Option ${idx + 1}`}
+                          title={`Libellé de l'option ${idx + 1}`}
+                        />
+                        {newSondage.options.length > 2 && (
+                          <button 
+                            onClick={() => {
+                              const newOptions = newSondage.options.filter((_, i) => i !== idx);
+                              setNewSondage({...newSondage, options: newOptions});
+                            }}
+                            className="p-3 text-red hover:bg-red/5 rounded-xl"
+                            title="Supprimer cette option"
+                          >
+                            <XCircle className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button 
+                      onClick={() => setNewSondage({...newSondage, options: [...newSondage.options, { label: '', votes: 0 }]})}
+                      className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline"
+                    >
+                      + Ajouter une option
+                    </button>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleAddSondage}
+                  disabled={isSaving}
+                  className="mt-8 px-8 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl disabled:opacity-50 min-h-[44px] flex items-center justify-center space-x-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Publier le Sondage</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {sondages.map((s: any) => {
+                  const total = s.options.reduce((acc: number, curr: any) => acc + (curr.votes || 0), 0);
+                  return (
+                    <div key={s.id} className="p-8 bg-white dark:bg-slate-800 rounded-3xl border border-border">
+                      <div className="flex justify-between items-start mb-6">
+                        <h4 className="text-lg font-black text-ink dark:text-white uppercase tracking-tight">{s.titre}</h4>
+                        <button 
+                          onClick={() => handleDeleteSondage(s.id)}
+                          className="p-2 text-red hover:bg-red/5 rounded-lg"
+                          title="Supprimer le sondage"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <div className="space-y-4">
+                        {s.options.map((opt: any, i: number) => {
+                          const pct = total > 0 ? Math.round((opt.votes || 0) / total * 100) : 0;
+                          return (
+                            <div key={i} className="space-y-1">
+                              <div className="flex justify-between text-[10px] font-black text-ink/60 dark:text-white/40 uppercase">
+                                <span>{opt.label}</span>
+                                <span>{opt.votes || 0} votes ({pct}%)</span>
+                              </div>
+                              <div className="w-full h-2 bg-muted dark:bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="p-8 bg-primary text-white rounded-[2.5rem] shadow-xl shadow-primary/20 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-12 -translate-y-12 blur-2xl" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">Total Dossiers</p>
+                  <h3 className="text-5xl font-black">1,482</h3>
+                  <p className="text-xs font-medium text-white/80 mt-4">+12% depuis le mois dernier</p>
+                </div>
+                <div className="p-8 bg-accent text-primary rounded-[2.5rem] shadow-xl shadow-accent/20">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-2">Abonnés Push</p>
+                  <h3 className="text-5xl font-black">2.5K</h3>
+                  <p className="text-xs font-medium text-primary/80 mt-4">Taux d'ouverture : 68%</p>
+                </div>
+                <div className="p-8 bg-card rounded-[2.5rem] border border-border shadow-sm">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-ink/40 mb-2">Satisfaction</p>
+                  <h3 className="text-5xl font-black text-primary">94%</h3>
+                  <p className="text-xs font-medium text-ink/60 mt-4">Calculé sur 450 sondages</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="bg-card p-10 rounded-[3rem] border border-border shadow-sm h-96 flex flex-col items-center justify-center">
+                  <BarChart2 className="w-16 h-16 text-primary/10 mb-6" />
+                  <p className="text-sm font-bold text-ink/40 italic">Graphique de fréquentation (En attente de connexion Analytics)</p>
+                </div>
+                <div className="bg-card p-10 rounded-[3rem] border border-border shadow-sm">
+                  <h4 className="text-sm font-black uppercase tracking-widest text-ink mb-8">Activités Récentes</h4>
+                  <div className="space-y-6">
+                    {[
+                      { type: 'Dossier', msg: 'Z-2024-56 validé par le S.E.', time: 'il y a 2 min' },
+                      { type: 'Alerte', msg: 'Push communiqué météo envoyé', time: 'il y a 15 min' },
+                      { type: 'Vote', msg: 'Nouvelle participation au sondage Budget', time: 'il y a 40 min' },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center space-x-4">
+                        <div className="w-2 h-2 bg-primary rounded-full" />
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-ink">{item.msg}</p>
+                          <p className="text-[10px] text-ink/40 font-black uppercase tracking-widest">{item.type} • {item.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

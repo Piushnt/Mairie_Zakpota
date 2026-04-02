@@ -6,6 +6,7 @@ import PartnersSection from '../components/PartnersSection';
 import MunicipalServices from '../components/MunicipalServices';
 import PhotoGallery from '../components/PhotoGallery';
 import SignalementForm from '../components/SignalementForm';
+import CommunityPolls from '../components/CommunityPolls';
 import { 
   ChevronRight, 
   Users, 
@@ -116,6 +117,7 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
 
 
 
+    <CommunityPolls />
     <PartnersSection />
 
     <MunicipalServices />

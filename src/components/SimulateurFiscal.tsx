@@ -261,11 +261,36 @@ const SimulateurFiscal = ({ settings = {} }: { settings?: any }) => {
               )}
               {isExporting ? 'Génération...' : 'Télécharger le PDF Officiel'}
             </button>
+
+            {resultat !== null && (
+              <button
+                onClick={() => {
+                  // Simulation Kkiapay
+                  alert(`Initialisation du paiement de ${Math.round(resultat).toLocaleString()} FCFA via Kkiapay...`);
+                  setTimeout(() => showSuccess("Paiement effectué avec succès ! Votre quittance sera envoyée par SMS."), 2000);
+                }}
+                className="w-full px-8 py-5 bg-[#ef4444] text-white rounded-xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 transition-all hover:bg-[#dc2626] shadow-xl shadow-red-500/20"
+              >
+                <Landmark className="w-5 h-5" />
+                Payer maintenant (Kkiapay)
+              </button>
+            )}
           </div>
         </div>
       </div>
+      {/* Toast notification simulation */}
+      <div id="toast-container" className="fixed bottom-8 right-8 z-50 pointer-events-none"></div>
     </main>
   );
+};
+
+// Simple success toast simulation
+const showSuccess = (msg: string) => {
+  const toast = document.createElement('div');
+  toast.className = 'bg-primary text-white px-6 py-4 rounded-2xl shadow-2xl font-bold animate-in slide-in-from-right duration-300 pointer-events-auto mb-4 border border-white/20';
+  toast.innerText = msg;
+  document.getElementById('toast-container')?.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
 };
 
 export default SimulateurFiscal;

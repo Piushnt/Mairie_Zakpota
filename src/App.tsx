@@ -96,6 +96,7 @@ import PageTourisme from './pages/PageTourisme';
 import PageStade from './pages/PageStade';
 import PageContact from './pages/PageContact';
 import PageService from './pages/PageService';
+import PageEconomie from './pages/PageEconomie';
 import PageAgenda from './pages/PageAgenda';
 import PageActualites from './pages/PageActualites';
 import PageNewsDetail from './pages/PageNewsDetail';
@@ -464,7 +465,7 @@ export default function App() {
             <Route path="simulateur" element={<SimulateurFiscal settings={store.tax_settings} />} />
             <Route path="formulaires" element={<PageFormulaires formulaires={store.formulaires} />} />
             <Route path="rendezvous" element={<RendezVous onSubmit={(data) => handleAudienceSubmit({...data, type: 'rdv'})} />} />
-            <Route path="economie" element={<MarketLogic config={store.configMarche} />} />
+            <Route path="economie" element={<PageEconomie configMarche={store.configMarche} />} />
             <Route path="opportunites" element={<Opportunities data={store.opportunites} />} />
             <Route path="agenda" element={<PageAgenda agenda={store.agenda} />} />
             <Route path="stade" element={<PageStade stade={store.stade} onReserve={handleStadeReservation} />} />

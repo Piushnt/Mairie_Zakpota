@@ -6,6 +6,7 @@ import Footer from './Footer';
 import FlashNews from './FlashNews';
 import SearchModal from './SearchModal';
 import PushNotificationPrompt from './PushNotificationPrompt';
+import MunicipalAI from './MunicipalAI';
 
 interface LayoutProps {
   NOM_VILLE: string;
@@ -79,6 +80,7 @@ const Layout = ({
       />
       
       <PushNotificationPrompt />
+      <MunicipalAI />
     </div>
   );
 };
