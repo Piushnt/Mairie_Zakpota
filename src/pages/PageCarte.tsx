@@ -55,6 +55,14 @@ const PageCarte: React.FC<PageCarteProps> = ({ locations = [] }) => {
   const MAP_CENTER: [number, number] = [7.1915, 2.2635];
   const DEFAULT_ZOOM = 13;
 
+  // Fix Leaflet resize issues on mount/mobile
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [isFullscreen]);
+
   return (
     <main className={`bg-surface transition-all duration-500 flex flex-col ${isFullscreen ? 'fixed inset-0 z-[60]' : 'min-h-screen pt-12'}`}>
       <Helmet>
@@ -148,13 +156,13 @@ const PageCarte: React.FC<PageCarteProps> = ({ locations = [] }) => {
         </aside>
 
         {/* Map Area */}
-        <div className="flex-1 relative bg-muted h-[500px] lg:h-auto lg:min-h-0">
+        <div className={`flex-1 relative bg-muted transition-all duration-300 ${isFullscreen ? 'h-full' : 'h-[60vh] lg:h-auto min-h-[400px] lg:min-h-0'}`}>
           <LazyMap 
             center={MAP_CENTER} 
             zoom={DEFAULT_ZOOM} 
             markers={filteredLocations}
             height="100%"
-            className="w-full absolute inset-0"
+            className="w-full absolute inset-0 z-10"
           />
           
           {isFullscreen && (

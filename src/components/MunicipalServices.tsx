@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, Building2, Scale, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import MarketCycle from './MarketCycle';
 
 const MunicipalServices = () => {
+  const navigate = useNavigate();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -70,6 +72,7 @@ const MunicipalServices = () => {
           <motion.button 
             whileHover={{ scale: 0.98 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/services/etat-civil')}
             className="w-fit min-h-[44px] px-8 py-4 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-accent hover:text-primary transition-all shadow-xl shadow-primary/20 flex items-center group/btn"
           >
             Démarrer une procédure <ChevronRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
@@ -93,6 +96,7 @@ const MunicipalServices = () => {
           <motion.button 
             whileHover={{ scale: 0.98 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/services/urbanisme')}
             className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center mt-6 hover:text-accent transition-colors underline decoration-accent underline-offset-4"
           >
             Voir les procédures <ChevronRight className="w-3 h-3 ml-1" />
@@ -117,6 +121,7 @@ const MunicipalServices = () => {
           <motion.button 
             whileHover={{ scale: 0.98 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/contact')}
             className="w-fit min-h-[44px] text-[10px] font-black uppercase tracking-widest text-accent flex items-center mt-6 hover:text-white transition-colors relative z-10"
           >
             S'enregistrer <ChevronRight className="w-3 h-3 ml-1" />

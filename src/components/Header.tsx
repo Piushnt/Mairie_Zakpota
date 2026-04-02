@@ -7,10 +7,22 @@ import {
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 
-const TopBar = ({ ADRESSE_MAIRIE, TEL_CONTACT, EMAIL_CONTACT }: any) => (
+const TopBar = ({ TEL_CONTACT, EMAIL_CONTACT }: any) => (
   <div className="bg-black text-white py-2 hidden lg:block">
-    <div className="container mx-auto px-4 flex justify-center items-center text-[11px] font-medium tracking-wide">
-      <span>Mairie de Za-Kpota - Portail Officiel</span>
+    <div className="container mx-auto px-4 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+      <div className="flex items-center space-x-6">
+        <span className="opacity-50">Mairie de Za-Kpota - Portail Officiel</span>
+      </div>
+      <div className="flex items-center space-x-6">
+        <a href={`tel:${TEL_CONTACT}`} className="flex items-center hover:text-accent transition-colors">
+          <Phone className="w-3 h-3 mr-2" />
+          {TEL_CONTACT}
+        </a>
+        <a href={`mailto:${EMAIL_CONTACT}`} className="flex items-center hover:text-accent transition-colors">
+          <Mail className="w-3 h-3 mr-2" />
+          {EMAIL_CONTACT}
+        </a>
+      </div>
     </div>
   </div>
 );

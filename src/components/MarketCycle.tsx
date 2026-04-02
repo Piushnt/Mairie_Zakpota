@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Clock, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const MarketCycle = () => {
+  const navigate = useNavigate();
   // Le cycle du marché de Za-Kpota est de 5 jours.
   // Pour la démo, on utilise une date de référence.
   const [currentDay, setCurrentDay] = useState(1);
@@ -82,7 +84,10 @@ const MarketCycle = () => {
             <p className="text-sm font-black text-primary uppercase">C'est le jour du Grand Marché !</p>
           </div>
         </div>
-        <button className="px-6 py-3 bg-white text-primary text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm border border-border hover:bg-primary hover:text-white transition-all active:scale-95">
+        <button 
+          onClick={() => navigate('/economie')}
+          className="px-6 py-3 bg-white text-primary text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
+        >
           Voir le calendrier
         </button>
       </div>

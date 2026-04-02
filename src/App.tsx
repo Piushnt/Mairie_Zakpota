@@ -219,7 +219,7 @@ export default function App() {
           newStore.opportunites = opps.map(o => ({
             ...o,
             title: o.titre,
-            date: o.date_limite
+            dateLimite: o.date_limite || ''
           }));
         }
 
