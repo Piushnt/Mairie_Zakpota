@@ -88,8 +88,15 @@ const Header = ({
     },
     {
       label: 'Économie', id: 'economie', submenu: [
-        { label: 'Marchés', path: '/economie' },
+        { label: 'Marchés Locaux', path: '/economie' },
         { label: 'Opportunités Locales', path: '/opportunites' },
+      ]
+    },
+    {
+      label: 'Citoyenneté', id: 'participation', submenu: [
+        { label: 'Sondages Citoyens', path: '/' },
+        { label: 'Budget Participatif', path: '/' },
+        { label: 'Signalement Urgence', path: '/signalement' },
       ]
     },
     {
@@ -99,8 +106,9 @@ const Header = ({
         { label: 'Guide Touristique', path: '/tourisme' },
       ]
     },
+    { label: 'Suivi Dossier', path: '/services' },
+    { label: 'Annuaire Artisans', path: '/economie' },
     { label: 'Actualités', path: '/actualites' },
-    { label: 'Signalement', id: 'signalement', path: '/signalement' },
     { label: 'Contact', id: 'contact', path: '/contact' },
   ];
 

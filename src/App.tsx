@@ -460,6 +460,7 @@ export default function App() {
             <Route path="histoire" element={<PageHistoire />} />
             <Route path="publications" element={<RapportsPage store={store} />} />
 
+            <Route path="services" element={<PageService services={Object.keys(store.services || {}).length > 0 ? store.services : servicesData} />} />
             <Route path="services/:type" element={<PageService services={Object.keys(store.services || {}).length > 0 ? store.services : servicesData} />} />
 
             <Route path="simulateur" element={<SimulateurFiscal settings={store.tax_settings} />} />
