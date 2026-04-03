@@ -81,10 +81,20 @@ const ChangeView = ({ center, zoom }: { center: [number, number]; zoom: number }
   const map = useMap();
   useEffect(() => {
     map.setView(center, zoom);
+    
+    // Forcer le redimensionnement immédiat et différé
+    map.invalidateSize();
     const timer = setTimeout(() => {
       map.invalidateSize();
-    }, 400); // Augmenté pour laisser le temps au layout mobile de se stabiliser
-    return () => clearTimeout(timer);
+    }, 500);
+
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [center, zoom, map]);
   return null;
 };

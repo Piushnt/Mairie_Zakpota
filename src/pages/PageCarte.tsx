@@ -53,7 +53,8 @@ const PageCarte: React.FC<PageCarteProps> = ({ locations = [] }) => {
 
   // Centre de Za-Kpota (approximatif)
   const MAP_CENTER: [number, number] = [7.1915, 2.2635];
-  const DEFAULT_ZOOM = 13;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const DEFAULT_ZOOM = isMobile ? 11.5 : 13;
 
   // Fix Leaflet resize issues on mount/mobile
   React.useEffect(() => {
@@ -156,7 +157,7 @@ const PageCarte: React.FC<PageCarteProps> = ({ locations = [] }) => {
         </aside>
 
         {/* Map Area */}
-        <div className={`flex-1 relative bg-muted transition-all duration-300 ${isFullscreen ? 'h-full' : 'h-[60vh] lg:h-auto min-h-[400px] lg:min-h-0'}`}>
+        <div className={`flex-1 relative bg-muted transition-all duration-300 ${isFullscreen ? 'h-full' : 'h-[500px] lg:h-auto min-h-[500px] lg:min-h-0'}`}>
           <LazyMap 
             center={MAP_CENTER} 
             zoom={DEFAULT_ZOOM} 
