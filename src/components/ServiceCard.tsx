@@ -25,10 +25,10 @@ const ServiceCard = ({ title, desc, url, category = "Service Public", Icon, icon
       </div>
 
       <div className="flex flex-col flex-1">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 dark:text-white/40 mb-3">
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-3 font-bold">
           {category}
         </span>
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-4 leading-tight group-hover:text-primary transition-colors">
+        <h3 className="text-xl font-bold text-slate-950 dark:text-white uppercase tracking-tight mb-4 leading-tight group-hover:text-primary transition-colors">
           {title}
         </h3>
         <p className="text-slate-600 dark:text-slate-400 text-[13px] font-medium leading-relaxed mb-6 flex-1">

@@ -30,7 +30,7 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
 
     <section className="container mx-auto px-4 mt-8 relative z-20">
       <div className="flex flex-col items-center text-center mb-16">
-        <h2 className="text-4xl md:text-5xl font-black text-ink dark:text-white tracking-tight uppercase mb-4">Services <span className="text-primary hover:text-accent transition-colors">Essentiels</span></h2>
+        <h2 className="text-4xl md:text-5xl font-black text-slate-950 dark:text-white tracking-tight uppercase mb-4">Services <span className="text-primary hover:text-accent transition-colors">Essentiels</span></h2>
         <div className="h-1.5 w-20 bg-accent rounded-full" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -77,7 +77,7 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
           <div className="max-w-xl">
             <span className="inline-block px-4 py-1 bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6">Transparence Municipale</span>
             <h2 className="text-4xl md:text-5xl font-black text-primary dark:text-[#00c561] uppercase tracking-tight mb-6">Rapports & Documents Officiels</h2>
-            <p className="text-ink-muted dark:text-white/60 font-medium text-lg leading-relaxed">
+            <p className="text-slate-600 dark:text-white/60 font-medium text-lg leading-relaxed">
               Consultez les derniers comptes-rendus de sessions, les arrêtés municipaux et les rapports d'activités pour rester informé de la gestion de votre commune.
             </p>
             <div className="mt-10">
@@ -102,8 +102,8 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
                     <FileText className="w-6 h-6" />
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <h4 className="font-bold text-ink dark:text-white truncate group-hover:text-primary dark:group-hover:text-[#00c561] transition-colors">{report.title}</h4>
-                    <p className="text-[10px] text-ink-muted dark:text-white/40 font-black uppercase tracking-widest mt-1">{report.type} • {report.date}</p>
+                    <h4 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-primary dark:group-hover:text-[#00c561] transition-colors">{report.title}</h4>
+                    <p className="text-[10px] text-slate-600 dark:text-white/40 font-black uppercase tracking-widest mt-1">{report.type} • {report.date}</p>
                     <a 
                       href={report.fileUrl} 
                       target="_blank" 
@@ -137,22 +137,22 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="bg-card p-10 rounded-[2.5rem] shadow-sm border-b-8 border-accent text-center border border-border">
             <h6 className="text-5xl font-black text-primary mb-2 tracking-tighter">13</h6>
-            <p className="text-ink-muted font-black text-[10px] uppercase tracking-[0.3em]">Arrondissements</p>
+            <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Arrondissements</p>
           </div>
           <div className="bg-card p-10 rounded-[2.5rem] shadow-sm border-b-8 border-primary text-center border border-border">
             <h6 className="text-5xl font-black text-primary mb-2 tracking-tighter">150K+</h6>
-            <p className="text-ink-muted font-black text-[10px] uppercase tracking-[0.3em]">Habitants</p>
+            <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Habitants</p>
           </div>
           <div className="bg-card p-10 rounded-[2.5rem] shadow-sm border-b-8 border-red text-center border border-border">
             <h6 className="text-5xl font-black text-primary mb-2 tracking-tighter">45+</h6>
-            <p className="text-ink-muted font-black text-[10px] uppercase tracking-[0.3em]">Projets en cours</p>
+            <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Projets en cours</p>
           </div>
           <div className="bg-card p-10 rounded-[2.5rem] shadow-sm border-b-8 border-green-500 text-center border border-border">
              <div className="flex justify-center items-center mb-2">
                 <span className="text-5xl font-black text-primary tracking-tighter">98</span>
                 <span className="text-2xl font-black text-primary">%</span>
              </div>
-            <p className="text-ink-muted font-black text-[10px] uppercase tracking-[0.3em]">Satisfaction</p>
+            <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Satisfaction</p>
           </div>
         </div>
       </div>

@@ -58,8 +58,8 @@ const CommunityPolls = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto mb-16 text-center">
           <span className="px-4 py-1.5 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6 inline-block">Démocratie Participative</span>
-          <h2 className="text-4xl md:text-5xl font-black text-ink dark:text-white tracking-tight uppercase mb-6">Voix des <span className="text-primary">Citoyens</span></h2>
-          <p className="text-ink-muted dark:text-white/60 text-lg font-medium leading-relaxed">
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight uppercase mb-6">Voix des <span className="text-primary">Citoyens</span></h2>
+          <p className="text-slate-600 dark:text-white/60 text-lg font-medium leading-relaxed">
             Participez aux décisions de la commune. Votre avis compte pour l'orientation du budget et des projets locaux.
           </p>
         </div>
@@ -85,15 +85,15 @@ const CommunityPolls = () => {
                     <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">Poll #{poll.id.slice(0,4)}</span>
                   </div>
                   {poll.end_date && (
-                    <div className="flex items-center space-x-2 text-[9px] font-bold text-ink-muted dark:text-white/30 uppercase">
+                    <div className="flex items-center space-x-2 text-[9px] font-bold text-slate-500 dark:text-white/30 uppercase">
                       <Calendar className="w-3 h-3" />
                       <span>Fin : {new Date(poll.end_date).toLocaleDateString()}</span>
                     </div>
                   )}
                 </div>
 
-                <h3 className="text-2xl font-black text-ink dark:text-white uppercase tracking-tight mb-4 leading-tight">{poll.titre}</h3>
-                <p className="text-sm font-medium text-ink-muted dark:text-white/50 mb-8">{poll.description}</p>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-4 leading-tight">{poll.titre}</h3>
+                <p className="text-sm font-medium text-slate-600 dark:text-white/50 mb-8">{poll.description}</p>
 
                 <div className="space-y-4">
                   {poll.options.map((option: any, index: number) => {
@@ -111,7 +111,7 @@ const CommunityPolls = () => {
                           }`}
                         >
                           <div className="flex items-center space-x-4">
-                            <span className="text-xs font-black text-ink dark:text-white uppercase">{option.label}</span>
+                            <span className="text-xs font-black text-slate-900 dark:text-white uppercase">{option.label}</span>
                           </div>
                           {hasVoted && (
                             <div className="flex items-center space-x-3">
@@ -145,7 +145,7 @@ const CommunityPolls = () => {
                 )}
                 
                 {!hasVoted && (
-                  <p className="mt-6 text-center text-[9px] font-black text-ink-muted/40 uppercase tracking-widest">
+                  <p className="mt-6 text-center text-[9px] font-black text-slate-400 dark:text-white/20 uppercase tracking-widest">
                     Cliquez sur une option pour voter anonymement
                   </p>
                 )}
@@ -171,7 +171,7 @@ const CommunityPolls = () => {
             
             <div className="p-8 border border-border dark:border-white/5 rounded-[2.5rem] bg-surface dark:bg-slate-800/10 backdrop-blur-sm">
               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-4 italic">Résultats Précédents</h4>
-              <p className="text-ink-muted dark:text-white/40 text-xs leading-relaxed font-medium">
+              <p className="text-slate-600 dark:text-white/40 text-xs leading-relaxed font-medium">
                 Dernier projet validé : **Éclairage Solaire de l'Arrondissement de Za-Tanta** (64% des votes). Travaux prévus pour Juin 2024.
               </p>
             </div>

@@ -41,11 +41,11 @@
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
   
-  --color-primary: var(--color-primary);
-  --color-secondary: var(--color-secondary);
-  --color-accent: var(--color-accent);
-  --color-accent-red: var(--color-accent-red);
-  --color-red: var(--color-red);
+  --color-primary: #006633;
+  --color-secondary: #FFCC00;
+  --color-accent: #FFCC00;
+  --color-accent-red: #E03C31;
+  --color-red: #E03C31;
   
   --color-ink: var(--color-ink);
   --color-ink-muted: var(--color-ink-muted);
