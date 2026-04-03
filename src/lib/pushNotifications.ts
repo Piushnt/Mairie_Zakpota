@@ -64,3 +64,33 @@ export const subscribeToPushNotifications = async () => {
     return false;
   }
 };
+export const checkSubscriptionStatus = async (): Promise<boolean> => {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return true; // On considère "abonné" ou non-éligible pour cacher le bouton
+    
+    // Notification.permission check
+    if (Notification.permission !== 'granted') return false;
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    
+    if (!subscription) return false;
+
+    // Check against DB
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .select('endpoint')
+      .eq('endpoint', subscription.endpoint)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erreur check DB push:", error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error("Erreur lors de la vérification de l'abonnement:", error);
+    return false;
+  }
+};

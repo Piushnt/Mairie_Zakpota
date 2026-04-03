@@ -6,6 +6,7 @@ import Footer from './Footer';
 import FlashNews from './FlashNews';
 import SearchModal from './SearchModal';
 import PushNotificationPrompt from './PushNotificationPrompt';
+import FloatingPushSubscribe from './FloatingPushSubscribe';
 import MunicipalAI from './MunicipalAI';
 
 interface LayoutProps {
@@ -80,6 +81,7 @@ const Layout = ({
       />
       
       <PushNotificationPrompt />
+      <FloatingPushSubscribe />
       <MunicipalAI />
     </div>
   );
