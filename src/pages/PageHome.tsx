@@ -28,35 +28,43 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
     </Helmet>
     <Hero news={news} />
 
-    <section className="container mx-auto px-4 mt-16 relative z-20">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <section className="container mx-auto px-4 mt-8 relative z-20">
+      <div className="flex flex-col items-center text-center mb-16">
+        <h2 className="text-4xl md:text-5xl font-black text-ink dark:text-white tracking-tight uppercase mb-4">Services <span className="text-primary hover:text-accent transition-colors">Essentiels</span></h2>
+        <div className="h-1.5 w-20 bg-accent rounded-full" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <ServiceCard
           title="État Civil & Suivi"
+          category="Administratif"
           desc="Demandez vos actes de naissance, mariage ou décès en ligne. Suivez l'évolution de votre demande en temps réel."
-          url="/services/etat-civil" 
+          url="/suivi-dossier" 
           Icon={Users}
-          iconColor="text-[#008751]"
+          iconColor="text-primary"
         />
         <ServiceCard
           title="Urbanisme & Foncier"
+          category="Habitat"
           desc="Permis de construire, certificat d'urbanisme et démarches foncières. Consultez le Plan Directeur d'Urbanisme."
-          url="/urbanisme"
+          url="/services/urbanisme"
           Icon={Building2}
-          iconColor="text-[#FCD116]"
+          iconColor="text-accent"
         />
         <ServiceCard
           title="Marchés Publics"
+          category="Économie"
           desc="Consultez les appels d'offres en cours et les résultats des attributions pour la commune de Za-Kpota."
           url="https://marches-publics.bj"
           Icon={ShoppingBag}
-          iconColor="text-[#E8112D]"
+          iconColor="text-red"
         />
         <ServiceCard
           title="Taxe de Développement"
+          category="Fiscalité"
           desc="Payez vos taxes locales et contribuez au développement des infrastructures de notre commune."
-          url="/taxes"
+          url="/simulateur"
           Icon={Coins}
-          iconColor="text-[#008751]"
+          iconColor="text-primary"
         />
       </div>
     </section>

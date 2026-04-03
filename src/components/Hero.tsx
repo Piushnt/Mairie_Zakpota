@@ -30,14 +30,14 @@ const Hero: React.FC<HeroProps> = ({ news = [] }) => {
   }, [nextSlide]);
 
   return (
-    <section className="relative h-[450px] lg:h-[550px] w-full overflow-hidden bg-slate-900">
+    <section className="relative h-[380px] lg:h-[480px] w-full overflow-hidden bg-slate-900">
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
-          initial={{ opacity: 0, scale: 1.1 }}
+          initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 1, ease: "easeOut" }}
           className="absolute inset-0 w-full h-full"
         >
           {/* Background Image */}
@@ -45,57 +45,49 @@ const Hero: React.FC<HeroProps> = ({ news = [] }) => {
             <img
               src={items[current].img || items[current].image_url}
               alt={items[current].title}
-              className="w-full h-full object-cover grayscale-[0.2]"
+              className="w-full h-full object-cover grayscale-[0.1]"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
-            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
+            <div className="absolute inset-0 bg-black/10" />
           </div>
 
           {/* Content */}
-          <div className="container mx-auto px-4 h-full flex flex-col justify-center items-center text-center relative z-10">
+          <div className="container mx-auto px-4 h-full flex flex-col justify-center items-center text-center relative z-10 pt-10">
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
+              initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
               className="max-w-4xl"
             >
-              <div className="flex items-center justify-center space-x-3 mb-6 bg-primary/20 backdrop-blur-md border border-white/10 w-fit mx-auto px-4 py-1.5 rounded-full">
-                <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">
+              <div className="flex items-center justify-center space-x-3 mb-4 bg-primary/20 backdrop-blur-md border border-white/10 w-fit mx-auto px-3 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white">
                   {items[current].cat || items[current].category || 'Actualité'}
                 </span>
-                {items[current].date && (
-                   <>
-                    <span className="w-1 h-1 bg-white/30 rounded-full" />
-                    <span className="text-[10px] font-medium text-white/60">
-                      {items[current].date}
-                    </span>
-                   </>
-                )}
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-black text-white mb-8 leading-[1.1] tracking-tight uppercase italic decoration-primary underline-offset-8">
+              <h1 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight tracking-tight uppercase italic underline-offset-4">
                 {items[current].title}
               </h1>
 
-              <p className="text-lg md:text-xl text-white/70 mb-10 max-w-2xl mx-auto font-medium leading-relaxed line-clamp-3">
+              <p className="text-sm md:text-lg text-white/70 mb-8 max-w-2xl mx-auto font-medium leading-relaxed line-clamp-2 md:line-clamp-3">
                 {items[current].desc || items[current].description}
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <div className="flex flex-row items-center justify-center gap-4">
                 <button
                   onClick={() => items[current].id !== 'default' ? navigate(`/news/${items[current].id}`) : navigate('/actualites')}
-                  className="group relative flex items-center space-x-3 px-10 py-5 bg-white text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary hover:text-white transition-all shadow-2xl shadow-black/20"
+                  className="group relative flex items-center space-x-2 px-6 py-4 bg-white text-slate-950 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-primary hover:text-white transition-all shadow-xl shadow-black/20"
                 >
-                  <span>Accéder au détail</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                  <span>Détails</span>
+                  <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </button>
                 
                 <button
-                   onClick={() => navigate('/services/etat-civil')}
-                  className="px-8 py-5 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-white/20 transition-all"
+                   onClick={() => navigate('/suivi-dossier')}
+                  className="px-6 py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-white/20 transition-all"
                 >
-                  Services en ligne
+                  Suivre dossier
                 </button>
               </div>
             </motion.div>
@@ -104,7 +96,7 @@ const Hero: React.FC<HeroProps> = ({ news = [] }) => {
       </AnimatePresence>
 
       {/* Pagination Controls */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-3">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2">
         {items.map((_, idx) => (
           <button
             key={idx}

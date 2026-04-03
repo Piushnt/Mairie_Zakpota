@@ -1,47 +1,65 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface ServiceCardProps {
   title: string;
   desc: string;
   url: string;
+  category?: string;
   Icon: any;
   iconColor?: string;
 }
 
-const ServiceCard = ({ title, desc, url, Icon, iconColor }: ServiceCardProps) => {
+const ServiceCard = ({ title, desc, url, category = "Service Public", Icon, iconColor }: ServiceCardProps) => {
+  const isExternal = url.startsWith('http');
+  
   return (
     <motion.div
-      whileHover={{ y: -5 }}
-      className="bg-card p-6 shadow-md dark:shadow-2xl border-l-4 border-primary dark:border-accent flex items-start space-x-6 h-full transition-all group border border-border dark:border-white/5 rounded-2xl"
+      whileHover={{ y: -8 }}
+      className="bg-card group relative p-8 rounded-[2rem] border border-border dark:border-white/5 transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,102,51,0.12)] dark:hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] flex flex-col h-full"
     >
-      <div className={`flex-shrink-0 w-20 h-20 bg-muted dark:bg-white/5 rounded-2xl p-4 flex items-center justify-center ${iconColor || 'text-primary dark:text-[#00c561]'} group-hover:bg-primary group-hover:text-white dark:group-hover:bg-[#00c561] dark:group-hover:text-slate-900 transition-all duration-500`}>
-        <Icon className="w-10 h-10" />
+      <div className={`w-16 h-16 rounded-[1.25rem] bg-primary/5 dark:bg-primary/10 flex items-center justify-center ${iconColor || 'text-primary'} mb-8 group-hover:bg-primary group-hover:text-white transition-all duration-500`}>
+        <Icon className="w-8 h-8" />
       </div>
-      
-      <div className="flex flex-col justify-between h-full flex-grow">
-        <div>
-          <h3 className="text-xl font-bold text-primary dark:text-[#00c561] mb-2">{title}</h3>
-          <p className="text-ink-muted text-sm leading-relaxed mb-4">
-            {desc}
-          </p>
-        </div>
-        
-        <div className="mt-auto">
+
+      <div className="flex flex-col flex-1">
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 dark:text-white/40 mb-3">
+          {category}
+        </span>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-4 leading-tight group-hover:text-primary transition-colors">
+          {title}
+        </h3>
+        <p className="text-slate-600 dark:text-slate-400 text-[13px] font-medium leading-relaxed mb-6 flex-1">
+          {desc}
+        </p>
+      </div>
+
+      <div className="pt-6 border-t border-border/50 dark:border-white/5 mt-auto">
+        {isExternal ? (
           <a 
             href={url} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-[#006633] dark:text-[#00c561] hover:underline flex items-center space-x-2 text-[13px] font-bold break-all opacity-80 hover:opacity-100 transition-opacity"
+            className="inline-flex items-center space-x-2 text-[10px] font-black text-primary dark:text-[#00c561] uppercase tracking-[0.2em] group/btn hover:text-accent transition-all"
           >
-            <span>{url}</span>
-            <ExternalLink className="w-3 h-3 flex-shrink-0" />
+            <span>Démarrer la procédure</span>
+            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1.5 transition-transform" />
           </a>
-        </div>
+        ) : (
+          <Link 
+            to={url} 
+            className="inline-flex items-center space-x-2 text-[10px] font-black text-primary dark:text-[#00c561] uppercase tracking-[0.2em] group/btn hover:text-accent transition-all"
+          >
+            <span>Démarrer la procédure</span>
+            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1.5 transition-transform" />
+          </Link>
+        )}
       </div>
     </motion.div>
   );
 };
 
 export default ServiceCard;
+
