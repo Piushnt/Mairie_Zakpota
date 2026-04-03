@@ -45,23 +45,13 @@ const PageEconomie = ({ configMarche }: { configMarche: any }) => {
         </div>
       </section>
 
-      {/* Tabs / Navigation Anchor */}
-      <div className="sticky top-[72px] z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-border dark:border-white/5">
-        <div className="container mx-auto px-4">
-          <div className="flex space-x-8">
-            <a href="#marches" className="py-6 text-[10px] font-black uppercase tracking-widest text-primary border-b-2 border-primary">Cycle des Marchés</a>
-            <a href="#artisans" className="py-6 text-[10px] font-black uppercase tracking-widest text-ink/40 hover:text-primary transition-colors">Annuaire Artisans</a>
-          </div>
-        </div>
-      </div>
+
 
       <div id="marches">
         <MarketLogic config={configMarche} />
       </div>
 
-      <div id="artisans" className="border-t border-border dark:border-white/5">
-        <ArtisanDirectory />
-      </div>
+
 
       {/* Appels d'offres CTA */}
       <section className="py-20 bg-primary overflow-hidden relative group">

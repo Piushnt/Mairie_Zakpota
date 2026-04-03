@@ -31,9 +31,9 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
     <section className="container mx-auto px-4 mt-16 relative z-20">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ServiceCard
-          title="État Civil"
+          title="État Civil & Suivi"
           desc="Demandez vos actes de naissance, mariage ou décès en ligne. Suivez l'évolution de votre demande en temps réel."
-          url="https://service-public.bj/etat-civil"
+          url="/services/etat-civil" 
           Icon={Users}
           iconColor="text-[#008751]"
         />
@@ -62,11 +62,10 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
     </section>
 
     {/* Section Documents Officiels */}
-    <section className="container mx-auto px-4 mt-24">
-      <div className="bg-card dark:bg-slate-800 rounded-[3rem] p-8 md:p-16 border border-border dark:border-white/5 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl opacity-50 dark:opacity-20" />
+    <section className="py-24 bg-paper dark:bg-slate-900/50 border-y border-border dark:border-white/5 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full bg-primary/[0.01] dark:bg-primary/[0.05] pointer-events-none" />
         
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12 relative z-10">
+        <div className="container mx-auto px-4 flex flex-col lg:flex-row lg:items-center justify-between gap-12 relative z-10">
           <div className="max-w-xl">
             <span className="inline-block px-4 py-1 bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6">Transparence Municipale</span>
             <h2 className="text-4xl md:text-5xl font-black text-primary dark:text-[#00c561] uppercase tracking-tight mb-6">Rapports & Documents Officiels</h2>
@@ -112,7 +111,6 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
             ))}
           </div>
         </div>
-      </div>
     </section>
 
 

@@ -80,6 +80,7 @@ const Header = ({
     {
       label: 'Services Publics', id: 'services', submenu: [
         { label: 'État Civil', path: '/services/etat-civil' },
+        { label: 'Suivi de Dossier', path: '/suivi-dossier' },
         { label: 'Formulaires (Guichet)', path: '/formulaires' },
         { label: 'Urbanisme', path: '/services/urbanisme' },
         { label: 'Simulateur Fiscal', path: '/simulateur' },
@@ -89,6 +90,7 @@ const Header = ({
     {
       label: 'Économie', id: 'economie', submenu: [
         { label: 'Marchés Locaux', path: '/economie' },
+        { label: 'Annuaire des Artisans', path: '/artisans' },
         { label: 'Opportunités Locales', path: '/opportunites' },
       ]
     },
@@ -106,8 +108,6 @@ const Header = ({
         { label: 'Guide Touristique', path: '/tourisme' },
       ]
     },
-    { label: 'Suivi Dossier', path: '/services' },
-    { label: 'Annuaire Artisans', path: '/economie' },
     { label: 'Actualités', path: '/actualites' },
     { label: 'Contact', id: 'contact', path: '/contact' },
   ];

@@ -28,17 +28,7 @@ const PageService = ({ services }: PageServiceProps) => {
           <div className="h-1.5 w-16 bg-accent mx-auto mt-10 rounded-full" />
         </div>
 
-        {/* Folder Tracking Section - New v2.0 */}
-        <section className="mb-24">
-          <div className="flex flex-col items-center text-center mb-12">
-            <span className="px-4 py-1.5 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6 inline-block">Nouveau : E-Administration</span>
-            <h3 className="text-3xl font-black text-ink tracking-tight uppercase mb-4">Gagnez du temps, suivez vos dossiers</h3>
-            <p className="text-ink-muted text-sm font-medium max-w-lg leading-relaxed">
-              Plus besoin de vous déplacer pour connaître l'état de votre demande. Entrez votre identifiant ci-dessous.
-            </p>
-          </div>
-          <FolderTracking />
-        </section>
+
 
         <div className="grid grid-cols-1 gap-12">
           {data.map((service, i) => (

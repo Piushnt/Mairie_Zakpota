@@ -61,7 +61,7 @@ const RapportsPage: React.FC<RapportsPageProps> = ({ store }) => {
   };
 
   return (
-    <div className="min-h-screen bg-muted pt-32 pb-20 transition-colors duration-300">
+    <div className="min-h-screen bg-surface pt-32 pb-20 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-12">
@@ -105,7 +105,7 @@ const RapportsPage: React.FC<RapportsPageProps> = ({ store }) => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-card p-6 rounded-2xl border-l-4 border-primary shadow-sm hover:shadow-md transition-all flex items-center justify-between group"
+                className="bg-card dark:bg-slate-800/40 p-8 md:p-10 rounded-[3rem] border border-border dark:border-white/5 shadow-xl relative group transition-all flex items-center justify-between group"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{report.type}</p>
@@ -128,7 +128,7 @@ const RapportsPage: React.FC<RapportsPageProps> = ({ store }) => {
         </div>
 
         {/* Filters Section */}
-        <div className="bg-card rounded-3xl shadow-sm border border-border p-6 mb-12 transition-colors">
+        <div className="bg-paper dark:bg-slate-900/50 rounded-3xl shadow-sm border border-border dark:border-white/5 p-6 mb-12 transition-colors">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Search */}
             <div className="md:col-span-2 relative">
@@ -187,7 +187,7 @@ const RapportsPage: React.FC<RapportsPageProps> = ({ store }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="group bg-white/40 backdrop-blur-md rounded-[2rem] p-8 shadow-sm hover:shadow-xl transition-all border border-white/30 flex flex-col h-full"
+                className="group bg-card dark:bg-slate-800 rounded-[2rem] p-8 shadow-sm hover:shadow-xl transition-all border border-border dark:border-white/5 flex flex-col h-full"
               >
                 <div className="flex items-start justify-between mb-6">
                   <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-500">

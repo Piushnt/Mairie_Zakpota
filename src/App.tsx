@@ -95,6 +95,8 @@ import PageHistoire from './pages/PageHistoire';
 import PageTourisme from './pages/PageTourisme';
 import PageStade from './pages/PageStade';
 import PageContact from './pages/PageContact';
+import PageSuiviDossier from './pages/PageSuiviDossier';
+import PageAnnuaireArtisans from './pages/PageAnnuaireArtisans';
 import PageService from './pages/PageService';
 import PageEconomie from './pages/PageEconomie';
 import PageAgenda from './pages/PageAgenda';
@@ -127,7 +129,7 @@ const ADRESSE_MAIRIE = "Hôtel de Ville de Za-Kpota, Centre Ville";
 
 
 export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState(true); // Za-Kpota 2.0: Dark Mode by Default
+  const [isDarkMode, setIsDarkMode] = useState(false); // Za-Kpota 2.0: Light Mode by Default
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useState(initialStoreData);
@@ -466,6 +468,8 @@ export default function App() {
             <Route path="simulateur" element={<SimulateurFiscal settings={store.tax_settings} />} />
             <Route path="formulaires" element={<PageFormulaires formulaires={store.formulaires} />} />
             <Route path="rendezvous" element={<RendezVous onSubmit={(data) => handleAudienceSubmit({...data, type: 'rdv'})} />} />
+            <Route path="suivi-dossier" element={<PageSuiviDossier />} />
+            <Route path="artisans" element={<PageAnnuaireArtisans />} />
             <Route path="economie" element={<PageEconomie configMarche={store.configMarche} />} />
             <Route path="opportunites" element={<Opportunities data={store.opportunites} />} />
             <Route path="agenda" element={<PageAgenda agenda={store.agenda} />} />

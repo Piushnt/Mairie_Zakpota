@@ -75,7 +75,7 @@ const CommunityPolls = () => {
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-slate-800 p-8 md:p-10 rounded-[3rem] border border-primary/10 shadow-xl relative group"
+                className="bg-card dark:bg-slate-800/40 p-8 md:p-10 rounded-[3rem] border border-border dark:border-white/5 shadow-xl relative group"
               >
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-x-3">
