@@ -17,12 +17,12 @@ const PageService = ({ services }: PageServiceProps) => {
     : "Gérez vos projets de construction et vos titres de propriété.";
 
   return (
-    <main className="pt-12 pb-24 bg-surface">
+    <main className="pt-20 pb-24 bg-surface dark:bg-slate-950 transition-colors">
       <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto text-center mb-20">
+        <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
           <h4 className="text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-4">Services Publics</h4>
-          <h2 className="text-5xl font-black text-ink tracking-tight mb-8">{title}</h2>
-          <p className="text-ink-muted text-lg font-medium leading-relaxed">
+          <h2 className="text-4xl md:text-6xl font-black text-ink dark:text-white tracking-tight mb-8 leading-tight">{title}</h2>
+          <p className="text-ink-muted dark:text-white/40 text-lg md:text-xl font-medium leading-relaxed">
             {subtitle}
           </p>
           <div className="h-1.5 w-16 bg-accent mx-auto mt-10 rounded-full" />

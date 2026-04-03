@@ -57,9 +57,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Local form states
   const [flashNews, setFlashNews] = useState(store.flashNews);
+  const [stats, setStats] = useState({
+    totalDossiers: 0,
+    totalArtisans: 0,
+    totalSondages: 0,
+    activePolls: 0
+  });
   const [services, setServices] = useState(store.services);
   const [agenda, setAgenda] = useState(store.agenda);
   const [reports, setReports] = useState(store.reports || []);
@@ -149,19 +156,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
     setAudiences(store.audiences || []);
     setCouncil(store.council || []);
     
-    // Fetch v2.0 data
-    fetchV2Data();
-  }, [store]);
+    const fetchData = async () => {
+      const { data: doss } = await supabase.from('dossiers').select('*').order('created_at', { ascending: false });
+      const { data: arts } = await supabase.from('artisans').select('*').order('nom', { ascending: true });
+      const { data: sond } = await supabase.from('sondages').select('*').order('created_at', { ascending: false });
+      
+      if (doss) setDossiers(doss);
+      if (arts) setArtisans(arts);
+      if (sond) setSondages(sond);
 
-  const fetchV2Data = async () => {
-    const { data: doss } = await supabase.from('dossiers').select('*').order('created_at', { ascending: false });
-    const { data: arts } = await supabase.from('artisans').select('*').order('nom', { ascending: true });
-    const { data: sond } = await supabase.from('sondages').select('*').order('created_at', { ascending: false });
-    
-    if (doss) setDossiers(doss);
-    if (arts) setArtisans(arts);
-    if (sond) setSondages(sond);
-  };
+      const { data: artData } = await supabase.from('artisans').select('id');
+      const { data: dosData } = await supabase.from('dossiers').select('id');
+      const { data: sonData } = await supabase.from('sondages').select('id, is_active');
+      
+      setStats({
+        totalArtisans: artData?.length || 0,
+        totalDossiers: dosData?.length || 0,
+        totalSondages: sonData?.length || 0,
+        activePolls: sonData?.filter(s => s.is_active).length || 0
+      });
+      
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [store]);
   
   const [newOpportunity, setNewOpportunity] = useState({
     title: '',
@@ -2762,18 +2781,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                 <div className="p-8 bg-primary text-white rounded-[2.5rem] shadow-xl shadow-primary/20 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-12 -translate-y-12 blur-2xl" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">Total Dossiers</p>
-                  <h3 className="text-5xl font-black">1,482</h3>
-                  <p className="text-xs font-medium text-white/80 mt-4">+12% depuis le mois dernier</p>
+                  <h3 className="text-5xl font-black">{stats.totalDossiers || '...'}</h3>
+                  <p className="text-xs font-medium text-white/80 mt-4">En temps réel (Supabase)</p>
                 </div>
                 <div className="p-8 bg-accent text-primary rounded-[2.5rem] shadow-xl shadow-accent/20">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-2">Abonnés Push</p>
-                  <h3 className="text-5xl font-black">2.5K</h3>
-                  <p className="text-xs font-medium text-primary/80 mt-4">Taux d'ouverture : 68%</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-2">Artisans Référencés</p>
+                  <h3 className="text-5xl font-black">{stats.totalArtisans || '...'}</h3>
+                  <p className="text-xs font-medium text-primary/80 mt-4">Annuaire Local Actif</p>
                 </div>
                 <div className="p-8 bg-card rounded-[2.5rem] border border-border shadow-sm">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-ink/40 mb-2">Satisfaction</p>
-                  <h3 className="text-5xl font-black text-primary">94%</h3>
-                  <p className="text-xs font-medium text-ink/60 mt-4">Calculé sur 450 sondages</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-ink/40 mb-2">Impact Citoyen</p>
+                  <h3 className="text-5xl font-black text-primary">{stats.totalSondages || '...'}</h3>
+                  <p className="text-xs font-medium text-ink/60 mt-4">Sondages & Consultations</p>
                 </div>
               </div>
 

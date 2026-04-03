@@ -1,34 +1,47 @@
-## Run Locally
+# Mairie de Za-Kpota - Portail Za-Kpota 2.0 (E-Administration) 🇧🇯
 
-**Prerequisites:**# Mairie de Za-Kpota - Portail Officiel 🇧🇯
+Portail professionnel, transactionnel et citoyen de la commune de Za-Kpota, Bénin. Transformé en plateforme d'e-administration complète en 2026.
 
-Portail professionnel et citoyen de la commune de Za-Kpota, Bénin.
+## 🚀 Fonctionnalités Clés (v2.0)
 
-## Structure & Fonctionnalités
+### 📂 E-Administration & Suivi de Dossiers
+- **Suivi en temps réel** : Les citoyens peuvent suivre l'état d'avancement de leurs actes (naissance, permis de construire) via un code unique.
+- **Paiements Mobiles** : Intégration de simulations de paiement (Kkiapay) pour les frais de dossier.
+- **Participation Citoyenne** : Système de sondages interactifs et budget participatif.
 
-### 📱 Responsive Design (Mobile-First)
-L'application est optimisée pour une expérience fluide sur mobile (360x740px) :
-- **Drawer Navigation** : Menu latéral intuitif sur mobile.
-- **Grilles Dynamiques** : Adaptation automatique des services du format GRID au format LISTED sur petits écrans.
-- **Accessibilité** : Zones de clic minimales de 44px pour une navigation tactile sans erreur.
+### 🤖 Za-Kpota GPT (IA Municipale)
+- **Assistant Dédié** : Intégration de l'IA Google Gemini pour répondre aux questions des usagers sur les démarches administratives, le cycle des marchés et l'histoire locale.
+- **Mobile-First** : Experience optimisée pour smartphones avec suggestions de questions.
 
-### 🏛️ Dashboard Secrétaire Exécutif (SE)
-Un portail d'administration dédié permet la gestion dynamique de la commune :
-- **Tarifs des Actes** : Mise à jour instantanée des coûts des services (État Civil, Urbanisme).
-- **Arrondissements** : Gestion des contacts des Chefs d'Arrondissement (CA).
-- **Planning du Stade** : Calendrier des événements sportifs et réservations du stade municipal.
-- **Bandeau d'Alerte** : Diffusion de Flash News en temps réel avec notifications.
+### 🛠️ Dashboard SE (Secrétaire Exécutif)
+- **Gestion Dynamique** : CRUD complet pour les dossiers, les artisans locaux et les sondages.
+- **Analytics Temps Réel** : Visualisation des statistiques de la commune (nombre de dossiers, artisans, taux de satisfaction).
+- **Mode Sombre Natif** : Design premium par défaut pour un confort de travail accru.
 
-## Technologies
-- **React 19** + **Vite**
-- **Tailwind CSS v4** (Branding Gouv.bj)
-- **Framer Motion** (Animations Drawer & Transitions)
-- **Lucide React** (Iconographie)
-Node.js
+## 🛠️ Stack Technique
+- **Frontend** : React 19 + Vite + TypeScript.
+- **Styling** : Tailwind CSS v4 + Framer Motion.
+- **Backend** : Supabase (Database & Auth).
+- **IA** : Google Gemini API (1.5 Flash).
 
+## 🎛️ Configuration & Déploiement
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 1. Variables d'Environnement
+Créez un fichier `.env` à la racine :
+```env
+VITE_SUPABASE_URL=votre_url_supabase
+VITE_SUPABASE_ANON_KEY=votre_cle_anon
+VITE_GEMINI_API_KEY=votre_cle_gemini
+```
+
+### 2. Installation Locales
+```bash
+npm install
+npm run dev
+```
+
+### 3. Production (Vercel)
+L'application est configurée pour un déploiement fluide sur Vercel. Assurez-vous de renseigner les variables d'environnement dans le tableau de bord Vercel.
+
+---
+*© 2026 Mairie de Za-Kpota - Direction du Numérique.*

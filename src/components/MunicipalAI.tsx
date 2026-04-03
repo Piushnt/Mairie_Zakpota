@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, Sparkles, Loader2, Info } from 'lucide-react';
+import { askMunicipalAI } from '../lib/gemini';
 
 const MunicipalAI = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<any[]>([
-    { role: 'bot', text: "Bienvenue sur Za-Kpota GPT ! Je suis votre assistant municipal. Comment puis-je vous aider aujourd'hui ?" }
+    { role: 'bot', text: "Bienvenue sur Za-Kpota GPT ! Je suis votre assistant municipal officiel. Comment puis-je vous aider aujourd'hui ?" }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -26,24 +27,15 @@ const MunicipalAI = () => {
     setInput('');
     setIsTyping(true);
 
-    // Simulation de l'IA (À lier à l'API Gemini en production)
-    setTimeout(() => {
-      let botResponse = "Je n'ai pas encore toutes les informations sur ce sujet. Je vous invite à contacter le secrétariat de la mairie au +229 97 00 00 00.";
-      
-      const lowerMsg = userMsg.toLowerCase();
-      if (lowerMsg.includes('naissance')) {
-        botResponse = "Pour un acte de naissance à Za-Kpota, vous devez fournir la fiche de déclaration de l'hôpital et les pièces d'identité des parents. Le coût est de 500 FCFA.";
-      } else if (lowerMsg.includes('marché')) {
-        botResponse = "Le marché de Za-Kpota suit un cycle de 5 jours. Vous pouvez consulter le calendrier exact sur notre page 'Économie'.";
-      } else if (lowerMsg.includes('maire')) {
-        botResponse = "Le Maire actuel de Za-Kpota est engagé pour le développement de la commune. Vous pouvez prendre rendez-vous avec son secrétariat via l'onglet 'Services'.";
-      } else if (lowerMsg.includes('dossier')) {
-        botResponse = "Vous pouvez suivre l'avancement de vos dossiers en direct sur la page 'Services' grâce à votre code d'identifiant.";
-      }
-
-      setMessages(prev => [...prev, { role: 'bot', text: botResponse }]);
+    try {
+      // Real Gemini AI call with history
+      const response = await askMunicipalAI(userMsg, messages);
+      setMessages(prev => [...prev, { role: 'bot', text: response }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { role: 'bot', text: "Une erreur est survenue lors de la communication avec l'assistant. Veuillez réessayer plus tard ou contacter le secrétariat." }]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -73,13 +65,13 @@ const MunicipalAI = () => {
             />
             
             <motion.div
-              initial={{ opacity: 0, y: 100, scale: 0.8, x: 50 }}
-              animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
-              exit={{ opacity: 0, y: 100, scale: 0.8, x: 50 }}
-              className="fixed bottom-8 right-8 z-[120] w-full max-w-[400px] h-[600px] bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-border dark:border-white/10"
+              initial={{ opacity: 0, y: 100, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 100, scale: 0.9 }}
+              className="fixed inset-0 sm:inset-auto sm:bottom-8 sm:right-8 z-[120] w-full sm:max-w-[400px] sm:h-[600px] h-full bg-white dark:bg-slate-900 sm:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-border dark:border-white/10"
             >
               {/* Header */}
-              <div className="p-6 bg-primary text-white flex items-center justify-between relative overflow-hidden">
+              <div className="p-6 bg-primary text-white flex items-center justify-between relative overflow-hidden shrink-0">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-12 -translate-y-12 blur-2xl" />
                 <div className="flex items-center space-x-4 relative z-10">
                   <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
@@ -96,6 +88,7 @@ const MunicipalAI = () => {
                 <button 
                   onClick={() => setIsOpen(false)}
                   className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all relative z-10"
+                  title="Fermer"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -113,7 +106,7 @@ const MunicipalAI = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[85%] flex space-x-3 ${msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                    <div className={`max-w-[90%] sm:max-w-[85%] flex space-x-3 ${msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm ${
                         msg.role === 'user' ? 'bg-primary text-white' : 'bg-muted dark:bg-slate-800 text-primary'
                       }`}>
@@ -140,8 +133,28 @@ const MunicipalAI = () => {
                 )}
               </div>
 
+              {/* Suggestions Section - Mobile Scrollable */}
+              <div className="px-6 py-4 bg-muted/50 dark:bg-slate-900/50 border-t border-border dark:border-white/5 scrollbar-none overflow-x-auto shrink-0">
+                <div className="flex space-x-3 min-w-max pb-1">
+                  {[
+                    "📜 Acte de naissance ?",
+                    "🛒 Cycle du marché ?",
+                    "🏛️ Qui est le maire ?",
+                    "📅 Info stade ?"
+                  ].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setInput(s)}
+                      className="px-4 py-2 bg-white dark:bg-slate-800 border border-border dark:border-white/10 rounded-full text-[10px] font-bold text-ink dark:text-white/60 whitespace-nowrap hover:bg-primary hover:text-white transition-all shadow-sm"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Info Banner */}
-              <div className="px-6 py-2 bg-accent/5 flex items-center space-x-2">
+              <div className="px-6 py-2 bg-accent/5 flex items-center space-x-2 shrink-0">
                 <Sparkles className="w-3 h-3 text-primary" />
                 <span className="text-[8px] font-black uppercase tracking-[0.2em] text-primary/60">Propulsé par Gemini AI (Beta)</span>
               </div>
@@ -149,7 +162,7 @@ const MunicipalAI = () => {
               {/* Input Area */}
               <form 
                 onSubmit={handleSend}
-                className="p-6 bg-white dark:bg-slate-900 border-t border-border dark:border-white/10"
+                className="p-6 bg-white dark:bg-slate-900 border-t border-border dark:border-white/10 shrink-0"
               >
                 <div className="relative flex items-center space-x-2">
                   <input
@@ -158,11 +171,13 @@ const MunicipalAI = () => {
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Posez votre question..."
                     className="flex-1 bg-muted dark:bg-slate-800 border-none rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold transition-all dark:text-white"
+                    title="Votre question"
                   />
                   <button
                     type="submit"
                     disabled={!input.trim() || isTyping}
                     className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center hover:bg-accent hover:text-primary transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+                    title="Envoyer"
                   >
                     <Send className="w-5 h-5" />
                   </button>
