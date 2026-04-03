@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, Sparkles, Loader2, Info } from 'lucide-react';
-import { askMunicipalAI } from '../lib/gemini';
+import { generateMunicipalResponse } from '../services/geminiService';
 
 const MunicipalAI = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,7 +29,7 @@ const MunicipalAI = () => {
 
     try {
       // Real Gemini AI call with history
-      const response = await askMunicipalAI(userMsg, messages);
+      const response = await generateMunicipalResponse(userMsg, messages);
       setMessages(prev => [...prev, { role: 'bot', text: response }]);
     } catch (err) {
       setMessages(prev => [...prev, { role: 'bot', text: "Une erreur est survenue lors de la communication avec l'assistant. Veuillez réessayer plus tard ou contacter le secrétariat." }]);
