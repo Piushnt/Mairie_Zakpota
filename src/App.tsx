@@ -129,7 +129,7 @@ const ADRESSE_MAIRIE = "Hôtel de Ville de Za-Kpota, Centre Ville";
 
 
 export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState(false); // Za-Kpota 2.0: Light Mode by Default
+  const [isDarkMode, setIsDarkMode] = useState(true); // Za-Kpota 2.0: Dark Mode by Default
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useState(initialStoreData);
