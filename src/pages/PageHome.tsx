@@ -70,52 +70,50 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
     </section>
 
     {/* Section Documents Officiels */}
-    <section className="py-24 bg-paper dark:bg-slate-900/50 border-y border-border dark:border-white/5 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full bg-primary/[0.01] dark:bg-primary/[0.05] pointer-events-none" />
-        
-        <div className="container mx-auto px-4 flex flex-col lg:flex-row lg:items-center justify-between gap-12 relative z-10">
+    <section className="py-24 bg-paper border-y border-border relative overflow-hidden">
+        <div className="container mx-auto px-4 flex flex-col lg:flex-row lg:items-center justify-between gap-16 relative z-10">
           <div className="max-w-xl">
-            <span className="inline-block px-4 py-1 bg-primary/10 dark:bg-accent/10 text-primary dark:text-accent rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6">Transparence Municipale</span>
-            <h2 className="text-4xl md:text-5xl font-black text-primary dark:text-[#00c561] uppercase tracking-tight mb-6">Rapports & Documents Officiels</h2>
-            <p className="text-slate-600 dark:text-white/60 font-medium text-lg leading-relaxed">
+            <div className="flex items-center space-x-2 mb-6">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Transparence Municipale</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-ink tracking-tight uppercase mb-6">
+              Rapports & Documents Officiels
+            </h2>
+            <div className="h-1.5 w-16 bg-accent rounded-full mb-6" />
+            <p className="text-ink-muted text-sm font-medium leading-relaxed mb-10">
               Consultez les derniers comptes-rendus de sessions, les arrêtés municipaux et les rapports d'activités pour rester informé de la gestion de votre commune.
             </p>
-            <div className="mt-10">
-              <Link 
-                to="/publications" 
-                className="inline-flex items-center px-8 py-4 bg-primary dark:bg-[#00c561] text-white dark:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-accent hover:text-primary transition-all shadow-xl shadow-primary/20 dark:shadow-none"
-              >
-                Accéder aux archives
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </Link>
-            </div>
+            <Link 
+              to="/publications" 
+              className="w-fit min-h-[44px] px-8 py-4 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-accent hover:text-primary transition-all shadow-xl shadow-primary/20 flex items-center group/btn"
+            >
+              Accéder aux archives
+              <ChevronRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+            </Link>
           </div>
 
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 mt-12 lg:mt-0">
             {reports.slice(0, 4).map((report) => (
-              <div 
+              <a 
+                href={report.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 key={report.id} 
-                className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group"
+                className="bg-card p-8 rounded-[24px] shadow-sm border border-border/50 hover:shadow-2xl hover:border-primary/30 transition-all group relative overflow-hidden flex flex-col justify-between"
               >
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-primary/5 dark:bg-primary/20 rounded-xl flex items-center justify-center text-primary dark:text-[#00c561] group-hover:bg-primary dark:group-hover:bg-[#00c561] group-hover:text-white dark:group-hover:text-slate-900 transition-colors">
-                    <FileText className="w-6 h-6" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <FileText className="w-6 h-6 text-primary" />
                   </div>
-                  <div className="flex-1 overflow-hidden">
-                    <h4 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-primary dark:group-hover:text-[#00c561] transition-colors">{report.title}</h4>
-                    <p className="text-[10px] text-slate-600 dark:text-white/40 font-black uppercase tracking-widest mt-1">{report.type} • {report.date}</p>
-                    <a 
-                      href={report.fileUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="mt-4 inline-flex items-center text-[10px] font-black text-primary dark:text-[#00c561] uppercase tracking-widest hover:text-accent dark:hover:text-white"
-                    >
-                      <Download className="w-3 h-3 mr-2" />
-                      Télécharger
-                    </a>
-                  </div>
+                  <h4 className="font-black text-ink text-lg mb-2 group-hover:text-primary transition-colors leading-tight">{report.title}</h4>
+                  <p className="text-ink-muted text-[10px] font-bold uppercase tracking-wider">{report.type} • {report.date}</p>
                 </div>
-              </div>
+                <div className="mt-8 flex items-center text-[10px] font-black uppercase tracking-widest text-primary underline decoration-accent underline-offset-4 group-hover:text-accent transition-colors relative z-10 w-fit">
+                   Télécharger <Download className="w-3 h-3 ml-1" />
+                </div>
+              </a>
             ))}
           </div>
         </div>
@@ -135,24 +133,28 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
     <section className="bg-muted py-24 mt-24">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="bg-white dark:bg-slate-900 p-10 rounded-xl shadow-sm border-b-8 border-accent text-center border border-gray-100 dark:border-slate-800 dark:border-b-accent">
-            <h6 className="text-5xl font-black text-primary mb-2 tracking-tighter">13</h6>
-            <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Arrondissements</p>
+          <div className="bg-card p-10 rounded-[24px] shadow-sm border border-border/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl group-hover:bg-accent/20 transition-colors -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            <h6 className="text-5xl font-black text-ink mb-2 tracking-tighter relative z-10">13</h6>
+            <p className="text-ink-muted font-black text-[10px] uppercase tracking-[0.3em] relative z-10">Arrondissements</p>
           </div>
-          <div className="bg-white dark:bg-slate-900 p-10 rounded-xl shadow-sm border-b-8 border-primary text-center border border-gray-100 dark:border-slate-800 dark:border-b-primary">
-            <h6 className="text-5xl font-black text-primary mb-2 tracking-tighter">150K+</h6>
-            <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Habitants</p>
+          <div className="bg-card p-10 rounded-[24px] shadow-sm border border-border/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            <h6 className="text-5xl font-black text-ink mb-2 tracking-tighter relative z-10">150K+</h6>
+            <p className="text-ink-muted font-black text-[10px] uppercase tracking-[0.3em] relative z-10">Habitants</p>
           </div>
-          <div className="bg-white dark:bg-slate-900 p-10 rounded-xl shadow-sm border-b-8 border-red text-center border border-gray-100 dark:border-slate-800 dark:border-b-red">
-            <h6 className="text-5xl font-black text-primary mb-2 tracking-tighter">45+</h6>
-            <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Projets en cours</p>
+          <div className="bg-card p-10 rounded-[24px] shadow-sm border border-border/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-red/10 rounded-full blur-2xl group-hover:bg-red/20 transition-colors -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            <h6 className="text-5xl font-black text-ink mb-2 tracking-tighter relative z-10">45+</h6>
+            <p className="text-ink-muted font-black text-[10px] uppercase tracking-[0.3em] relative z-10">Projets en cours</p>
           </div>
-          <div className="bg-white dark:bg-slate-900 p-10 rounded-xl shadow-sm border-b-8 border-green-500 text-center border border-gray-100 dark:border-slate-800 dark:border-b-green-500">
-             <div className="flex justify-center items-center mb-2">
-                <span className="text-5xl font-black text-primary tracking-tighter">98</span>
-                <span className="text-2xl font-black text-primary">%</span>
+          <div className="bg-card p-10 rounded-[24px] shadow-sm border border-border/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center relative overflow-hidden group">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition-colors -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+             <div className="flex justify-center items-center mb-2 relative z-10">
+                <span className="text-5xl font-black text-ink tracking-tighter">98</span>
+                <span className="text-2xl font-black text-ink">%</span>
              </div>
-            <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Satisfaction</p>
+            <p className="text-ink-muted font-black text-[10px] uppercase tracking-[0.3em] relative z-10">Satisfaction</p>
           </div>
         </div>
       </div>

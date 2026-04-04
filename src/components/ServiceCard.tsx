@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ServiceCardProps {
@@ -17,42 +17,42 @@ const ServiceCard = ({ title, desc, url, category = "Service Public", Icon, icon
   
   return (
     <motion.div
-      className="bg-white dark:bg-slate-900 group relative p-8 rounded-2xl border border-gray-200 dark:border-white/5 transition-all duration-300 hover:shadow-[0_20px_40px_-15px_rgba(0,102,51,0.15)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.6)] hover:-translate-y-2 flex flex-col h-full shadow-lg"
+      className="bg-card p-10 rounded-[24px] shadow-sm border border-border/50 hover:shadow-2xl hover:border-primary/30 transition-all group relative overflow-hidden flex flex-col justify-between h-full"
     >
-      <div className={`w-16 h-16 rounded-[1.25rem] bg-primary/5 dark:bg-primary/10 flex items-center justify-center ${iconColor || 'text-primary'} mb-8 group-hover:bg-primary group-hover:text-white transition-all duration-500`}>
-        <Icon className="w-8 h-8" />
-      </div>
-
-      <div className="flex flex-col flex-1">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80 dark:text-[#00c561]/80 mb-3">
-          {category}
-        </span>
-        <h3 className="text-xl font-bold text-slate-950 dark:text-white uppercase tracking-tight mb-4 leading-tight group-hover:text-primary transition-colors">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-primary/10 transition-colors pointer-events-none" />
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-8">
+          <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Icon className={`w-7 h-7 text-primary`} />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80">
+            {category}
+          </span>
+        </div>
+        <h3 className="text-xl md:text-2xl font-black mb-4 tracking-tight text-ink uppercase">
           {title}
         </h3>
-        <p className="text-slate-600 dark:text-slate-400 text-[13px] font-medium leading-relaxed mb-6 flex-1">
+        <p className="text-ink-muted leading-relaxed mb-8 text-sm font-medium">
           {desc}
         </p>
       </div>
-
-      <div className="pt-6 border-t border-border/50 dark:border-white/5 mt-auto">
+      
+      <div className="relative z-10 mt-auto">
         {isExternal ? (
           <a 
             href={url} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="inline-flex items-center space-x-2 text-[10px] font-black text-primary dark:text-[#00c561] uppercase tracking-[0.2em] group/btn hover:text-accent transition-all"
+            className="w-fit text-[10px] font-black uppercase tracking-widest text-primary flex items-center hover:text-accent transition-colors underline decoration-accent underline-offset-4 group/btn"
           >
-            <span>Démarrer la procédure</span>
-            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1.5 transition-transform" />
+            Voir les procédures <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-1 transition-transform" />
           </a>
         ) : (
           <Link 
             to={url} 
-            className="inline-flex items-center space-x-2 text-[10px] font-black text-primary dark:text-[#00c561] uppercase tracking-[0.2em] group/btn hover:text-accent transition-all"
+            className="w-fit text-[10px] font-black uppercase tracking-widest text-primary flex items-center hover:text-accent transition-colors underline decoration-accent underline-offset-4 group/btn"
           >
-            <span>Démarrer la procédure</span>
-            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1.5 transition-transform" />
+            Voir les procédures <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-1 transition-transform" />
           </Link>
         )}
       </div>
