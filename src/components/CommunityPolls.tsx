@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Vote, CheckCircle2, ListFilter, Calendar, BarChart3, HelpingHand, ArrowRight, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { Link } from 'react-router-dom';
 
-const CommunityPolls = () => {
+const CommunityPolls = ({ hideBudgetBlock }: { hideBudgetBlock?: boolean }) => {
   const [sondages, setSondages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [votedIds, setVotedIds] = useState<string[]>([]);
@@ -62,7 +63,8 @@ const CommunityPolls = () => {
         </p>
       </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+        <div className={`grid grid-cols-1 ${hideBudgetBlock ? 'lg:max-w-4xl mx-auto' : 'lg:grid-cols-2 gap-12 max-w-6xl mx-auto'}`}>
+          <div className="space-y-8">
           {sondages.map((poll) => {
             const hasVoted = votedIds.includes(poll.id);
             const totalVotes = poll.options.reduce((acc: number, curr: any) => acc + (curr.votes || 0), 0);
@@ -151,8 +153,10 @@ const CommunityPolls = () => {
               </motion.div>
             );
           })}
+          </div>
 
-          <div className="flex flex-col justify-center space-y-8">
+          {!hideBudgetBlock && (
+            <div className="flex flex-col justify-center space-y-8">
             <div className="p-10 bg-primary text-white rounded-[24px] shadow-2xl border border-white/10 hover:shadow-primary/30 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-1/2 -translate-y-1/2 blur-2xl group-hover:bg-white/20 transition-colors pointer-events-none" />
               <div className="relative z-10">
@@ -163,9 +167,9 @@ const CommunityPolls = () => {
                 <p className="text-white/60 text-sm font-medium leading-relaxed mb-6">
                   Chaque année, la Mairie alloue 5% du budget d'investissement aux projets choisis directement par vous. Proposez vos idées ou votez pour celles de vos voisins !
                 </p>
-                <button className="w-fit min-h-[44px] text-[10px] font-black uppercase tracking-widest text-accent flex items-center hover:text-white transition-colors relative z-10 outline-none">
+                <Link to="/budget-participatif" className="w-fit min-h-[44px] text-[10px] font-black uppercase tracking-widest text-accent flex items-center hover:text-white transition-colors relative z-10 outline-none">
                   S'impliquer <ChevronRight className="w-3 h-3 ml-1" />
-                </button>
+                </Link>
               </div>
             </div>
             
@@ -176,6 +180,7 @@ const CommunityPolls = () => {
               </p>
             </div>
           </div>
+          )}
         </div>
     </section>
   );

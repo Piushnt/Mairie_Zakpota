@@ -97,8 +97,8 @@ const Header = ({
     },
     {
       label: 'Citoyenneté', id: 'participation', submenu: [
-        { label: 'Sondages Citoyens', path: '/' },
-        { label: 'Budget Participatif', path: '/' },
+        { label: 'Sondages Citoyens', path: '/sondages' },
+        { label: 'Budget Participatif', path: '/budget-participatif' },
         { label: 'Signalement Urgence', path: '/signalement' },
       ]
     },

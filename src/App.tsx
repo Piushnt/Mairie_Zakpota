@@ -102,6 +102,8 @@ import PageEconomie from './pages/PageEconomie';
 import PageAgenda from './pages/PageAgenda';
 import PageActualites from './pages/PageActualites';
 import PageNewsDetail from './pages/PageNewsDetail';
+import PageSondages from './pages/PageSondages';
+import PageBudgetParticipatif from './pages/PageBudgetParticipatif';
 const PageCarte = React.lazy(() => import('./pages/PageCarte'));
 import SignalementForm from './components/SignalementForm';
 import SimulateurFiscal from './components/SimulateurFiscal';
@@ -482,6 +484,8 @@ export default function App() {
             } />
             <Route path="actualites" element={<PageActualites news={store.news.length > 0 ? store.news : newsData} />} />
             <Route path="news/:id" element={<PageNewsDetail news={store.news.length > 0 ? store.news : newsData} />} />
+            <Route path="sondages" element={<PageSondages />} />
+            <Route path="budget-participatif" element={<PageBudgetParticipatif />} />
             <Route path="signalement" element={<SignalementForm />} />
             <Route path="contact" element={<PageContact onSubmit={(data) => handleAudienceSubmit({...data, type: 'contact'})} NOM_VILLE={NOM_VILLE} ADRESSE_MAIRIE={ADRESSE_MAIRIE} TEL_CONTACT={TEL_CONTACT} EMAIL_CONTACT={EMAIL_CONTACT} />} />
 
