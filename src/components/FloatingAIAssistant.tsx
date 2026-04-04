@@ -142,8 +142,8 @@ const FloatingAIAssistant = () => {
             )}
 
             {/* Input Area */}
-            <div className="p-6 border-t border-border bg-muted/30">
-              <div className="relative flex items-center gap-3">
+            <div className="p-4 sm:p-6 border-t border-border bg-muted/30">
+              <div className="relative flex items-center gap-2 sm:gap-3">
                 <button className="p-2 text-ink/40 hover:text-primary transition-colors" title="Joindre un fichier">
                   <Paperclip className="w-5 h-5" />
                 </button>
@@ -159,7 +159,7 @@ const FloatingAIAssistant = () => {
                   onClick={handleSend}
                   disabled={!message.trim() || isLoading}
                   title="Envoyer le message"
-                  className="p-3 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-accent hover:text-primary transition-all disabled:opacity-50 disabled:grayscale"
+                  className="p-2.5 sm:p-3 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-accent hover:text-primary transition-all disabled:opacity-50 disabled:grayscale shrink-0"
                 >
                   <Send className="w-5 h-5" />
                 </button>
