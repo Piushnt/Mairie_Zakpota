@@ -108,6 +108,7 @@ const PageCarte = React.lazy(() => import('./pages/PageCarte'));
 import SignalementForm from './components/SignalementForm';
 import SimulateurFiscal from './components/SimulateurFiscal';
 import PageFormulaires from './pages/PageFormulaires';
+import FloatingAIAssistant from './components/FloatingAIAssistant';
 import Login from './pages/Login';
 import PushPrompt from './components/PushPrompt';
 import { parseImageUrl } from './utils/imageParser';
@@ -509,6 +510,7 @@ export default function App() {
           </Route>
         </Routes>
         </LazyMotion>
+        <FloatingAIAssistant />
         <PushPrompt />
       </BrowserRouter>
     </HelmetProvider>

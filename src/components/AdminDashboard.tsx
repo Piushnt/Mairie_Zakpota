@@ -36,11 +36,13 @@ import {
   BarChart2,
   Users2,
   Hammer,
-  Vote
+  Vote,
+  Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { parseImageUrl, getOptimizedNetworkUrl } from '../utils/imageParser';
+import AdminAI_Assistant from './AdminAI_Assistant';
 
 interface AdminDashboardProps {
   store: any;
@@ -1107,6 +1109,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
             { id: 'artisans', label: 'Annuaire Artisans', icon: Hammer },
             { id: 'sondages', label: 'Sondages Citoyens', icon: Vote },
             { id: 'analytics', label: 'Statistiques', icon: BarChart2 },
+            { id: 'ai', label: 'Intelligence IA', icon: Bot },
             { id: 'flash', label: 'Alertes & Push', icon: Bell },
             { id: 'settings', label: 'Configuration', icon: Settings },
           ].map(item => (
@@ -1167,6 +1170,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
               {activeTab === 'artisans' && "Gestion de l'Annuaire Artisans"}
               {activeTab === 'sondages' && "Sondages & Consultations"}
               {activeTab === 'analytics' && "Tableau de Bord Analytique"}
+              {activeTab === 'ai' && "Intelligence Artificielle & Rapports"}
               {activeTab === 'settings' && "Paramètres Système"}
             </h1>
             <p className="text-ink/40 font-medium">Interface de gestion simplifiée pour les agents de la mairie.</p>
@@ -1221,6 +1225,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
         {/* Tab Content */}
         <div className="bg-card rounded-[2.5rem] shadow-2xl border border-border p-8 lg:p-12 transition-colors">
+          {activeTab === 'ai' && <AdminAI_Assistant />}
+          
           {activeTab === 'flash' && (
             <div className="max-w-2xl space-y-8">
               <div className="space-y-4">
@@ -1229,6 +1235,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                   value={flashNews}
                   onChange={(e) => setFlashNews(e.target.value)}
                   rows={4}
+                  title="Texte du message défilant"
                   className="w-full bg-muted border border-border rounded-2xl px-6 py-4 outline-none focus:border-primary transition-all text-ink font-medium resize-none min-h-[44px]"
                   placeholder="Entrez le message à afficher sur le site..."
                 />

@@ -1,11 +1,8 @@
-/**
- * Za-Kpota GPT - Gemini AI Integration Service
- * This service handles communication with the Google Gemini API.
- * It includes a system prompt tailored to the municipal context of Za-Kpota.
- */
+import { GoogleGenerativeAI, Tool, GenerateContentRequest, SchemaType } from "@google/generative-ai";
+import { supabase } from "./supabase";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GEMINI_MODEL = "gemini-1.5-flash";
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const SYSTEM_PROMPT = `
 Vous êtes "Za-Kpota GPT", l'assistant municipal officiel de la commune de Za-Kpota au Bénin.
@@ -15,70 +12,143 @@ CONTEXTE DE ZA-KPOTA :
 - Maire : Poste stratégique pour le développement local.
 - Arrondissements : Allahé, Assalin, Houngomey, Kpota, Kpakpamè, Kpozoun, Za-Hla, Za-Kpota (Chef-lieu).
 - Services : État civil (naissance, mariage, décès), urbanisme (permis de construire), taxes locales (TFU).
-- Économie : Cycle de marché de 5 jours, agriculture, artisanat dynamique.
-- Infrastructures : Stade municipal, écoles, centres de santé.
-
-DIRECTIVES :
+DIRECTIVES DE SÉCURITÉ :
 1. Soyez toujours professionnel et chaleureux.
-2. Si vous ne connaissez pas une information spécifique, invitez l'usager à contacter le secrétariat au +229 97 00 00 00.
-3. Encouragez l'utilisation des services en ligne du portail (suivi de dossier, simulateur fiscal).
-4. Répondez en français clair.
+2. Utilisez les outils à votre disposition pour donner des informations RÉELLES (prix, dates, actualités). Ne jamais inventer de prix.
+3. Si une information manque, invitez l'usager à contacter le secrétariat au +229 97 00 00 00.
+4. PROTECTION : Ne fournissez jamais de conseils financiers complexes, d'avis médicaux ou de recommandations politiques partisanes. Votre rôle est purement administratif.
+5. CONFIDENTIALITÉ : Ne demandez jamais de mot de passe ou de données de carte bancaire.
 `;
+
+// --- TOOLS DEFINITION ---
+
+const tools: Tool[] = [
+  {
+    functionDeclarations: [
+      {
+        name: "get_municipal_news",
+        description: "Récupère les 5 dernières actualités de la commune de Za-Kpota",
+      },
+      {
+        name: "get_service_details",
+        description: "Récupère les tarifs et pièces à fournir pour un service municipal particulier (acte de naissance, mariage, etc.)",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            service_name: {
+              type: SchemaType.STRING,
+              description: "Le nom du service recherché (ex: 'naissance', 'mariage', 'construction')"
+            }
+          }
+        }
+      },
+      {
+        name: "get_upcoming_events",
+        description: "Récupère les événements à venir dans l'agenda municipal (stade, réunions publiques, etc.)",
+      }
+    ]
+  }
+];
+
+// --- TOOL IMPLEMENTATIONS ---
+
+async function get_municipal_news() {
+  const { data } = await supabase.from('news').select('*').order('date', { ascending: false }).limit(5);
+  return JSON.stringify(data);
+}
+
+async function get_service_details(args: { service_name: string }) {
+  const { data } = await supabase
+    .from('services_tarifs')
+    .select('*')
+    .ilike('name', `%${args.service_name}%`)
+    .limit(3);
+  return JSON.stringify(data);
+}
+
+async function get_upcoming_events() {
+  const { data } = await supabase
+    .from('agenda_events')
+    .select('*')
+    .gte('date', new Date().toISOString().split('T')[0])
+    .order('date', { ascending: true })
+    .limit(5);
+  return JSON.stringify(data);
+}
+
+const functions: Record<string, Function> = {
+  get_municipal_news,
+  get_service_details,
+  get_upcoming_events
+};
+
+// --- MAIN SERVICE ---
 
 export async function askMunicipalAI(prompt: string, history: { role: string, text: string }[] = []) {
   if (!GEMINI_API_KEY) {
-    console.warn("Gemini API Key missing. Using municipal simulation mode.");
     return simulateMunicipalResponse(prompt);
   }
 
   try {
-    const contents = [
-      { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-      ...history.map(h => ({
-        role: h.role === 'bot' ? 'model' : 'user',
-        parts: [{ text: h.text }]
-      })),
-      { role: "user", parts: [{ text: prompt }] }
-    ];
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents })
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: SYSTEM_PROMPT,
+      tools
     });
 
-    const data = await response.json();
-    if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-      return data.candidates[0].content.parts[0].text;
+    const chat = model.startChat({
+      history: history.map(h => ({
+        role: h.role === 'bot' ? 'model' : 'user',
+        parts: [{ text: h.text }]
+      }))
+    });
+
+    // Add a AbortController or a simple timeout for safety
+    const aiPromise = chat.sendMessage(prompt);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("AI_TIMEOUT")), 15000)
+    );
+
+    const result = await Promise.race([aiPromise, timeoutPromise]) as any;
+    let response = result.response;
+    
+    // Handle function calls
+    const calls = response.candidates?.[0]?.content?.parts.filter(p => p.functionCall);
+    
+    if (calls && calls.length > 0) {
+      const toolResults = [];
+      for (const call of calls) {
+        if (call.functionCall) {
+          const functionName = call.functionCall.name;
+          const args = call.functionCall.args;
+          const functionResponse = await functions[functionName](args);
+          
+          toolResults.push({
+            functionResponse: {
+              name: functionName,
+              response: { result: functionResponse }
+            }
+          });
+        }
+      }
+      
+      const secondResult = await chat.sendMessage(toolResults);
+      return secondResult.response.text();
     }
-    throw new Error("Invalid response from Gemini");
+
+    return response.text();
   } catch (err) {
-    console.error("Gemini API Error:", err);
+    console.error("Gemini AI Error:", err);
     return simulateMunicipalResponse(prompt);
   }
 }
 
 /**
- * Fallback simulation based on local knowledge for when API is unavailable or key is missing.
+ * Fallback simulation for offline/missing key
  */
 function simulateMunicipalResponse(prompt: string): string {
   const lowerPrompt = prompt.toLowerCase();
-  
-  if (lowerPrompt.includes('naissance')) {
-    return "Pour un acte de naissance à Za-Kpota, vous devez fournir la fiche de déclaration de l'hôpital et les pièces d'identité des parents. Le coût est de 500 FCFA. Vous pouvez suivre l'état de votre demande dans l'onglet 'Services'.";
-  }
-  if (lowerPrompt.includes('marché') || lowerPrompt.includes('cycle')) {
-    return "Le grand marché de Za-Kpota suit un cycle tournant de 5 jours. Pour connaître la date du prochain marché, consultez notre page 'Économie' qui affiche le calendrier en temps réel.";
-  }
-  if (lowerPrompt.includes('maire')) {
-    return "Le conseil municipal de Za-Kpota travaille activement sur des projets d'électrification et d'assainissement. Pour un rendez-vous officiel, veuillez utiliser le formulaire de contact ou appeler le secrétariat.";
-  }
-  if (lowerPrompt.includes('stade')) {
-    return "Le stade municipal est disponible pour les compétitions et entraînements. Les réservations se font directement en ligne sur ce portail via la page dédiée au Stade.";
-  }
-  if (lowerPrompt.includes('artisan')) {
-    return "La Mairie dispose d'un annuaire des artisans certifiés. Vous pouvez trouver un menuisier, maçon ou électricien dans la section 'Économie' de notre site.";
-  }
-
-  return "Je suis navré, je n'ai pas pu trouver l'information précise sur ce sujet. Je vous suggère de vous rapprocher de la Mairie Centrale de Za-Kpota ou d'appeler le +229 97 00 00 00.";
+  if (lowerPrompt.includes('naissance')) return "Pour un acte de naissance, prévoyez 500 FCFA et la fiche de déclaration de l'hôpital.";
+  if (lowerPrompt.includes('marché')) return "Le marché de Za-Kpota a lieu tous les 5 jours.";
+  return "Je suis désolé, je rencontre une difficulté technique. Veuillez contacter la mairie au +229 97 00 00 00.";
 }
