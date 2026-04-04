@@ -62,11 +62,13 @@ export const generateMunicipalResponse = async (
 
   const cleanPrompt = sanitizeInput(prompt);
   
-  // Conversion de l'historique au format Gemini
-  const chatHistory = history.map(msg => ({
-    role: msg.role === "user" ? "user" : "model",
-    parts: [{ text: msg.text }] as Part[],
-  }));
+  // Conversion de l'historique au format Gemini (Doit impérativement commencer par 'user')
+  const chatHistory = history
+    .filter((msg, index) => !(index === 0 && msg.role === 'bot')) // Skip initial bot welcome
+    .map(msg => ({
+      role: msg.role === "user" ? "user" : "model",
+      parts: [{ text: msg.text }] as Part[],
+    }));
 
   let lastError: any = null;
 

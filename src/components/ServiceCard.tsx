@@ -18,7 +18,7 @@ const ServiceCard = ({ title, desc, url, category = "Service Public", Icon, icon
   return (
     <motion.div
       whileHover={{ y: -8 }}
-      className="bg-card group relative p-8 rounded-[2rem] border border-border dark:border-white/5 transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,102,51,0.12)] dark:hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] flex flex-col h-full"
+      className="bg-white group relative p-8 rounded-xl border border-gray-100 dark:border-white/5 transition-all duration-500 hover:shadow-xl flex flex-col h-full shadow-sm"
     >
       <div className={`w-16 h-16 rounded-[1.25rem] bg-primary/5 dark:bg-primary/10 flex items-center justify-center ${iconColor || 'text-primary'} mb-8 group-hover:bg-primary group-hover:text-white transition-all duration-500`}>
         <Icon className="w-8 h-8" />

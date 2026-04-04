@@ -95,7 +95,7 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
             {reports.slice(0, 4).map((report) => (
               <div 
                 key={report.id} 
-                className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-primary/5 dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group"
+                className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group"
               >
                 <div className="flex items-start space-x-4">
                   <div className="w-12 h-12 bg-primary/5 dark:bg-primary/20 rounded-xl flex items-center justify-center text-primary dark:text-[#00c561] group-hover:bg-primary dark:group-hover:bg-[#00c561] group-hover:text-white dark:group-hover:text-slate-900 transition-colors">
@@ -135,19 +135,19 @@ const PageHome = ({ reports = [], news = [] }: { reports?: any[], news?: any[] }
     <section className="bg-muted py-24 mt-24">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="bg-card p-10 rounded-[2.5rem] shadow-sm border-b-8 border-accent text-center border border-border">
+          <div className="bg-white p-10 rounded-xl shadow-sm border-b-8 border-accent text-center border border-gray-100">
             <h6 className="text-5xl font-black text-primary mb-2 tracking-tighter">13</h6>
             <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Arrondissements</p>
           </div>
-          <div className="bg-card p-10 rounded-[2.5rem] shadow-sm border-b-8 border-primary text-center border border-border">
+          <div className="bg-white p-10 rounded-xl shadow-sm border-b-8 border-primary text-center border border-gray-100">
             <h6 className="text-5xl font-black text-primary mb-2 tracking-tighter">150K+</h6>
             <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Habitants</p>
           </div>
-          <div className="bg-card p-10 rounded-[2.5rem] shadow-sm border-b-8 border-red text-center border border-border">
+          <div className="bg-white p-10 rounded-xl shadow-sm border-b-8 border-red text-center border border-gray-100">
             <h6 className="text-5xl font-black text-primary mb-2 tracking-tighter">45+</h6>
             <p className="text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Projets en cours</p>
           </div>
-          <div className="bg-card p-10 rounded-[2.5rem] shadow-sm border-b-8 border-green-500 text-center border border-border">
+          <div className="bg-white p-10 rounded-xl shadow-sm border-b-8 border-green-500 text-center border border-gray-100">
              <div className="flex justify-center items-center mb-2">
                 <span className="text-5xl font-black text-primary tracking-tighter">98</span>
                 <span className="text-2xl font-black text-primary">%</span>
