@@ -7,7 +7,6 @@ import FlashNews from './FlashNews';
 import SearchModal from './SearchModal';
 import PushNotificationPrompt from './PushNotificationPrompt';
 import FloatingPushSubscribe from './FloatingPushSubscribe';
-import MunicipalAI from './MunicipalAI';
 
 interface LayoutProps {
   NOM_VILLE: string;
@@ -82,7 +81,6 @@ const Layout = ({
       
       <PushNotificationPrompt />
       <FloatingPushSubscribe />
-      <MunicipalAI />
     </div>
   );
 };
