@@ -67,6 +67,7 @@ const Header = ({
   };
 
   const navItems = [
+    { label: 'Accueil', path: '/' },
     {
       label: 'La Mairie', id: 'mairie', submenu: [
         { label: 'Le Maire', path: '/maire' },

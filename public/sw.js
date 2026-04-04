@@ -3,9 +3,7 @@ const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/logo.jpg',
-  '/img/logo-mairie.jpg',
-  '/badge.png'
+  '/logo.jpg'
 ];
 
 self.addEventListener('install', (event) => {
@@ -51,13 +49,19 @@ self.addEventListener('push', function (event) {
       const data = event.data.json();
       const options = {
         body: data.body,
-        icon: data.icon || '/img/logo-mairie.jpg',
-        badge: data.badge || '/badge.png',
+        icon: data.icon || '/logo.jpg',
+        badge: data.badge || '/logo.jpg',
         image: data.image || undefined,
         vibrate: [200, 100, 200, 100, 200, 100, 400],
         requireInteraction: true,
         data: { url: data.url || '/' }
       };
+
+      if (data.url && data.url.includes('/news/')) {
+        options.actions = [
+          { action: 'read-article', title: 'Lire l\'article' }
+        ];
+      }
 
       event.waitUntil(
         self.registration.showNotification(data.title, options)
@@ -66,8 +70,8 @@ self.addEventListener('push', function (event) {
       // If payload is not valid JSON, show generic
       event.waitUntil(
         self.registration.showNotification(event.data.text(), {
-          icon: '/img/logo-mairie.jpg',
-          badge: '/badge.png',
+          icon: '/logo.jpg',
+          badge: '/logo.jpg',
           vibrate: [200, 100, 200, 100, 200, 100, 400],
           data: { url: '/' }
         })
