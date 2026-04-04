@@ -16,6 +16,9 @@ const Footer = ({ ADRESSE_MAIRIE, TEL_CONTACT, EMAIL_CONTACT, NOM_VILLE }: any) 
               <img
                 src="/img/logo-mairie.jpg"
                 alt="Logo Mairie"
+                width={48}
+                height={48}
+                loading="lazy"
                 className="w-full h-full object-contain"
               />
             </div>

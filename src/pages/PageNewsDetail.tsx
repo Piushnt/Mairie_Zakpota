@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, ArrowLeft, Share2, MessageCircle, Send, Mail } from 'lucide-react';
 
+import { getOptimizedNetworkUrl } from '../utils/imageParser';
+
 const PageNewsDetail = ({ news }: { news: any[] }) => {
   const { id } = useParams<{ id: string }>();
   const article = news.find(n => n.id === id);
@@ -32,9 +34,12 @@ const PageNewsDetail = ({ news }: { news: any[] }) => {
 
           <div className="relative h-[400px] md:h-[500px] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
             <img 
-              src={article.img || article.image_url} 
+              src={getOptimizedNetworkUrl(article.img || article.image_url, 1200)} 
               alt={article.title} 
-              className="w-full h-full object-cover"
+              width={1200}
+              height={600}
+              loading="eager"
+              className="w-full h-full object-cover" 
             />
             <div className={`absolute top-8 left-8 bg-primary text-white text-[10px] font-black px-6 py-2 rounded-2xl uppercase tracking-widest shadow-xl`}>
               {article.cat || article.category}

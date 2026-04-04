@@ -1,6 +1,7 @@
 import React from 'react';
 import { histoireData } from '../data/config';
 import { MapPin, Info } from 'lucide-react';
+import { getOptimizedNetworkUrl } from '../utils/imageParser';
 
 const PageHistoire = () => (
   <main className="pt-12 pb-24 bg-surface">
@@ -30,8 +31,11 @@ const PageHistoire = () => (
           <div key={i} className="group cursor-pointer">
             <div className="aspect-[16/9] rounded-[2.5rem] overflow-hidden mb-8 border border-border shadow-xl">
               <img 
-                src={site.img} 
+                src={getOptimizedNetworkUrl(site.img, 800)} 
                 alt={site.name} 
+                width={800}
+                height={450}
+                loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
               />
             </div>

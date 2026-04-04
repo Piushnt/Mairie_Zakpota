@@ -140,6 +140,8 @@ const Header = ({
                 <img
                   src="/img/armoirie.png"
                   alt="Armoirie"
+                  width={48}
+                  height={48}
                   className="h-12 w-auto object-contain"
                 />
               </div>
@@ -206,7 +208,13 @@ const Header = ({
               <div className="flex items-center space-x-3 pr-2 md:pr-4 md:border-r border-white/20">
                 <div className="hidden md:flex items-center space-x-3 transition-all cursor-pointer">
                   <div className="w-10 h-10 overflow-hidden">
-                    <img src="/img/logo-mairie.jpg" alt="Mairie de Za-Kpota" className="w-full h-full object-contain filter drop-shadow-md" />
+                    <img 
+                      src="/img/logo-mairie.jpg" 
+                      alt="Mairie de Za-Kpota" 
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-contain filter drop-shadow-md" 
+                    />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[9px] font-black leading-none uppercase tracking-tighter">Mairie de</span>
@@ -258,7 +266,13 @@ const Header = ({
               <div className="p-6 border-b border-border flex items-center justify-between bg-primary text-white">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 p-0.5">
-                    <img src="/img/logo-mairie.jpg" alt="Logo" className="w-full h-full object-contain" />
+                    <img 
+                      src="/img/logo-mairie.jpg" 
+                      alt="Logo" 
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-contain" 
+                    />
                   </div>
                   <span className="font-black uppercase tracking-tighter text-sm">Menu ZA-KPOTA</span>
                 </div>

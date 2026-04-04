@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, MapPin, ChevronLeft, ChevronRight, X, Info, ArrowRight } from 'lucide-react';
 
+import { getOptimizedNetworkUrl } from '../utils/imageParser';
+
 export default function PageAgenda({ agenda }: { agenda: any }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day' | 'list'>('month');
@@ -94,13 +96,13 @@ export default function PageAgenda({ agenda }: { agenda: any }) {
               </h2>
               {view !== 'list' && (
                 <div className="flex space-x-4">
-                  <button onClick={prev} className="p-3 bg-surface rounded-xl border border-border hover:text-primary transition-all shadow-sm">
+                  <button onClick={prev} title="Précédent" className="p-3 bg-surface rounded-xl border border-border hover:text-primary transition-all shadow-sm">
                     <ChevronLeft className="w-6 h-6" />
                   </button>
                   <button onClick={() => setCurrentDate(new Date())} className="px-6 py-3 bg-surface rounded-xl border border-border hover:text-primary transition-all shadow-sm font-bold text-sm">
                     Aujourd'hui
                   </button>
-                  <button onClick={next} className="p-3 bg-surface rounded-xl border border-border hover:text-primary transition-all shadow-sm">
+                  <button onClick={next} title="Suivant" className="p-3 bg-surface rounded-xl border border-border hover:text-primary transition-all shadow-sm">
                     <ChevronRight className="w-6 h-6" />
                   </button>
                 </div>
@@ -233,8 +235,11 @@ export default function PageAgenda({ agenda }: { agenda: any }) {
                   >
                     <div className="relative h-64 overflow-hidden">
                       <img 
-                        src={event.img} 
+                        src={getOptimizedNetworkUrl(event.img, 800)} 
                         alt={event.title} 
+                        width={800}
+                        height={450}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                       <div className="absolute top-6 left-6 bg-card/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg">
@@ -284,13 +289,20 @@ export default function PageAgenda({ agenda }: { agenda: any }) {
             >
               <button 
                 onClick={() => setSelectedEvent(null)}
+                title="Fermer"
                 className="absolute top-6 right-6 z-20 p-3 bg-card/90 rounded-full shadow-lg hover:scale-110 transition-transform"
               >
                 <X className="w-6 h-6 text-primary" />
               </button>
               
               <div className="relative h-80">
-                <img src={selectedEvent.img} alt={selectedEvent.title} className="w-full h-full object-cover" />
+                <img 
+                  src={getOptimizedNetworkUrl(selectedEvent.img, 1200)} 
+                  alt={selectedEvent.title} 
+                  width={1200}
+                  height={400}
+                  className="w-full h-full object-cover" 
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                 <div className="absolute bottom-10 left-10 right-10">
                   <div className="flex items-center text-accent font-bold text-xs mb-4 uppercase tracking-widest">

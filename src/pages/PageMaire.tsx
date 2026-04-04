@@ -16,6 +16,9 @@ const PageMaire = () => (
             <img 
               src={maireData.photo} 
               alt={maireData.name} 
+              width={600}
+              height={800}
+              loading="eager"
               className="w-full h-full object-cover" 
             />
           </div>

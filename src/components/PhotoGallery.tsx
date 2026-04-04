@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { galleryData } from '../data/config';
 import { X } from 'lucide-react';
 
+import { getOptimizedNetworkUrl } from '../utils/imageParser';
+
 const PhotoGallery = () => {
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
 
@@ -23,8 +25,11 @@ const PhotoGallery = () => {
             onClick={() => setSelectedImg(img.url)}
           >
             <img 
-              src={img.url} 
+              src={getOptimizedNetworkUrl(img.url, 600)} 
               alt={img.caption} 
+              width={600}
+              height={600}
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">

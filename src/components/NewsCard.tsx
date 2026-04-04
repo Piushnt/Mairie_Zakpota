@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, ArrowRight, Heart, Share2, MessageCircle, Send, Mail } from 'lucide-react';
+import { getOptimizedNetworkUrl } from '../utils/imageParser';
 
 export default function NewsCard({ news }: { news: any }) {
   const navigate = useNavigate();
@@ -51,7 +52,14 @@ export default function NewsCard({ news }: { news: any }) {
       className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 group flex flex-col h-full border border-gray-100 dark:border-white/5"
     >
       <div className="relative overflow-hidden h-64 shrink-0">
-        <img src={news.img} alt={news.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+        <img 
+          src={getOptimizedNetworkUrl(news.img, 600)} 
+          alt={news.title} 
+          width={600}
+          height={400}
+          loading="lazy"
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+        />
         <div className={`absolute top-4 left-4 ${getCategoryColor(news.cat)} text-white text-[10px] font-black px-4 py-1.5 rounded-xl uppercase tracking-widest shadow-lg`}>
           {news.cat}
         </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, User, Users, ChevronRight } from 'lucide-react';
+import { getOptimizedNetworkUrl } from '../utils/imageParser';
 
 interface Arrondissement {
   id: string;
@@ -45,8 +46,11 @@ const Arrondissements: React.FC<ArrondissementsProps> = ({ data }) => {
               {/* Image Section */}
               <div className="md:w-1/3 h-48 md:h-auto relative overflow-hidden">
                 <img 
-                  src={arr.image} 
+                  src={getOptimizedNetworkUrl(arr.image, 600)} 
                   alt={arr.nom}
+                  width={600}
+                  height={400}
+                  loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                   referrerPolicy="no-referrer"
                 />

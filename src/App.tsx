@@ -48,7 +48,7 @@ import {
   MessageCircle,
   ChevronLeft
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LazyMotion, domMax } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 
@@ -424,8 +424,9 @@ export default function App() {
   return (
     <HelmetProvider>
       <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
+        <LazyMotion features={domMax}>
+          <ScrollToTop />
+          <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/admin-portal" element={
             session ? (
@@ -507,6 +508,7 @@ export default function App() {
             } />
           </Route>
         </Routes>
+        </LazyMotion>
         <PushPrompt />
       </BrowserRouter>
     </HelmetProvider>

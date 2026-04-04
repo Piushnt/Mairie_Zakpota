@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { agendaData } from '../data/config';
 import { Trophy, Users, CheckCircle, Clock, Calendar as CalIcon, MapPin } from 'lucide-react';
 
+import { getOptimizedNetworkUrl } from '../utils/imageParser';
+
 interface PageStadeProps {
   stade: any;
   onReserve: (data: any) => Promise<void>;
@@ -43,8 +45,11 @@ const PageStade = ({ stade, onReserve }: PageStadeProps) => {
         {/* Hero Stade */}
         <div className="relative h-[500px] rounded-[3.5rem] overflow-hidden mb-20 shadow-2xl border-8 border-white">
           <img 
-            src={agendaData.stade.image} 
+            src={getOptimizedNetworkUrl(agendaData.stade.image, 1200)} 
             alt="Stade Municipal" 
+            width={1200}
+            height={500}
+            loading="lazy"
             className="w-full h-full object-cover" 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/20 to-transparent" />

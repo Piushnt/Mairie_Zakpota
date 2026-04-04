@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ArrowRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getOptimizedNetworkUrl } from '../utils/imageParser';
 
 interface HeroProps {
   news?: any[];
@@ -43,8 +44,13 @@ const Hero: React.FC<HeroProps> = ({ news = [] }) => {
           {/* Background Image */}
           <div className="absolute inset-0 w-full h-full">
             <img
-              src={items[current].img || items[current].image_url}
+              src={getOptimizedNetworkUrl(items[current].img || items[current].image_url, 1920)}
               alt={items[current].title}
+              width={1920}
+              height={1080}
+              // @ts-ignore - fetchpriority is relatively new in React types
+              fetchpriority={current === 0 ? "high" : "low"}
+              loading={current === 0 ? "eager" : "lazy"}
               className="w-full h-full object-cover grayscale-[0.1]"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
