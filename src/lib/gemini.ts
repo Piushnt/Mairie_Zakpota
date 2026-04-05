@@ -96,11 +96,18 @@ export async function askMunicipalAI(prompt: string, history: { role: string, te
       tools
     });
 
+    // Gemini requires the first message in history to be from the 'user' role.
+    // We skip any initial 'bot' (model) messages (like the welcome greeting) to avoid crashing.
+    const mappedHistory = history.map(h => ({
+      role: (h.role === 'bot' || h.role === 'model') ? 'model' : 'user',
+      parts: [{ text: h.text }]
+    }));
+
+    const firstUserIndex = mappedHistory.findIndex(h => h.role === 'user');
+    const finalHistory = firstUserIndex === -1 ? [] : mappedHistory.slice(firstUserIndex);
+
     const chat = model.startChat({
-      history: history.map(h => ({
-        role: h.role === 'bot' ? 'model' : 'user',
-        parts: [{ text: h.text }]
-      }))
+      history: finalHistory
     });
 
     // Add a AbortController or a simple timeout for safety
