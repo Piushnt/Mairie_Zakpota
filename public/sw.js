@@ -50,14 +50,16 @@ self.addEventListener('push', function (event) {
       const options = {
         body: data.body,
         icon: data.icon || '/logo.jpg',
-        badge: data.badge || '/logo.jpg',
-        image: data.image || undefined,
-        vibrate: [200, 100, 200, 100, 200, 100, 400],
+        badge: data.badge || '/badge.png',
+        image: data.image || undefined, // Rich Media image
+        vibrate: [300, 100, 400],
         requireInteraction: true,
-        data: { url: data.url || '/' }
+        data: { 
+          url: data.data?.url || data.url || '/' 
+        }
       };
 
-      if (data.url && data.url.includes('/news/')) {
+      if (options.data.url && options.data.url.includes('/news/')) {
         options.actions = [
           { action: 'read-article', title: 'Lire l\'article' }
         ];
@@ -87,12 +89,13 @@ self.addEventListener('notificationclick', function (event) {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
-      for (let i = 0; i < clientList.length; i++) {
-        let client = clientList[i];
-        if (client.url === targetUrl && 'focus' in client) {
+      // Si une fenêtre est déjà ouverte sur la bonne URL, on lui donne le focus
+      for (let client of clientList) {
+        if (client.url.includes(targetUrl) && 'focus' in client) {
           return client.focus();
         }
       }
+      // Sinon, on ouvre une nouvelle fenêtre
       if (clients.openWindow) {
         return clients.openWindow(targetUrl);
       }

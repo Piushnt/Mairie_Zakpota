@@ -1,32 +1,32 @@
-GUIDE D'INSTALLATION ET D'UTILISATION - MAIRIE DE ZA-KPOTA
+Guide de Déploiement & Migration Finale (.bj)
+Ce guide récapitule les étapes pour un déploiement réussi sur Vercel et les actions spécifiques pour le passage au domaine officiel mairie-zakpota.bj.
 
-1. Installation
----------------
-- Assurez-vous d'avoir Node.js installé sur votre machine.
-- Clonez le projet ou extrayez l'archive.
-- Ouvrez un terminal dans le dossier du projet.
-- Exécutez 'npm install' pour installer les dépendances.
-- Exécutez 'npm run dev' pour lancer le serveur de développement.
-- L'application sera accessible sur http://localhost:3000.
+1. Variables d'Environnement (Vercel Dashboard)
+Ces variables doivent être configurées dans Project Settings > Environment Variables.
 
-2. Structure du Projet
-----------------------
-- /src : Contient le code source React.
-- /src/App.tsx : Composant principal gérant la navigation et les pages.
-- /src/components : Composants réutilisables et pages spécifiques (Arrondissements, MarketLogic, etc.).
-- /src/data : Données statiques et configuration du store (`store.js`).
-- /src/index.css : Styles globaux et variables de thème (Tailwind).
+Frontend (Framework: Vite)
+VITE_SUPABASE_URL : URL de votre projet Supabase.
+VITE_SUPABASE_ANON_KEY : Clé anonyme Supabase.
+VITE_GEMINI_API_KEY : Clé API Google Gemini (Za-Kpota GPT).
+VITE_VAPID_PUBLIC_KEY : Clé publique pour les notifications Push.
+Backend (Serverless Functions)
+VAPID_PRIVATE_KEY : Clé privée pour signer les notifications (NE PAS préfixer par VITE_).
+SUPABASE_SERVICE_ROLE_KEY : (Optionnel) Si vous utilisez des fonctions d'admin avancées.
+2. Checklist Migration Domaine .bj
+Lors du passage au domaine officiel, suivez ces étapes :
 
-3. Fonctionnalités Clés
------------------------
-- Portail Citoyen : Informations sur les services, l'histoire et les arrondissements.
-- E-Services : Simulateur fiscal, formulaires de contact, signalement et prise de RDV.
-- Économie : Calendrier des marchés (cycle de 5 jours) et opportunités locales.
-- Transparence : Page de rapports officiels avec filtrage et accès rapide.
-- Administration : Dashboard sécurisé pour la gestion du contenu.
-- Mode Sombre/Clair : Interface adaptative utilisant des variables CSS sémantiques.
-
-4. Déploiement
---------------
-- Exécutez 'npm run build' pour générer les fichiers de production dans le dossier /dist.
-- Ces fichiers peuvent être servis par n'importe quel serveur web statique.
+A. Configuration PWA & Manifest
+Dans public/manifest.json, mettez à jour le champ start_url si nécessaire (généralement /).
+Vérifiez que scope est bien /.
+B. Notifications Push (VAPID)
+Host de confiance : Si vous changez de serveur de push, régénérez les clés VAPID pour le nouveau domaine.
+Service Worker : Vercel gère le HTTPS par défaut, ce qui est requis pour les notifications PWA sur mobile.
+C. SEO & Meta Tags
+Dans index.html, remplacez toutes les occurrences de https://mairie-zakpota.vercel.app par https://www.mairie-zakpota.bj.
+Mettez à jour le champ og:url et les données structurées JSON-LD.
+D. CORS & Sécurité
+Dans api/send-push.js, assurez-vous que Access-Control-Allow-Origin autorise votre nouveau domaine.
+Dans le dashboard Supabase, ajoutez https://www.mairie-zakpota.bj à la liste des URLs de redirection autorisées.
+3. Maintenance Post-Déploiement
+Lighthouse Audit : Lancez un audit Lighthouse sur le domaine final pour valider le score 90+ Mobile.
+SSL : Vercel gère le certificat Let's Encrypt automatiquement.

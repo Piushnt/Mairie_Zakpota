@@ -1,8 +1,22 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/((?!api/|sw.js|manifest.json|logo.jpg|badge.png).*)", "destination": "/index.html" }
   ],
   "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    },
     {
       "source": "/assets/(.*)",
       "headers": [
@@ -13,7 +27,7 @@
       ]
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!sw.js|assets/).*)",
       "headers": [
         {
           "key": "Cache-Control",

@@ -83,17 +83,21 @@ const ChangeView = ({ center, zoom }: { center: [number, number]; zoom: number }
     map.setView(center, zoom);
     
     // Forcer le redimensionnement immédiat et différé
-    map.invalidateSize();
-    const timer = setTimeout(() => {
+    const invalidate = () => {
       map.invalidateSize();
-    }, 500);
+      // Un deuxième souffle pour Leaflet
+      setTimeout(() => map.invalidateSize(), 300);
+      setTimeout(() => map.invalidateSize(), 1000);
+    };
 
-    const handleResize = () => map.invalidateSize();
-    window.addEventListener('resize', handleResize);
+    invalidate();
+    
+    window.addEventListener('resize', invalidate);
+    window.addEventListener('orientationchange', invalidate);
     
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', invalidate);
+      window.removeEventListener('orientationchange', invalidate);
     };
   }, [center, zoom, map]);
   return null;

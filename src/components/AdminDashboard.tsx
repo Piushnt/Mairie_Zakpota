@@ -137,6 +137,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
   const [customPushTitle, setCustomPushTitle] = useState('');
   const [customPushMessage, setCustomPushMessage] = useState('');
   const [customPushUrl, setCustomPushUrl] = useState('');
+  const [customPushImage, setCustomPushImage] = useState('');
 
   // Synchronize local state with store updates from parent
   useEffect(() => {
@@ -204,7 +205,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
     if (!error) {
       onUpdateStore({ ...store, flashNews });
-      onSendPush("Flash Info", "Le bandeau défilant a été mis à jour.");
+      onSendPush("Flash Info", "Le bandeau défilant a été mis à jour.", "/", "", "flash-info");
       showSuccess("Bandeau Flash mis à jour avec succès !");
     } else {
       console.error(error);
@@ -322,7 +323,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         onUpdateStore({ services: grouped });
       }
 
-      onSendPush("Tarifs Mis à Jour", "Les prix des services municipaux ont été actualisés.");
+      onSendPush("Tarifs Mis à Jour", "Les prix des services municipaux ont été actualisés.", "/services", "", "service-update");
       showSuccess("Tous les tarifs ont été enregistrés avec succès !");
     } catch (error: any) {
       console.error('Supabase Error:', error);
@@ -407,7 +408,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         onUpdateStore({ agenda: updatedAgenda });
       }
 
-      onSendPush("Agenda Mis à Jour", "Les événements du stade ont été actualisés.");
+      onSendPush("Agenda Mis à Jour", "Les événements du stade ont été actualisés.", "/agenda", "", "agenda-update");
       showSuccess("Agenda enregistré avec succès !");
     } catch (error: any) {
       console.error('Supabase Error:', error);
@@ -447,7 +448,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         const updatedReports = [freshReport, ...reports];
         setReports(updatedReports);
         onUpdateStore({ reports: updatedReports });
-        onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`, "/publications");
+        onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`, "/publications", "", "document-alert");
         showSuccess("Rapport publié avec succès !");
         setNewReport({
           title: '',
@@ -526,7 +527,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         onUpdateStore({ arrondissements: updatedArrs });
       }
 
-      onSendPush("Informations Mises à Jour", "Les contacts des arrondissements ont été actualisés.", "/arrondissements");
+      onSendPush("Informations Mises à Jour", "Les contacts des arrondissements ont été actualisés.", "/arrondissements", "", "info-update");
       showSuccess("Arrondissements enregistrés avec succès !");
     } catch (error: any) {
       console.error('Supabase Error:', error);
@@ -565,7 +566,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         const updatedOpps = [freshOpp, ...opportunites];
         setOpportunites(updatedOpps);
         onUpdateStore({ opportunites: updatedOpps });
-        onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${newOpportunity.title}" a été publiée.`, "/opportunites");
+        onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${newOpportunity.title}" a été publiée.`, "/opportunites", "", "job-alert");
         showSuccess("Opportunité publiée avec succès !");
         setNewOpportunity({
           title: '',
@@ -835,11 +836,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       setErrorMessage("Veuillez remplir le titre et le message.");
       return;
     }
-    onSendPush(customPushTitle, customPushMessage, customPushUrl || '/');
+    onSendPush(customPushTitle, customPushMessage, customPushUrl || '/', customPushImage, "custom-alert");
     showSuccess("Notification envoyée avec succès !");
     setCustomPushTitle('');
     setCustomPushMessage('');
     setCustomPushUrl('');
+    setCustomPushImage('');
   };
 
   const handleSaveNews = async () => {
@@ -1291,6 +1293,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
                       onChange={(e) => setCustomPushUrl(e.target.value)}
                       className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
                       placeholder="Ex: /carte, /agenda, ou https://..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-ink/40">URL de l'image (Rich Media)</label>
+                    <input 
+                      type="text" 
+                      value={customPushImage}
+                      onChange={(e) => setCustomPushImage(e.target.value)}
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:border-primary text-sm min-h-[44px]"
+                      placeholder="Ex: https://images.unsplash.com/..."
                     />
                   </div>
                 </div>

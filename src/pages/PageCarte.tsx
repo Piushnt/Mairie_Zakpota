@@ -97,7 +97,7 @@ const PageCarte: React.FC<PageCarteProps> = ({ locations = [] }) => {
         </div>
       )}
 
-      <div className={`flex-1 flex flex-col lg:flex-row relative bg-card ${isFullscreen ? 'h-full' : 'container mx-auto px-4 mb-20 min-h-[700px] border border-border rounded-[3.5rem] overflow-hidden shadow-2xl'}`}>
+      <div className={`flex-1 flex flex-col lg:flex-row relative bg-card ${isFullscreen ? 'h-full' : 'container mx-auto px-4 mb-20 min-h-[700px] border border-border rounded-[2.5rem] lg:rounded-[3.5rem] lg:overflow-hidden shadow-2xl'}`}>
         
         {/* Sidebar Controls */}
         <aside className={`w-full lg:w-96 bg-card border-r border-border p-6 lg:p-10 flex flex-col z-20 ${isFullscreen ? 'lg:h-full lg:pt-24' : ''}`}>
@@ -157,7 +157,7 @@ const PageCarte: React.FC<PageCarteProps> = ({ locations = [] }) => {
         </aside>
 
         {/* Map Area */}
-        <div className={`flex-1 relative bg-muted transition-all duration-300 ${isFullscreen ? 'h-full' : 'h-[500px] lg:h-auto min-h-[500px] lg:min-h-0'}`}>
+        <div className={`relative bg-muted transition-all duration-300 ${isFullscreen ? 'h-full w-full' : 'h-[550px] lg:h-auto min-h-[550px] lg:min-h-0 lg:flex-1'}`}>
           <LazyMap 
             center={MAP_CENTER} 
             zoom={DEFAULT_ZOOM} 

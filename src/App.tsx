@@ -348,18 +348,22 @@ export default function App() {
       
       console.log('Simulation Envoi Push:', { title, message, urlPath, imageUrl, tag });
       
+      const payload = {
+        title: title,
+        body: message,
+        url: urlPath,
+        image: imageUrl ? parseImageUrl(imageUrl) : undefined, // Rich Media coverage image
+        badge: '/badge.png', // Monochrome icon for status bar
+        icon: '/logo.jpg',   // Colorful icon for notification center
+        tag: tag
+      };
+
       await fetch('/api/send-push', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          title: title,
-          body: message,
-          url: urlPath,
-          image: parseImageUrl(imageUrl),
-          tag: tag
-        })
+        body: JSON.stringify(payload)
       });
     } catch (e) {
       console.error('Erreur lors de l\'envoi du Push serveur', e);

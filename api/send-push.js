@@ -40,13 +40,14 @@ export default async function handler(req, res) {
       throw new Error('VAPID keys not configured in environment variables');
     }
 
-    const { title, body, url } = req.body;
+    const { title, body, url, image, badge, icon } = req.body;
 
     const payload = JSON.stringify({
       title: title || 'Mairie de Za-Kpota',
       body: body || 'Nouvelle information disponible.',
-      icon: '/logo.jpg',
-      badge: '/badge.png', // Fallback, on peut utiliser le logo
+      icon: icon || '/logo.jpg', // Icône couleur (emblème)
+      badge: badge || '/badge.png', // Icône monochrome (barre d'état)
+      image: image || undefined, // Grande image (news/illustration)
       data: {
         url: url || '/'
       }
