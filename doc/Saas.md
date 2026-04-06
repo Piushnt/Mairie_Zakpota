@@ -70,8 +70,9 @@ L'application nécessite les tables suivantes (voir `App.tsx` pour les hooks de 
 
 ### Intelligence Artificielle (Gemini)
 Dans `src/lib/gemini.ts` :
-- [ ] **SYSTEM_PROMPT** : Mettre à jour le contexte géographique et les directives spécifiques à la ville.
+- [ ] **SYSTEM_PROMPT** : Mettre à jour le rôle (Cerveau Communal), le contexte géographique et les directives spécifiques à la ville (Zéro Hallucination).
 - [ ] **Tools** : Adapter les fonctions si des services spécifiques à la ville doivent être interrogés.
+- [ ] **Fallback Chain** : Vérifier que `MODELS_HIERARCHY` est configuré (`gemini-3-flash` -> `3-pro` -> `2.5-flash` -> `1.5-flash`) pour garantir la haute disponibilité.
 
 ---
 

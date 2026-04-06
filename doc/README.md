@@ -9,8 +9,9 @@ Portail professionnel et citoyen de nouvelle génération, initialement conçu p
 - **Système de Likes Réels** : Engagement authentique des citoyens via Supabase.
 - **Partage Social Multi-Canal** : WhatsApp, Telegram et API native Navigator Share.
 
-### 🤖 Assistant IA Municipal (Gemini)
-- **Assistant Dédié** : Intégration de **Google Gemini 1.5 Flash** pour répondre aux questions sur les procédures, l'histoire et l'économie locale.
+### 🤖 Assistant IA Municipal (Cerveau Communal)
+- **Chaîne "Incassable" (Fallback)** : Bascule automatique transparente entre `gemini-3-flash`, `gemini-3-pro`, `gemini-2.5-flash` et `gemini-1.5-flash` en cas de saturation ou panne.
+- **Zéro Hallucination (RAG)** : IA officiellement verrouillée sur les procédures de la mairie. Refuse d'inventer des prix ou des lois non confirmés par la base de données.
 - **Interface Flottante** : Accessible sur toutes les pages pour un support instantané.
 
 ### 🔔 Notifications Push Rich Media

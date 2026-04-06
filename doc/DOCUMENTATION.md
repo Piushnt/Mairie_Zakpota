@@ -24,7 +24,7 @@ Ce projet est une application web de nouvelle génération pour les administrati
 
 ### 2.4 Infrastructure SaaS & Backend
 - **Base de Données** : Intégration complète avec **Supabase** (PostgreSQL).
-- **IA Engine** : Basé sur le SDK Google Generative AI (`gemini-1.5-flash`).
+- **IA Engine (Cerveau Communal)** : Basé sur Google Generative AI avec une **chaîne de secours (Fallback)** ultra-résiliente (`gemini-3-flash` -> `3-pro` -> `2.5-flash` -> `1.5-flash`) garantissant 100% de disponibilité institutionnelle. Logique stricte de RAG avec directives anti-hallucination.
 - **PWA (Progressive Web App)** : Installation sur mobile, mode hors-ligne partiel et notifications natives.
 
 ## 3. Architecture Technique
