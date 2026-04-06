@@ -3,26 +3,48 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, ArrowRight, Heart, Share2, MessageCircle, Send, Mail } from 'lucide-react';
 import { getOptimizedNetworkUrl } from '../utils/imageParser';
+import { supabase } from '../lib/supabase';
+
+const getCategoryColor = (cat: string) => {
+  switch (cat?.toLowerCase()) {
+    case 'administration': return 'bg-blue-600';
+    case 'travaux': return 'bg-orange-500';
+    case 'sport': return 'bg-green-600';
+    case 'santé': return 'bg-red-500';
+    case 'annonces': return 'bg-purple-600';
+    default: return 'bg-primary';
+  }
+};
 
 export default function NewsCard({ news }: { news: any }) {
   const navigate = useNavigate();
-  const [likes, setLikes] = useState(Math.floor(Math.random() * 50) + 10);
+  const [likes, setLikes] = useState(news.likes || 0);
   const [shares, setShares] = useState(Math.floor(Math.random() * 20) + 5);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(() => {
+    return localStorage.getItem(`news_liked_${news.id}`) === 'true';
+  });
   const [showShareMenu, setShowShareMenu] = useState(false);
 
-  const getCategoryColor = (cat: string) => {
-    switch (cat?.toLowerCase()) {
-      case 'administration': return 'bg-blue-600';
-      case 'travaux': return 'bg-orange-500';
-      case 'sport': return 'bg-green-600';
-      case 'santé': return 'bg-red-500';
-      case 'annonces': return 'bg-purple-600';
-      default: return 'bg-primary';
+  const handleLike = async () => {
+    try {
+      const newLikedStatus = !isLiked;
+      setIsLiked(newLikedStatus);
+      
+      if (newLikedStatus) {
+        setLikes(prev => prev + 1);
+        localStorage.setItem(`news_liked_${news.id}`, 'true');
+        await supabase.rpc('increment_news_likes', { row_id: news.id });
+      } else {
+        setLikes(prev => Math.max(0, prev - 1));
+        localStorage.removeItem(`news_liked_${news.id}`);
+        await supabase.rpc('decrement_news_likes', { row_id: news.id });
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
     }
   };
 
-  const shareUrl = window.location.href;
+  const shareUrl = `${window.location.origin}/news/${news.id}`;
   const shareText = `Découvrez cette actualité de la Mairie de Za-Kpota : ${news.title}`;
 
   const shareOptions = [
@@ -39,10 +61,26 @@ export default function NewsCard({ news }: { news: any }) {
       action: () => window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank')
     },
     { 
-      name: 'Email', 
-      icon: <Mail className="w-4 h-4" />, 
-      color: 'bg-ink-muted',
-      action: () => window.open(`mailto:?subject=${encodeURIComponent(news.title)}&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`, '_blank')
+      name: 'Partager', 
+      icon: <Share2 className="w-4 h-4" />, 
+      color: 'bg-primary',
+      action: async () => {
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: news.title,
+              text: shareText,
+              url: shareUrl,
+            });
+          } catch (err) {
+            console.log('Error sharing:', err);
+          }
+        } else {
+          // Fallback: Copy to clipboard
+          navigator.clipboard.writeText(shareUrl);
+          alert('Lien copié dans le presse-papier !');
+        }
+      }
     }
   ];
 
@@ -60,8 +98,8 @@ export default function NewsCard({ news }: { news: any }) {
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
         />
-        <div className={`absolute top-4 left-4 ${getCategoryColor(news.cat)} text-white text-[10px] font-black px-4 py-1.5 rounded-xl uppercase tracking-widest shadow-lg`}>
-          {news.cat}
+        <div className={`absolute top-4 left-4 ${getCategoryColor(news.cat || news.category)} text-white text-[10px] font-black px-4 py-1.5 rounded-xl uppercase tracking-widest shadow-lg`}>
+          {news.cat || news.category}
         </div>
       </div>
       <div className="p-8 flex flex-col flex-grow">
@@ -72,7 +110,7 @@ export default function NewsCard({ news }: { news: any }) {
           {news.title}
         </h3>
         <p className="text-ink-muted text-sm mb-6 line-clamp-3 flex-grow">
-          {news.desc}
+          {news.description || news.desc}
         </p>
         
         <div className="flex items-center justify-between mt-auto pt-6 border-t border-border relative">
@@ -85,10 +123,7 @@ export default function NewsCard({ news }: { news: any }) {
           
           <div className="flex items-center space-x-4">
             <button 
-              onClick={() => {
-                setIsLiked(!isLiked);
-                setLikes(prev => isLiked ? prev - 1 : prev + 1);
-              }}
+              onClick={handleLike}
               className={`flex items-center space-x-1.5 text-xs font-bold transition-colors ${isLiked ? 'text-red' : 'text-ink-muted hover:text-red'}`}
             >
               <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
@@ -120,7 +155,7 @@ export default function NewsCard({ news }: { news: any }) {
                             setShares(prev => prev + 1);
                             setShowShareMenu(false);
                           }}
-                          className="flex items-center space-x-3 p-2 hover:bg-muted rounded-xl transition-colors text-left"
+                          className="flex items-center space-x-3 p-2 hover:bg-muted rounded-xl transition-colors text-left w-full"
                         >
                           <div className={`w-8 h-8 ${opt.color} text-white rounded-lg flex items-center justify-center`}>
                             {opt.icon}
