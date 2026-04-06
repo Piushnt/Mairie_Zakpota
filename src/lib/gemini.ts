@@ -84,70 +84,94 @@ const functions: Record<string, Function> = {
 
 // --- MAIN SERVICE ---
 
+const MODELS_HIERARCHY = [
+  "gemini-3-flash",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash"
+];
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function askMunicipalAI(prompt: string, history: { role: string, text: string }[] = []) {
   if (!GEMINI_API_KEY) {
     return simulateMunicipalResponse(prompt);
   }
 
-  try {
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      systemInstruction: SYSTEM_PROMPT,
-      tools
-    });
+  // Gemini requires the first message in history to be from the 'user' role.
+  // We skip any initial 'bot' (model) messages (like the welcome greeting) to avoid crashing.
+  const mappedHistory = history.map(h => ({
+    role: (h.role === 'bot' || h.role === 'model') ? 'model' : 'user',
+    parts: [{ text: h.text }]
+  }));
 
-    // Gemini requires the first message in history to be from the 'user' role.
-    // We skip any initial 'bot' (model) messages (like the welcome greeting) to avoid crashing.
-    const mappedHistory = history.map(h => ({
-      role: (h.role === 'bot' || h.role === 'model') ? 'model' : 'user',
-      parts: [{ text: h.text }]
-    }));
+  const firstUserIndex = mappedHistory.findIndex(h => h.role === 'user');
+  const finalHistory = firstUserIndex === -1 ? [] : mappedHistory.slice(firstUserIndex);
 
-    const firstUserIndex = mappedHistory.findIndex(h => h.role === 'user');
-    const finalHistory = firstUserIndex === -1 ? [] : mappedHistory.slice(firstUserIndex);
+  for (let i = 0; i < MODELS_HIERARCHY.length; i++) {
+    const modelName = MODELS_HIERARCHY[i];
 
-    const chat = model.startChat({
-      history: finalHistory
-    });
+    try {
+      const model = genAI.getGenerativeModel({ 
+        model: modelName,
+        systemInstruction: SYSTEM_PROMPT,
+        tools
+      });
 
-    // Add a AbortController or a simple timeout for safety
-    const aiPromise = chat.sendMessage(prompt);
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("AI_TIMEOUT")), 15000)
-    );
+      const chat = model.startChat({
+        history: finalHistory
+      });
 
-    const result = await Promise.race([aiPromise, timeoutPromise]) as any;
-    let response = result.response;
-    
-    // Handle function calls
-    const calls = response.candidates?.[0]?.content?.parts.filter(p => p.functionCall);
-    
-    if (calls && calls.length > 0) {
-      const toolResults = [];
-      for (const call of calls) {
-        if (call.functionCall) {
-          const functionName = call.functionCall.name;
-          const args = call.functionCall.args;
-          const functionResponse = await functions[functionName](args);
-          
-          toolResults.push({
-            functionResponse: {
-              name: functionName,
-              response: { result: functionResponse }
-            }
-          });
-        }
-      }
+      // Add a AbortController or a simple timeout for safety
+      const aiPromise = chat.sendMessage(prompt);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("AI_TIMEOUT")), 15000)
+      );
+
+      const result = await Promise.race([aiPromise, timeoutPromise]) as any;
+      let response = result.response;
       
-      const secondResult = await chat.sendMessage(toolResults);
-      return secondResult.response.text();
-    }
+      // Handle function calls
+      const calls = response.candidates?.[0]?.content?.parts?.filter((p: any) => p.functionCall);
+      
+      if (calls && calls.length > 0) {
+        const toolResults = [];
+        for (const call of calls) {
+          if (call.functionCall) {
+            const functionName = call.functionCall.name;
+            const args = call.functionCall.args;
+            const functionResponse = await functions[functionName](args);
+            
+            toolResults.push({
+              functionResponse: {
+                name: functionName,
+                response: { result: functionResponse }
+              }
+            });
+          }
+        }
+        
+        const secondResult = await chat.sendMessage(toolResults);
+        return secondResult.response.text();
+      }
 
-    return response.text();
-  } catch (err) {
-    console.error("Gemini AI Error:", err);
-    return simulateMunicipalResponse(prompt);
+      return response.text();
+
+    } catch (err) {
+      if (i < MODELS_HIERARCHY.length - 1) {
+        const currentModelShort = modelName.replace("gemini-", "").replace("-flash", "");
+        const nextModelShort = MODELS_HIERARCHY[i + 1].replace("gemini-", "").replace("-flash", "");
+        console.warn(`Gemini ${currentModelShort} failed, switching to ${nextModelShort}...`);
+        
+        // Wait 2 seconds before retrying
+        await delay(2000);
+      } else {
+        console.error("All Gemini models failed:", err);
+        return simulateMunicipalResponse(prompt);
+      }
+    }
   }
+  
+  return simulateMunicipalResponse(prompt);
 }
 
 /**
