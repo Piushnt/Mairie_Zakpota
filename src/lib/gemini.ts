@@ -13,6 +13,18 @@ CONTEXTE DE ZA-KPOTA :
 - Arrondissements : Allahé, Assalin, Houngomey, Kpota, Kpakpamè, Kpozoun, Za-Hla, Za-Kpota (Chef-lieu).
 - Services : État civil (naissance, mariage, décès), urbanisme (permis de construire), taxes locales (TFU).
 
+GUIDE DE NAVIGATION DE L'APPLICATION :
+Si un utilisateur demande comment faire une démarche ou où trouver une information sur le site, guidez-le vers la page appropriée :
+- "/services" : Pour les démarches d'État civil et d'urbanisme.
+- "/formulaires" : Pour télécharger les formulaires PDF.
+- "/simulateur" : Pour estimer les taxes locales.
+- "/rendezvous" : Pour prendre rendez-vous avec la mairie.
+- "/signalement" : Pour signaler un problème technique (voirie, éclairage).
+- "/suivi-dossier" : Pour suivre l'avancement d'un dossier administratif.
+- "/economie" : Pour suivre le cycle du marché central.
+- "/opportunites" : Pour les appels d'offres et l'emploi.
+- "/publications" : Pour lire les rapports et comptes-rendus publics.
+
 DIRECTIVES DE SÉCURITÉ ET DE FIABILITÉ (RAG STRICT) :
 1. TON INSTITUTIONNEL : Soyez toujours professionnel, courtois et chaleureux. Vous représentez l'administration.
 2. VERROUILLAGE DES DONNÉES (ZÉRO HALLUCINATION) : Utilisez UNIQUEMENT les outils à votre disposition pour fournir des informations (tarifs, dates, lieux, procédures). REFUSEZ STRICTEMENT d'inventer des prix ou des lois si l'information ne provient pas de vos outils.
@@ -46,6 +58,18 @@ const tools: Tool[] = [
       {
         name: "get_upcoming_events",
         description: "Récupère les événements à venir dans l'agenda municipal (stade, réunions publiques, etc.)",
+      },
+      {
+        name: "get_public_reports",
+        description: "Récupère la liste des rapports publics et comptes-rendus de la mairie (très utile pour l'analyse documentaire)"
+      },
+      {
+        name: "get_opportunities",
+        description: "Récupère la liste des appels d'offres, offres d'emploi et opportunités économiques"
+      },
+      {
+        name: "get_arrondissements",
+        description: "Récupère les détails démographiques et administratifs des arrondissements de Za-Kpota"
       }
     ]
   }
@@ -77,10 +101,28 @@ async function get_upcoming_events() {
   return JSON.stringify(data);
 }
 
+async function get_public_reports() {
+  const { data } = await supabase.from('reports').select('id, title, category, date').order('date', { ascending: false }).limit(10);
+  return JSON.stringify(data);
+}
+
+async function get_opportunities() {
+  const { data } = await supabase.from('opportunites').select('*').order('dateLimite', { ascending: true }).limit(10);
+  return JSON.stringify(data);
+}
+
+async function get_arrondissements() {
+  const { data } = await supabase.from('arrondissements').select('name, population, ca_name, contact, description');
+  return JSON.stringify(data);
+}
+
 const functions: Record<string, Function> = {
   get_municipal_news,
   get_service_details,
-  get_upcoming_events
+  get_upcoming_events,
+  get_public_reports,
+  get_opportunities,
+  get_arrondissements
 };
 
 // --- MAIN SERVICE ---
