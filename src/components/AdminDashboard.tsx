@@ -118,7 +118,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!error) {
       showSuccess(approve ? "Utilisateur approuvé !" : "Utilisateur révoqué.");
       fetchUsers();
-      logAuditAction(approve ? 'APPROVE' : 'REVOKE', 'Utilisateurs', `A ${approve ? 'approuvé' : 'révoqué'} l'accès de ${users.find(u => u.id === userId)?.email}`);
+      if (users.length > 0) {
+        logAuditAction(approve ? 'APPROVE' : 'REVOKE', 'Utilisateurs', `A ${approve ? 'approuvé' : 'révoqué'} l'accès de ${users.find(u => u.id === userId)?.email}`);
+      }
+    } else {
+      console.error(error);
+      setErrorMessage("Erreur lors de la validation du compte. Vérifiez vos droits Admin.");
     }
   };
 
@@ -127,7 +132,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!error) {
       showSuccess(`Rôle mis à jour : ${newRole}`);
       fetchUsers();
-      logAuditAction('UPDATE', 'Utilisateurs', `A changé le rôle de ${users.find(u => u.id === userId)?.email} en ${newRole}`);
+      if (users.length > 0) {
+        logAuditAction('UPDATE', 'Utilisateurs', `A changé le rôle de ${users.find(u => u.id === userId)?.email} en ${newRole}`);
+      }
+    } else {
+      console.error(error);
+      setErrorMessage("Échec du changement de rôle.");
     }
   };
 
@@ -1199,14 +1209,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <nav className="space-y-2 flex-1 overflow-y-auto pr-2 custom-scrollbar">
           {[
             { id: 'analytics', label: 'Statistiques', icon: BarChart2, role: 'admin' },
-            { id: 'ai', label: 'Intelligence IA', icon: Bot },
-            { id: 'services', label: 'Tarifs des Actes', icon: FileText },
-            { id: 'agenda', label: 'Planning du Stade', icon: Calendar },
-            { id: 'stade_res', label: 'Gestion Stade', icon: Users },
-            { id: 'dossiers', label: 'Suivi Dossiers', icon: FileText },
-            { id: 'artisans', label: 'Annuaire Artisans', icon: Hammer },
-            { id: 'formulaires', label: 'Guichet Numérique', icon: FileSignature },
-            { id: 'taxes', label: 'Paramètres Fiscaux', icon: Calculator },
+            { id: 'ai', label: 'Intelligence IA', icon: Bot, role: 'employee' },
+            { id: 'services', label: 'Tarifs des Actes', icon: FileText, role: 'employee' },
+            { id: 'agenda', label: 'Planning du Stade', icon: Calendar, role: 'employee' },
+            { id: 'stade_res', label: 'Gestion Stade', icon: Users, role: 'employee' },
+            { id: 'dossiers', label: 'Suivi Dossiers', icon: FileText, role: 'employee' },
+            { id: 'artisans', label: 'Annuaire Artisans', icon: Hammer, role: 'employee' },
+            { id: 'formulaires', label: 'Guichet Numérique', icon: FileSignature, role: 'employee' },
+            { id: 'taxes', label: 'Paramètres Fiscaux', icon: Calculator, role: 'employee' },
             { id: 'reports', label: 'Rapports Officiels', icon: FileText, role: 'admin' },
             { id: 'mapping', label: 'Lieux & Carte', icon: MapPin, role: 'admin' },
             { id: 'arrondissements', label: 'Arrondissements', icon: MapPin, role: 'admin' },
@@ -1221,11 +1231,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'flash', label: 'Alertes & Push', icon: Bell, role: 'admin' },
             { id: 'settings', label: 'Configuration', icon: Settings },
           ].map(item => {
-            const isLocked = item.role === 'admin' && userRole !== 'admin';
+            const isLocked = (item.role === 'admin' && userRole !== 'admin') || (item.role === 'employee' && userRole === 'admin');
             return (
               <button
                 key={item.id}
                 disabled={isLocked}
+                title={isLocked ? `Réservé aux ${item.role === 'admin' ? 'Administrateurs' : 'Agents'}` : ''}
                 onClick={() => {
                   if (isLocked) return;
                   setActiveTab(item.id);
@@ -1235,15 +1246,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   activeTab === item.id 
                     ? 'bg-primary text-white shadow-xl shadow-primary/20 lg:translate-x-2' 
                     : isLocked 
-                      ? 'text-ink/20 cursor-not-allowed bg-muted/30 grayscale'
+                      ? 'text-ink/10 cursor-not-allowed bg-muted/40 grayscale-100 scale-[0.97] border border-border/50'
                       : 'text-ink/40 hover:text-primary hover:bg-primary/5'
                 }`}
               >
                 <div className="flex items-center space-x-4">
-                  <item.icon className="w-5 h-5" />
-                  <span className="text-sm">{item.label}</span>
+                  <div className={isLocked ? 'opacity-10 grayscale' : ''}>
+                    <item.icon className="w-5 h-5" />
+                  </div>
+                  <span className={`text-sm ${isLocked ? 'opacity-10' : ''}`}>{item.label}</span>
                 </div>
-                {isLocked && <Lock className="w-4 h-4 text-ink/20" />}
+                {isLocked && <Lock className="w-4 h-4 text-primary/40 animate-pulse" />}
               </button>
             );
           })}
