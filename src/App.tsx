@@ -110,6 +110,7 @@ import SimulateurFiscal from './components/SimulateurFiscal';
 import PageFormulaires from './pages/PageFormulaires';
 import FloatingAIAssistant from './components/FloatingAIAssistant';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import PushPrompt from './components/PushPrompt';
 import { parseImageUrl } from './utils/imageParser';
 
@@ -137,19 +138,33 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useState(initialStoreData);
   const [session, setSession] = useState<any>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'employee'>('employee');
 
   // Auth Listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserProfile = async (userId: string) => {
+    const { data } = await supabase.from('user_profiles').select('role').eq('id', userId).single();
+    if (data) {
+      setUserRole(data.role as 'admin' | 'employee');
+    }
+  };
 
   useEffect(() => {
     if (isDarkMode) {
@@ -433,6 +448,7 @@ export default function App() {
           <ScrollToTop />
           <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/admin-portal" element={
             session ? (
               <AdminDashboard
@@ -442,6 +458,7 @@ export default function App() {
                 onExit={() => window.location.href = '/'}
                 isDarkMode={isDarkMode}
                 toggleDarkMode={toggleDarkMode}
+                userRole={userRole}
               />
             ) : (
               <Login />

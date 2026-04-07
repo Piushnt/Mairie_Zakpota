@@ -70,6 +70,14 @@ const tools: Tool[] = [
       {
         name: "get_arrondissements",
         description: "Récupère les détails démographiques et administratifs des arrondissements de Za-Kpota"
+      },
+      {
+        name: "get_stadium_status",
+        description: "Vérifie les matchs prévus, le planning et l'occupation courante du stade municipal"
+      },
+      {
+        name: "get_map_locations",
+        description: "Récupère les points d'intérêts et géolocalisations enregistrés sur la carte interactive (écoles, santé, mairies, etc.)"
       }
     ]
   }
@@ -116,13 +124,29 @@ async function get_arrondissements() {
   return JSON.stringify(data);
 }
 
+async function get_stadium_status() {
+  const { data } = await supabase.from('reservations_stade')
+    .select('nom, date, creneau, statut')
+    .gte('date', new Date().toISOString().split('T')[0])
+    .order('date', { ascending: true })
+    .limit(10);
+  return JSON.stringify(data);
+}
+
+async function get_map_locations() {
+  const { data } = await supabase.from('locations').select('name, category, description, lat, lng');
+  return JSON.stringify(data);
+}
+
 const functions: Record<string, Function> = {
   get_municipal_news,
   get_service_details,
   get_upcoming_events,
   get_public_reports,
   get_opportunities,
-  get_arrondissements
+  get_arrondissements,
+  get_stadium_status,
+  get_map_locations
 };
 
 // --- MAIN SERVICE ---

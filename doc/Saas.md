@@ -64,9 +64,12 @@ L'application nécessite les tables suivantes (voir `App.tsx` pour les hooks de 
 - `audiences` : Demandes de rendez-vous.
 - `opportunites` : Appels d'offres et recrutements.
 - `push_subscriptions` : Clés de notifications des citoyens.
+- `user_profiles` : Profils des agents de la mairie (RBAC: rôle `admin` ou `employee`, approbation `is_approved`).
+- `audit_logs` : Journal d'audit sécurisé pour tracer les actions des administrateurs.
 
 ### Scripts SQL Importants
 - [ ] **`setup_news_likes.sql`** : À exécuter dans l'éditeur SQL de Supabase pour activer le système de likes réel.
+- [ ] **`setup_rbac_audit.sql`** : À exécuter **obligatoirement** pour mettre en place la sécurité RLS, les rôles des agents et l'historicisation des actions (Audit Logs). Sans ce script, l'accès au Dashboard sera impossible.
 
 ### Intelligence Artificielle (Gemini)
 Dans `src/lib/gemini.ts` :

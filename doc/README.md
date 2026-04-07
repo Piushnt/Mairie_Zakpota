@@ -18,15 +18,18 @@ Portail professionnel et citoyen de nouvelle génération, initialement conçu p
 - **Alertes Visuelles** : Notifications natives avec logos et images d'illustration des articles.
 - **Deep Linking** : Ouverture directe de l'article sur clic depuis la notification mobile.
 
-### 🛠️ Dashboard Admin & IA
+### 🛠️ Dashboard Admin & IA (Sécurisé RBAC)
+- **Contrôle d'Accès (RBAC)** : Architecture à deux niveaux (Admin SE/DSI vs Employés) avec Approbation Manuelle obligatoire.
+- **Journal d'Audit (Souveraineté)** : Historique complet et inaltérable de toutes les actions administratives.
 - **Pilotage de Contenu** : CRUD complet pour les news, rapports et opportunités économiques.
-- **Assistant IA Admin** : Aide à la rédaction et à l'analyse des rapports officiels.
+- **IA de Gestion** : Assistant IA dédié aux administrateurs pour l'analyse des rapports et l'aide à la rédaction.
 
 ## 🛠️ Stack Technique
 - **Frontend** : React 19 + Vite + TypeScript.
 - **Styling** : Tailwind CSS v4 + Framer Motion.
-- **Backend & Temps Réel** : Supabase (Database, Auth, RPC).
-- **IA Engine** : Google Gemini API.
+- **Base de Données** : Intégration complète avec Supabase (Politiques RLS strictes).
+- **Sécurité RAG & RBAC** : Initialisation via `setup_rbac_audit.sql` pour la traçabilité des actions.
+- **IA Engine** : Google Gemini API avecFallback ultra-résiliente.
 - **PWA** : Service Worker personnalisé pour le Push et le mode hors-ligne.
 
 ## 💾 Installation & Configuration

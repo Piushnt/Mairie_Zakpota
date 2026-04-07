@@ -23,8 +23,8 @@ Ce projet est une application web de nouvelle génération pour les administrati
 - **Gestion des Opportunités** : Publication d'appels d'offres et d'offres de recrutement avec interface de consultation optimisée (Scroll Lock, Modals responsive).
 
 ### 2.4 Infrastructure SaaS & Backend
-- **Base de Données** : Intégration complète avec **Supabase** (PostgreSQL).
 - **IA Engine (Cerveau Communal)** : Basé sur Google Generative AI avec une **chaîne de secours (Fallback)** ultra-résiliente (`gemini-3-flash` -> `3-pro` -> `2.5-flash` -> `1.5-flash`) garantissant 100% de disponibilité institutionnelle. Logique stricte de RAG avec directives anti-hallucination.
+- **Sécurité & Souveraineté (RBAC)** : Système de contrôle d'accès basé sur les rôles (Admin SE/DSI vs Employés) avec approbation manuelle obligatoire et Journal d'Audit complet des actions administratives pour assurer une traçabilité totale (RLS Policies).
 - **PWA (Progressive Web App)** : Installation sur mobile, mode hors-ligne partiel et notifications natives.
 
 ## 3. Architecture Technique
@@ -47,6 +47,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 ```
+
+### Gestion des Accès (RBAC) & Audit
+1.  **Script RBAC** : Exécutez le script `setup_rbac_audit.sql` pour créer les tables `user_profiles`, `audit_logs` et configurer les politiques RLS strictes.
+2.  **Premier Administrateur** : Lors de la première installation, créez un compte manuellement dans l'interface Auth de Supabase, puis définissez son rôle sur `admin` et `is_approved` sur `true` dans la table `user_profiles`.
+3.  **Approbation des Employés** : Les nouveaux agents s'inscrivent via la page dédiée. L'administrateur valide leur accès depuis l'onglet "Utilisateurs" du Dashboard.
 
 ## 5. Maintenance & Évolutivité
 L'application est conçue pour être clonée. Le fichier `doc/Saas.md` contient toutes les étapes pour changer de commune (logos, couleurs, constantes).

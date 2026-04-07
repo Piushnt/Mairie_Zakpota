@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, Loader2, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -23,6 +23,18 @@ export default function Login() {
       });
 
       if (error) throw error;
+      
+      // Verify RBAC profile
+      const { data: profileError, data: profile } = await supabase
+        .from('user_profiles')
+        .select('is_approved')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+        
+      if (profile && profile.is_approved === false) {
+        await supabase.auth.signOut();
+        throw new Error("Compte en attente d'approbation par le SE.");
+      }
       
       navigate('/admin-portal');
     } catch (err: any) {
@@ -94,6 +106,11 @@ export default function Login() {
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Se Connecter</span>}
             </button>
+            <div className="text-center mt-4">
+              <Link to="/register" className="text-primary text-xs font-bold uppercase tracking-widest hover:underline">
+                Demander un accès (Inscription)
+              </Link>
+            </div>
           </form>
 
           <div className="p-6 bg-muted/30 border-t border-border text-center">

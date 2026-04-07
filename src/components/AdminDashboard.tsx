@@ -51,15 +51,77 @@ interface AdminDashboardProps {
   onExit: () => void;
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
+  userRole?: 'admin' | 'employee';
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, onSendPush, onExit, isDarkMode, toggleDarkMode }) => {
-  const [activeTab, setActiveTab] = useState('services');
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
+  store, 
+  onUpdateStore, 
+  onSendPush, 
+  onExit, 
+  isDarkMode, 
+  toggleDarkMode,
+  userRole = 'employee'
+}) => {
+  const [activeTab, setActiveTab] = useState(userRole === 'admin' ? 'analytics' : 'services');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // RBAC & Audit States
+  const [users, setUsers] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+
+  // Audit Helper
+  const logAuditAction = async (actionType: string, moduleName: string, description: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase.from('audit_logs').insert([{
+        user_id: user.id,
+        user_name: user.email,
+        action_type: actionType,
+        module_name: moduleName,
+        description: description
+      }]);
+      
+      // Refresh logs if we are on the audit tab
+      if (activeTab === 'audit') fetchAuditLogs();
+    } catch (err) {
+      console.error("Failed to log audit action:", err);
+    }
+  };
+
+  const fetchUsers = async () => {
+    const { data } = await supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+    if (data) setUsers(data);
+  };
+
+  const fetchAuditLogs = async () => {
+    const { data } = await supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(50);
+    if (data) setAuditLogs(data);
+  };
+
+  const handleApproveUser = async (userId: string, approve: boolean) => {
+    const { error } = await supabase.from('user_profiles').update({ is_approved: approve }).eq('id', userId);
+    if (!error) {
+      showSuccess(approve ? "Utilisateur approuvé !" : "Utilisateur révoqué.");
+      fetchUsers();
+      logAuditAction(approve ? 'APPROVE' : 'REVOKE', 'Utilisateurs', `A ${approve ? 'approuvé' : 'révoqué'} l'accès de ${users.find(u => u.id === userId)?.email}`);
+    }
+  };
+
+  const handleChangeUserRole = async (userId: string, newRole: string) => {
+    const { error } = await supabase.from('user_profiles').update({ role: newRole }).eq('id', userId);
+    if (!error) {
+      showSuccess(`Rôle mis à jour : ${newRole}`);
+      fetchUsers();
+      logAuditAction('UPDATE', 'Utilisateurs', `A changé le rôle de ${users.find(u => u.id === userId)?.email} en ${newRole}`);
+    }
+  };
 
   // Local form states
   const [flashNews, setFlashNews] = useState(store.flashNews);
@@ -178,12 +240,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         totalSondages: sonData?.length || 0,
         activePolls: sonData?.filter(s => s.is_active).length || 0
       });
+
+      if (userRole === 'admin') {
+        fetchUsers();
+        fetchAuditLogs();
+      }
       
       setLoading(false);
     };
 
     fetchData();
-  }, [store]);
+  }, [store, userRole, activeTab]);
   
   const [newOpportunity, setNewOpportunity] = useState({
     title: '',
@@ -207,6 +274,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       onUpdateStore({ ...store, flashNews });
       onSendPush("Flash Info", "Le bandeau défilant a été mis à jour.", "/", "", "flash-info");
       showSuccess("Bandeau Flash mis à jour avec succès !");
+      logAuditAction('UPDATE', 'Alertes & Push', "A mis à jour le bandeau défilant municipal.");
     } else {
       console.error(error);
       setErrorMessage("Échec de la mise à jour du bandeau.");
@@ -325,6 +393,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
       onSendPush("Tarifs Mis à Jour", "Les prix des services municipaux ont été actualisés.", "/services", "", "service-update");
       showSuccess("Tous les tarifs ont été enregistrés avec succès !");
+      logAuditAction('UPDATE', 'Tarifs des Actes', "A mis à jour la grille tarifaire complète des actes municipaux.");
     } catch (error: any) {
       console.error('Supabase Error:', error);
       setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de l'enregistrement des services"}`);
@@ -345,6 +414,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       setServices(newServices);
       onUpdateStore({ services: newServices });
       showSuccess("Acte supprimé localement. Assurez-vous d'enregistrer les tarifs pour synchroniser.");
+      logAuditAction('DELETE', 'Tarifs des Actes', `A supprimé un acte dans la catégorie ${category}.`);
     } catch (error: any) {
       console.error(error);
       setErrorMessage("Échec de la suppression.");
@@ -410,6 +480,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
       onSendPush("Agenda Mis à Jour", "Les événements du stade ont été actualisés.", "/agenda", "", "agenda-update");
       showSuccess("Agenda enregistré avec succès !");
+      logAuditAction('UPDATE', 'Planning du Stade', "A mis à jour le planning officiel du stade.");
     } catch (error: any) {
       console.error('Supabase Error:', error);
       setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de l'enregistrement de l'agenda"}`);
@@ -450,6 +521,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         onUpdateStore({ reports: updatedReports });
         onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`, "/publications", "", "document-alert");
         showSuccess("Rapport publié avec succès !");
+        logAuditAction('CREATE', 'Rapports Officiels', `A publié un nouveau document : "${newReport.title}"`);
         setNewReport({
           title: '',
           date: new Date().toISOString().split('T')[0],
@@ -606,6 +678,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       
       onUpdateStore({ tax_settings: taxSettings });
       showSuccess("Paramètres fiscaux enregistrés !");
+      logAuditAction('UPDATE', 'Paramètres Fiscaux', "A modifié les taux de simulation des taxes (TFU/Patente).");
     } catch (err: any) {
       console.error(err);
       setErrorMessage(`Erreur sauvegarde taxes: ${err.message}`);
@@ -779,6 +852,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       );
       
       showSuccess(newStatus === 'VALIDE' ? "Réservation validée et ajoutée à l'agenda !" : "Réservation refusée.");
+      logAuditAction('UPDATE', 'Gestion Stade', `A ${newStatus === 'VALIDE' ? 'validé' : 'refusé'} la réservation de ${reservation.nom} pour le ${reservation.date}.`);
     } catch (error: any) {
       console.error('Supabase Error:', error);
       setErrorMessage(`Erreur [${error.code}]: Échec de l'action.`);
@@ -886,6 +960,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
       );
 
       showSuccess("Actualité publiée et notification envoyée !");
+      logAuditAction('CREATE', 'Actualités', `A publié l'actualité : "${newNews.title}"`);
       setNewNews({
         title: '',
         description: '',
@@ -1094,27 +1169,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
 
         <nav className="space-y-2 flex-1 overflow-y-auto pr-2 custom-scrollbar">
           {[
+            { id: 'analytics', label: 'Statistiques', icon: BarChart2, role: 'admin' },
+            { id: 'ai', label: 'Intelligence IA', icon: Bot },
             { id: 'services', label: 'Tarifs des Actes', icon: FileText },
             { id: 'agenda', label: 'Planning du Stade', icon: Calendar },
-            { id: 'reports', label: 'Rapports Officiels', icon: FileText },
-            { id: 'mapping', label: 'Lieux & Carte', icon: MapPin },
-            { id: 'arrondissements', label: 'Arrondissements', icon: MapPin },
-            { id: 'opportunities', label: 'Opportunités & Appels', icon: Briefcase },
-            { id: 'news', label: 'Actualités Mairie', icon: Newspaper },
-            { id: 'market', label: 'Cycle du Marché', icon: ShoppingBag },
-            { id: 'appointments', label: 'Audiences', icon: CalendarCheck },
             { id: 'stade_res', label: 'Gestion Stade', icon: Users },
-            { id: 'formulaires', label: 'Guichet Numérique', icon: FileSignature },
-            { id: 'taxes', label: 'Paramètres Fiscaux', icon: Calculator },
-            { id: 'council', label: 'Conseil Municipal', icon: Users },
             { id: 'dossiers', label: 'Suivi Dossiers', icon: FileText },
             { id: 'artisans', label: 'Annuaire Artisans', icon: Hammer },
-            { id: 'sondages', label: 'Sondages Citoyens', icon: Vote },
-            { id: 'analytics', label: 'Statistiques', icon: BarChart2 },
-            { id: 'ai', label: 'Intelligence IA', icon: Bot },
-            { id: 'flash', label: 'Alertes & Push', icon: Bell },
+            { id: 'formulaires', label: 'Guichet Numérique', icon: FileSignature },
+            { id: 'taxes', label: 'Paramètres Fiscaux', icon: Calculator },
+            { id: 'reports', label: 'Rapports Officiels', icon: FileText, role: 'admin' },
+            { id: 'mapping', label: 'Lieux & Carte', icon: MapPin, role: 'admin' },
+            { id: 'arrondissements', label: 'Arrondissements', icon: MapPin, role: 'admin' },
+            { id: 'opportunities', label: 'Opportunités & Appels', icon: Briefcase, role: 'admin' },
+            { id: 'news', label: 'Actualités Mairie', icon: Newspaper, role: 'admin' },
+            { id: 'market', label: 'Cycle du Marché', icon: ShoppingBag, role: 'admin' },
+            { id: 'appointments', label: 'Audiences', icon: CalendarCheck, role: 'admin' },
+            { id: 'council', label: 'Conseil Municipal', icon: Users, role: 'admin' },
+            { id: 'sondages', label: 'Sondages Citoyens', icon: Vote, role: 'admin' },
+            { id: 'users', label: 'Utilisateurs', icon: Users2, role: 'admin' },
+            { id: 'audit', label: 'Journal d\'Audit', icon: Clock, role: 'admin' },
+            { id: 'flash', label: 'Alertes & Push', icon: Bell, role: 'admin' },
             { id: 'settings', label: 'Configuration', icon: Settings },
-          ].map(item => (
+          ].filter(item => !item.role || (item.role === 'admin' && userRole === 'admin')).map(item => (
             <button
               key={item.id}
               onClick={() => {
@@ -1173,6 +1250,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
               {activeTab === 'sondages' && "Sondages & Consultations"}
               {activeTab === 'analytics' && "Tableau de Bord Analytique"}
               {activeTab === 'ai' && "Intelligence Artificielle & Rapports"}
+              {activeTab === 'users' && "Gestion des Utilisateurs"}
+              {activeTab === 'audit' && "Journal d'Audit Sécurité"}
               {activeTab === 'settings' && "Paramètres Système"}
             </h1>
             <p className="text-ink/40 font-medium">Interface de gestion simplifiée pour les agents de la mairie.</p>
@@ -1228,7 +1307,114 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ store, onUpdateStore, o
         {/* Tab Content */}
         <div className="bg-card rounded-[2.5rem] shadow-2xl border border-border p-8 lg:p-12 transition-colors">
           {activeTab === 'ai' && <AdminAI_Assistant />}
-          
+
+          {activeTab === 'users' && userRole === 'admin' && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-xl">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-muted text-[10px] font-black uppercase tracking-[0.2em] text-ink/40">
+                      <th className="px-8 py-6">Utilisateur</th>
+                      <th className="px-8 py-6">Rôle</th>
+                      <th className="px-8 py-6">Statut</th>
+                      <th className="px-8 py-6 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {users.map((u: any) => (
+                      <tr key={u.id} className="hover:bg-muted/30 transition-all">
+                        <td className="px-8 py-6">
+                          <p className="font-bold text-ink">{u.first_name} {u.last_name}</p>
+                          <p className="text-xs text-ink/40">{u.email}</p>
+                        </td>
+                        <td className="px-8 py-6">
+                          <select 
+                            value={u.role}
+                            onChange={(e) => handleChangeUserRole(u.id, e.target.value)}
+                            className="bg-muted border border-border rounded-lg px-3 py-1 text-[10px] font-black uppercase outline-none"
+                          >
+                            <option value="employee">Employé</option>
+                            <option value="admin">Administrateur (SE/DSI)</option>
+                          </select>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                            u.is_approved ? 'bg-green-500/10 text-green-500' : 'bg-red/10 text-red'
+                          }`}>
+                            {u.is_approved ? 'Approuvé' : 'En attente'}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          {u.is_approved ? (
+                            <button 
+                              onClick={() => handleApproveUser(u.id, false)}
+                              className="px-4 py-2 bg-red/10 text-red rounded-xl text-[10px] font-black uppercase hover:bg-red hover:text-white transition-all"
+                            >
+                              Révoquer
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleApproveUser(u.id, true)}
+                              className="px-4 py-2 bg-green-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-green-500/20 hover:scale-105 transition-all"
+                            >
+                              Approuver
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'audit' && userRole === 'admin' && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-xl">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-muted text-[10px] font-black uppercase tracking-[0.2em] text-ink/40">
+                      <th className="px-8 py-6">Date & Heure</th>
+                      <th className="px-8 py-6">Agent</th>
+                      <th className="px-8 py-6">Action</th>
+                      <th className="px-8 py-6">Module</th>
+                      <th className="px-8 py-6">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {auditLogs.map((log: any) => (
+                      <tr key={log.id} className="hover:bg-muted/30 transition-all text-xs">
+                        <td className="px-8 py-4 font-medium text-ink/40">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </td>
+                        <td className="px-8 py-4 font-bold text-ink">
+                          {log.user_name}
+                        </td>
+                        <td className="px-8 py-4">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                            log.action_type === 'CREATE' ? 'bg-green-500/10 text-green-500' :
+                            log.action_type === 'DELETE' ? 'bg-red/10 text-red' :
+                            log.action_type === 'UPDATE' ? 'bg-blue-500/10 text-blue-500' :
+                            'bg-muted text-ink/40'
+                          }`}>
+                            {log.action_type}
+                          </span>
+                        </td>
+                        <td className="px-8 py-4 font-bold text-primary uppercase tracking-widest text-[9px]">
+                          {log.module_name}
+                        </td>
+                        <td className="px-8 py-4 text-ink/60 italic">
+                          {log.description}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'flash' && (
             <div className="max-w-2xl space-y-8">
               <div className="space-y-4">
