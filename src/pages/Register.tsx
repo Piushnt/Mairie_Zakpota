@@ -9,8 +9,6 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState<'employee' | 'admin'>('employee');
-  const [adminPin, setAdminPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -29,8 +27,7 @@ export default function Register() {
           data: {
             first_name: firstName,
             last_name: lastName,
-            role: role,
-            admin_pin: role === 'admin' ? adminPin : undefined
+            role: 'employee'
           }
         }
       });
@@ -75,13 +72,10 @@ export default function Register() {
                 <User className="w-8 h-8" />
               </div>
               <h2 className="text-xl font-black text-ink">
-                {role === 'admin' ? "Compte Administrateur Actif" : "Demande Envoyée"}
+                Compte Créé avec Succès
               </h2>
               <p className="text-ink-muted text-sm font-medium">
-                {role === 'admin' 
-                  ? "Votre compte a été authentifié avec succès en tant que Secrétaire Exécutif et validé grâce au PIN de sécurité."
-                  : "Votre compte a été créé avec succès. Il est actuellement en attente d'approbation par le Secrétaire Exécutif (SE)."
-                }
+                Votre inscription a bien été enregistrée. Les agents communaux pourront se connecter une fois leur accès validé par l'Administrateur, tandis que le S.E. y accèdera directement via le Code PIN.
               </p>
               <Link to="/login" className="block mt-6 bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl">
                 Retour à la connexion
@@ -144,48 +138,6 @@ export default function Register() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
-                </div>
-
-                <div className="bg-muted p-4 rounded-2xl space-y-4 border border-border">
-                  <p className="text-xs font-black uppercase text-ink/40 tracking-widest text-center">Sélectionnez votre profil</p>
-                  <div className="flex gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setRole('employee')}
-                      className={`flex-1 py-3 text-xs font-bold uppercase rounded-xl transition-all ${role === 'employee' ? 'bg-primary text-white shadow-lg' : 'bg-card text-ink/60 hover:bg-card/50 border border-border'}`}
-                    >
-                      Employé
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRole('admin')}
-                      className={`flex-1 py-3 text-xs font-bold uppercase rounded-xl transition-all ${role === 'admin' ? 'bg-ink text-white shadow-lg' : 'bg-card text-ink/60 hover:bg-card/50 border border-border'}`}
-                    >
-                      Administrateur
-                    </button>
-                  </div>
-
-                  {role === 'admin' && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }} 
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="pt-4 border-t border-border mt-4"
-                    >
-                      <label className="text-xs font-black uppercase text-ink/60 tracking-widest mb-2 block">Code Secret (PIN)</label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red/60" />
-                        <input
-                          type="password"
-                          required={role === 'admin'}
-                          placeholder="Ex: ZKP-XXXX"
-                          className="w-full bg-red/5 border border-red/20 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-red transition-all text-sm font-medium text-red"
-                          value={adminPin}
-                          onChange={(e) => setAdminPin(e.target.value)}
-                        />
-                      </div>
-                      <p className="text-[10px] text-red/60 mt-2 font-medium">Requis pour l'accès immédiat au Dashboard.</p>
-                    </motion.div>
-                  )}
                 </div>
               </div>
 

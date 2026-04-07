@@ -52,6 +52,7 @@ interface AdminDashboardProps {
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
   userRole?: 'admin' | 'employee';
+  userName?: string;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
@@ -61,9 +62,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onExit, 
   isDarkMode, 
   toggleDarkMode,
-  userRole = 'employee'
+  userRole = 'employee',
+  userName = ''
 }) => {
   const [activeTab, setActiveTab] = useState(userRole === 'admin' ? 'analytics' : 'services');
+
+  // Enforce correct tab when role changes
+  useEffect(() => {
+    setActiveTab(userRole === 'admin' ? 'analytics' : 'services');
+  }, [userRole]);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -1178,10 +1185,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
           <div>
             <h2 className="font-black text-ink uppercase tracking-widest text-sm">
-              {userRole === 'admin' ? "Portail S.E." : "Portail Agent"}
+              {userRole === 'admin' ? "Portail S.E." : "Espace Agent"}
             </h2>
             <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">
-              {userRole === 'admin' ? "Secrétaire Exécutif" : "Services Citoyens"}
+              {userName || (userRole === 'admin' ? "Secrétaire Exécutif" : "Services Citoyens")}
             </p>
           </div>
         </div>

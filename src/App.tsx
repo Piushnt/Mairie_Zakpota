@@ -139,6 +139,7 @@ export default function App() {
   const [store, setStore] = useState(initialStoreData);
   const [session, setSession] = useState<any>(null);
   const [userRole, setUserRole] = useState<'admin' | 'employee'>('employee');
+  const [userName, setUserName] = useState('');
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
 
   // Auth Listener
@@ -165,9 +166,10 @@ export default function App() {
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
-    const { data } = await supabase.from('user_profiles').select('role').eq('id', userId).single();
+    const { data } = await supabase.from('user_profiles').select('role, first_name, last_name').eq('id', userId).single();
     if (data) {
       setUserRole(data.role as 'admin' | 'employee');
+      setUserName(`${data.first_name || ''} ${data.last_name || ''}`.trim());
     }
     setIsProfileLoaded(true);
   };
@@ -469,6 +471,7 @@ export default function App() {
                 isDarkMode={isDarkMode}
                 toggleDarkMode={toggleDarkMode}
                 userRole={userRole}
+                userName={userName}
               />
             ) : (
               <Login />
