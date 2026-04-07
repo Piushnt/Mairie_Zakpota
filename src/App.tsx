@@ -139,6 +139,7 @@ export default function App() {
   const [store, setStore] = useState(initialStoreData);
   const [session, setSession] = useState<any>(null);
   const [userRole, setUserRole] = useState<'admin' | 'employee'>('employee');
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
 
   // Auth Listener
   useEffect(() => {
@@ -146,6 +147,8 @@ export default function App() {
       setSession(session);
       if (session?.user) {
         fetchUserProfile(session.user.id);
+      } else {
+        setIsProfileLoaded(true);
       }
     });
 
@@ -153,6 +156,8 @@ export default function App() {
       setSession(session);
       if (session?.user) {
         fetchUserProfile(session.user.id);
+      } else {
+        setIsProfileLoaded(true);
       }
     });
 
@@ -164,6 +169,7 @@ export default function App() {
     if (data) {
       setUserRole(data.role as 'admin' | 'employee');
     }
+    setIsProfileLoaded(true);
   };
 
   useEffect(() => {
@@ -450,7 +456,11 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/admin-portal" element={
-            session ? (
+            !isProfileLoaded ? (
+              <div className="min-h-screen flex items-center justify-center bg-muted">
+                 <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+              </div>
+            ) : session ? (
               <AdminDashboard
                 store={store}
                 onUpdateStore={handleUpdateStore}
