@@ -123,6 +123,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer définitivement cet utilisateur du système ?")) return;
+
+    const userToRemove = users.find(u => u.id === userId);
+    const { error } = await supabase.from('user_profiles').delete().eq('id', userId);
+    
+    if (!error) {
+      showSuccess("Utilisateur supprimé avec succès.");
+      fetchUsers();
+      logAuditAction('DELETE', 'Utilisateurs', `A supprimé définitivement le compte de : ${userToRemove?.email}`);
+    } else {
+      setErrorMessage("Échec de la suppression de l'utilisateur.");
+    }
+  };
+
   // Local form states
   const [flashNews, setFlashNews] = useState(store.flashNews);
   const [stats, setStats] = useState({
@@ -1344,21 +1359,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             {u.is_approved ? 'Approuvé' : 'En attente'}
                           </span>
                         </td>
-                        <td className="px-8 py-6 text-right">
-                          {u.is_approved ? (
-                            <button 
-                              onClick={() => handleApproveUser(u.id, false)}
-                              className="px-4 py-2 bg-red/10 text-red rounded-xl text-[10px] font-black uppercase hover:bg-red hover:text-white transition-all"
-                            >
-                              Révoquer
-                            </button>
-                          ) : (
-                            <button 
-                              onClick={() => handleApproveUser(u.id, true)}
-                              className="px-4 py-2 bg-green-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-green-500/20 hover:scale-105 transition-all"
-                            >
-                              Approuver
-                            </button>
+                        <td className="px-8 py-6 text-right space-x-2">
+                          {u.role !== 'admin' && (
+                            <>
+                              {u.is_approved ? (
+                                <button 
+                                  onClick={() => handleApproveUser(u.id, false)}
+                                  className="px-4 py-2 bg-red/10 text-red rounded-xl text-[10px] font-black uppercase hover:bg-red hover:text-white transition-all"
+                                >
+                                  Révoquer
+                                </button>
+                              ) : (
+                                <button 
+                                  onClick={() => handleApproveUser(u.id, true)}
+                                  className="px-4 py-2 bg-green-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-green-500/20 hover:scale-105 transition-all"
+                                >
+                                  Approuver
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => handleDeleteUser(u.id)}
+                                className="p-2 text-red hover:bg-red/5 rounded-xl transition-all"
+                                title="Supprimer définitivement"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </>
+                          )}
+                          {u.role === 'admin' && (
+                            <span className="text-[10px] font-black text-primary uppercase tracking-widest px-4">Admin Principal</span>
                           )}
                         </td>
                       </tr>
