@@ -1230,36 +1230,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'audit', label: 'Journal d\'Audit', icon: Clock, role: 'admin' },
             { id: 'flash', label: 'Alertes & Push', icon: Bell, role: 'admin' },
             { id: 'settings', label: 'Configuration', icon: Settings },
-          ].map(item => {
-            const isLocked = (item.role === 'admin' && userRole !== 'admin') || (item.role === 'employee' && userRole === 'admin');
-            return (
-              <button
-                key={item.id}
-                disabled={isLocked}
-                title={isLocked ? `Réservé aux ${item.role === 'admin' ? 'Administrateurs' : 'Agents'}` : ''}
-                onClick={() => {
-                  if (isLocked) return;
-                  setActiveTab(item.id);
-                  setIsSidebarOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold transition-all min-h-[44px] ${
-                  activeTab === item.id 
-                    ? 'bg-primary text-white shadow-xl shadow-primary/20 lg:translate-x-2' 
-                    : isLocked 
-                      ? 'text-ink/10 cursor-not-allowed bg-muted/40 grayscale-100 scale-[0.97] border border-border/50'
-                      : 'text-ink/40 hover:text-primary hover:bg-primary/5'
-                }`}
-              >
-                <div className="flex items-center space-x-4">
-                  <div className={isLocked ? 'opacity-10 grayscale' : ''}>
-                    <item.icon className="w-5 h-5" />
-                  </div>
-                  <span className={`text-sm ${isLocked ? 'opacity-10' : ''}`}>{item.label}</span>
-                </div>
-                {isLocked && <Lock className="w-4 h-4 text-primary/40 animate-pulse" />}
-              </button>
-            );
-          })}
+          ].filter(item => !item.role || item.role === userRole).map(item => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setActiveTab(item.id);
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold transition-all min-h-[44px] ${
+                activeTab === item.id 
+                  ? 'bg-primary text-white shadow-xl shadow-primary/20 lg:translate-x-2' 
+                  : 'text-ink/40 hover:text-primary hover:bg-primary/5'
+              }`}
+            >
+              <div className="flex items-center space-x-4">
+                <item.icon className="w-5 h-5" />
+                <span className="text-sm">{item.label}</span>
+              </div>
+            </button>
+          ))}
         </nav>
 
         <div className="mt-12 pt-8 border-t border-border">
