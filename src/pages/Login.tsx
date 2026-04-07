@@ -54,7 +54,8 @@ export default function Login() {
         }
       }
       
-      navigate('/admin-portal');
+      // Force page reload to avoid race condition with App.tsx fetching the profile before the update finishes
+      window.location.href = '/admin-portal';
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la connexion. Vérifiez vos identifiants.');
     } finally {
