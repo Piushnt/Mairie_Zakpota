@@ -1102,10 +1102,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsSaving(false);
   };
 
-  const handleUpdateDossierStatus = async (id: string, statut: string) => {
-    const { error } = await supabase.from('dossiers').update({ statut }).eq('id', id);
+  const handleUpdateDossierStatus = async (code: string, statut: string) => {
+    const { error } = await supabase.from('dossiers').update({ statut }).eq('code', code);
     if (!error) {
-      setDossiers(dossiers.map(d => d.id === id ? { ...d, statut } : d));
+      setDossiers(dossiers.map(d => d.code === code ? { ...d, statut } : d));
       showSuccess("Statut du dossier mis à jour !");
     }
   };
@@ -2835,7 +2835,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               <div className="grid grid-cols-1 gap-4">
                 {dossiers.map((d: any) => (
-                  <div key={d.id} className="p-6 bg-muted rounded-2xl border border-border flex items-center justify-between">
+                  <div key={d.code} className="p-6 bg-muted rounded-2xl border border-border flex items-center justify-between">
                     <div>
                       <h4 className="font-black text-ink">{d.code} — {d.citoyen_nom}</h4>
                       <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">{d.type} • Créé le {new Date(d.created_at).toLocaleDateString()}</p>
@@ -2843,7 +2843,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="flex items-center space-x-4">
                       <select 
                         value={d.statut}
-                        onChange={(e) => handleUpdateDossierStatus(d.id, e.target.value)}
+                        onChange={(e) => handleUpdateDossierStatus(d.code, e.target.value)}
                         className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border-none outline-none ${
                           d.statut === 'Prêt' ? 'bg-green-500 text-white' : 'bg-primary/10 text-primary'
                         }`}

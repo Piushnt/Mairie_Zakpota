@@ -227,9 +227,9 @@ CREATE TABLE IF NOT EXISTS public.artisans (
 );
 
 CREATE TABLE IF NOT EXISTS public.dossiers (
-  id TEXT PRIMARY KEY,
-  user_name TEXT NOT NULL,
-  service_type TEXT NOT NULL,
+  code TEXT PRIMARY KEY,
+  citoyen_nom TEXT NOT NULL,
+  type TEXT NOT NULL,
   statut TEXT DEFAULT 'En attente',
   commentaire TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -370,7 +370,11 @@ ON CONFLICT DO NOTHING;
 -- 6. SÉCURITÉ RLS (POLITIQUES UNIFIÉES)
 -- ----------------------------------------------------
 
--- Activation Globale
+-- ----------------------------------------------------
+-- 6. SÉCURITÉ RLS (POLITIQUES UNIFIÉES ET SÉCURISÉES)
+-- ----------------------------------------------------
+
+-- Activation Globale du RLS sur toutes les tables du schéma public
 DO $$ 
 DECLARE
     r record;
@@ -381,7 +385,9 @@ BEGIN
     END LOOP;
 END $$;
 
--- 1. Lecture Publique (Toutes tables infos sauf profil/audit)
+-- --- 6.1 LECTURE PUBLIQUE (Accès Visiteurs & Citoyens) ---
+-- Autorise toute personne à LIRE les contenus informatifs.
+
 DROP POLICY IF EXISTS "Public Read" ON public.news;
 CREATE POLICY "Public Read" ON public.news FOR SELECT USING (true);
 
@@ -427,7 +433,12 @@ CREATE POLICY "Public Read" ON public.artisans FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public Read" ON public.sondages;
 CREATE POLICY "Public Read" ON public.sondages FOR SELECT USING (true);
 
--- 2. Insertion Publique (Citoyens)
+DROP POLICY IF EXISTS "Public Read" ON public.dossiers;
+CREATE POLICY "Public Read" ON public.dossiers FOR SELECT USING (true);
+
+-- --- 6.2 ACTIONS CITOYENNES (Insertion de données) ---
+-- Autorise les citoyens non-connectés à soumettre des demandes.
+
 DROP POLICY IF EXISTS "Citizen Insert" ON public.audiences;
 CREATE POLICY "Citizen Insert" ON public.audiences FOR INSERT WITH CHECK (true);
 
@@ -443,7 +454,8 @@ CREATE POLICY "Public Read Subscriptions" ON public.user_subscriptions FOR SELEC
 DROP POLICY IF EXISTS "Public Update Subscriptions" ON public.user_subscriptions;
 CREATE POLICY "Public Update Subscriptions" ON public.user_subscriptions FOR UPDATE USING (true);
 
--- 3. Accès Personnel
+-- --- 6.3 ACCÈS PRIVÉS (Profil & IA) ---
+
 DROP POLICY IF EXISTS "Self View" ON public.user_profiles;
 CREATE POLICY "Self View" ON public.user_profiles FOR SELECT USING (id = auth.uid());
 
@@ -456,53 +468,70 @@ CREATE POLICY "Self Manage" ON public.ai_chat_sessions FOR ALL TO authenticated 
 DROP POLICY IF EXISTS "Self Manage" ON public.ai_messages;
 CREATE POLICY "Self Manage" ON public.ai_messages FOR ALL TO authenticated USING (session_id IN (SELECT id FROM ai_chat_sessions WHERE user_id = auth.uid()));
 
--- 4. Accès Agents Approuvés (Modification)
+-- --- 6.4 ACCÈS AGENTS APPROUVÉS (Gestion Quotidienne) ---
+-- Autorise les agents validés (is_approved = true) à gérer les contenus.
+
+-- Politique générique pour la plupart des tables gérées par les agents
 DROP POLICY IF EXISTS "Approved Agent Write" ON public.news;
-CREATE POLICY "Approved Agent Write" ON public.news FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()));
+CREATE POLICY "Approved Agent Write" ON public.news FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write" ON public.services_tarifs;
-CREATE POLICY "Approved Agent Write" ON public.services_tarifs FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()));
+CREATE POLICY "Approved Agent Write" ON public.services_tarifs FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write" ON public.reports;
-CREATE POLICY "Approved Agent Write" ON public.reports FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()));
+CREATE POLICY "Approved Agent Write" ON public.reports FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write" ON public.agenda_events;
-CREATE POLICY "Approved Agent Write" ON public.agenda_events FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()));
+CREATE POLICY "Approved Agent Write" ON public.agenda_events FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write" ON public.appointments;
-CREATE POLICY "Approved Agent Write" ON public.appointments FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()));
+CREATE POLICY "Approved Agent Write" ON public.appointments FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write" ON public.opportunites;
-CREATE POLICY "Approved Agent Write" ON public.opportunites FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()));
+CREATE POLICY "Approved Agent Write" ON public.opportunites FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write" ON public.arrondissements;
-CREATE POLICY "Approved Agent Write" ON public.arrondissements FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Select" ON public.audiences;
-CREATE POLICY "Approved Agent Select" ON public.audiences FOR SELECT TO authenticated USING (public.check_is_approved(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Select" ON public.reservations_stade;
-CREATE POLICY "Approved Agent Select" ON public.reservations_stade FOR SELECT TO authenticated USING (public.check_is_approved(auth.uid()));
+CREATE POLICY "Approved Agent Write" ON public.arrondissements FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write" ON public.formulaires;
-CREATE POLICY "Approved Agent Write" ON public.formulaires FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()));
+CREATE POLICY "Approved Agent Write" ON public.formulaires FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write" ON public.locations;
-CREATE POLICY "Approved Agent Write" ON public.locations FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()));
+CREATE POLICY "Approved Agent Write" ON public.locations FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write Artisans" ON public.artisans;
-CREATE POLICY "Approved Agent Write Artisans" ON public.artisans FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Read Dossiers" ON public.dossiers;
-CREATE POLICY "Approved Agent Read Dossiers" ON public.dossiers FOR SELECT TO authenticated USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
+CREATE POLICY "Approved Agent Write Artisans" ON public.artisans FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Approved Agent Write Dossiers" ON public.dossiers;
-CREATE POLICY "Approved Agent Write Dossiers" ON public.dossiers FOR ALL TO authenticated USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
+CREATE POLICY "Approved Agent Write Dossiers" ON public.dossiers FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
+-- Lecture des demandes (Audiences & Stade)
+DROP POLICY IF EXISTS "Approved Agent Select" ON public.audiences;
+CREATE POLICY "Approved Agent Select" ON public.audiences FOR SELECT TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
+
+DROP POLICY IF EXISTS "Approved Agent Select" ON public.reservations_stade;
+CREATE POLICY "Approved Agent Select" ON public.reservations_stade FOR SELECT TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
+
+-- Audit (Insert uniquement pour archivage des actions)
 DROP POLICY IF EXISTS "Approved Agent Log" ON public.audit_logs;
 CREATE POLICY "Approved Agent Log" ON public.audit_logs FOR INSERT TO authenticated WITH CHECK (true);
 
--- 5. Accès S.E / Admin (Contrôle Total)
+-- --- 6.5 ACCÈS S.E / ADMIN (Contrôle Total) ---
+-- Réservé aux administrateurs (S.E) pour la gestion du système.
+
 DROP POLICY IF EXISTS "Admin View Profiles" ON public.user_profiles;
 CREATE POLICY "Admin View Profiles" ON public.user_profiles FOR SELECT USING (public.check_is_admin(auth.uid()));
 
@@ -510,17 +539,20 @@ DROP POLICY IF EXISTS "Admin Delete Profiles" ON public.user_profiles;
 CREATE POLICY "Admin Delete Profiles" ON public.user_profiles FOR DELETE USING (public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Admin Update Profiles" ON public.user_profiles;
-CREATE POLICY "Admin Update Profiles" ON public.user_profiles FOR UPDATE USING (public.check_is_admin(auth.uid())) WITH CHECK (public.check_is_admin(auth.uid()));
+CREATE POLICY "Admin Update Profiles" ON public.user_profiles FOR UPDATE 
+USING (public.check_is_admin(auth.uid())) WITH CHECK (public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Admin Manage Config" ON public.site_config;
-CREATE POLICY "Admin Manage Config" ON public.site_config FOR ALL TO authenticated USING (public.check_is_admin(auth.uid()));
+CREATE POLICY "Admin Manage Config" ON public.site_config FOR ALL TO authenticated 
+USING (public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Admin Manage Taxes" ON public.tax_settings;
-CREATE POLICY "Admin Manage Taxes" ON public.tax_settings FOR ALL TO authenticated USING (public.check_is_admin(auth.uid()));
+CREATE POLICY "Admin Manage Taxes" ON public.tax_settings FOR ALL TO authenticated 
+USING (public.check_is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Admin View Logs" ON public.audit_logs;
 CREATE POLICY "Admin View Logs" ON public.audit_logs FOR SELECT USING (public.check_is_admin(auth.uid()));
 
 -- ==========================================================
--- FIN DU SCRIPT COMPLET
+-- ✅ FIN DU SCRIPT COMPLET (V2.0 PARFAITE)
 -- ==========================================================

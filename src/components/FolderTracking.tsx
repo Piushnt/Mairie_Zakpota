@@ -21,7 +21,7 @@ const FolderTracking = () => {
       const { data, error: fetchError } = await supabase
         .from('dossiers')
         .select('*')
-        .eq('id', folderId.trim().toUpperCase())
+        .eq('code', folderId.trim().toUpperCase())
         .single();
 
       if (fetchError || !data) {
