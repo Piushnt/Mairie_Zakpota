@@ -1177,8 +1177,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <LayoutDashboard className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="font-black text-ink uppercase tracking-widest text-sm">Portail S.E.</h2>
-            <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">Secrétaire Exécutif</p>
+            <h2 className="font-black text-ink uppercase tracking-widest text-sm">
+              {userRole === 'admin' ? "Portail S.E." : "Portail Agent"}
+            </h2>
+            <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">
+              {userRole === 'admin' ? "Secrétaire Exécutif" : "Services Citoyens"}
+            </p>
           </div>
         </div>
 

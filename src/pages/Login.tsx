@@ -25,20 +25,25 @@ export default function Login() {
       if (error) throw error;
       
       // Verify RBAC profile
-      const { data: profileError, data: profile } = await supabase
+      const { error: profileError, data: profile } = await supabase
         .from('user_profiles')
-        .select('is_approved')
+        .select('is_approved, role')
         .eq('id', (await supabase.auth.getUser()).data.user?.id)
         .single();
         
-      if (profile && profile.is_approved === false) {
+      if (!profile) {
         await supabase.auth.signOut();
-        throw new Error("Compte en attente d'approbation par le SE.");
+        throw new Error("PROFIL INTROUVABLE : Impossible de vous identifier dans la sécurité RBAC. Si ce compte existait avant la mise à jour, veuillez exécuter le correctif SQL d'initialisation.");
+      }
+
+      if (profile.is_approved === false) {
+        await supabase.auth.signOut();
+        throw new Error("Compte en attente d'approbation. Le Secrétaire Exécutif doit valider votre accès.");
       }
       
       navigate('/admin-portal');
     } catch (err: any) {
-      setError(err.message || 'Erreur lors de la connexion');
+      setError(err.message || 'Erreur lors de la connexion. Vérifiez vos identifiants.');
     } finally {
       setLoading(false);
     }
