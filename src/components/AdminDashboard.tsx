@@ -37,7 +37,8 @@ import {
   Users2,
   Hammer,
   Vote,
-  Bot
+  Bot,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -1148,7 +1149,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
             <LayoutDashboard className="w-5 h-5" />
           </div>
-          <h2 className="font-black text-ink uppercase tracking-widest text-xs">Portail S.E.</h2>
+          <h2 className="font-black text-ink uppercase tracking-widest text-xs">
+            {userRole === 'admin' ? "Portail S.E." : "Espace Agent"}
+          </h2>
         </div>
         <div className="flex items-center space-x-2">
           {toggleDarkMode && (
@@ -1217,23 +1220,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'audit', label: 'Journal d\'Audit', icon: Clock, role: 'admin' },
             { id: 'flash', label: 'Alertes & Push', icon: Bell, role: 'admin' },
             { id: 'settings', label: 'Configuration', icon: Settings },
-          ].filter(item => !item.role || (item.role === 'admin' && userRole === 'admin')).map(item => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                setIsSidebarOpen(false);
-              }}
-              className={`w-full flex items-center space-x-4 px-4 py-3 rounded-2xl font-bold transition-all min-h-[44px] ${
-                activeTab === item.id 
-                  ? 'bg-primary text-white shadow-xl shadow-primary/20 lg:translate-x-2' 
-                  : 'text-ink/40 hover:text-primary hover:bg-primary/5'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-sm">{item.label}</span>
-            </button>
-          ))}
+          ].map(item => {
+            const isLocked = item.role === 'admin' && userRole !== 'admin';
+            return (
+              <button
+                key={item.id}
+                disabled={isLocked}
+                onClick={() => {
+                  if (isLocked) return;
+                  setActiveTab(item.id);
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold transition-all min-h-[44px] ${
+                  activeTab === item.id 
+                    ? 'bg-primary text-white shadow-xl shadow-primary/20 lg:translate-x-2' 
+                    : isLocked 
+                      ? 'text-ink/20 cursor-not-allowed bg-muted/30 grayscale'
+                      : 'text-ink/40 hover:text-primary hover:bg-primary/5'
+                }`}
+              >
+                <div className="flex items-center space-x-4">
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-sm">{item.label}</span>
+                </div>
+                {isLocked && <Lock className="w-4 h-4 text-ink/20" />}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="mt-12 pt-8 border-t border-border">
