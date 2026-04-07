@@ -86,9 +86,9 @@ const functions: Record<string, Function> = {
 // --- MAIN SERVICE ---
 
 const MODELS_HIERARCHY = [
+  "gemini-2.5-flash",
   "gemini-3-flash",
   "gemini-3-pro",
-  "gemini-2.5-flash",
   "gemini-1.5-flash"
 ];
 
@@ -113,7 +113,7 @@ export async function askMunicipalAI(prompt: string, history: { role: string, te
     const modelName = MODELS_HIERARCHY[i];
 
     try {
-      const model = genAI.getGenerativeModel({ 
+      const model = genAI.getGenerativeModel({
         model: modelName,
         systemInstruction: SYSTEM_PROMPT,
         tools
@@ -125,16 +125,16 @@ export async function askMunicipalAI(prompt: string, history: { role: string, te
 
       // Add a AbortController or a simple timeout for safety
       const aiPromise = chat.sendMessage(prompt);
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("AI_TIMEOUT")), 15000)
       );
 
       const result = await Promise.race([aiPromise, timeoutPromise]) as any;
       let response = result.response;
-      
+
       // Handle function calls
       const calls = response.candidates?.[0]?.content?.parts?.filter((p: any) => p.functionCall);
-      
+
       if (calls && calls.length > 0) {
         const toolResults = [];
         for (const call of calls) {
@@ -142,7 +142,7 @@ export async function askMunicipalAI(prompt: string, history: { role: string, te
             const functionName = call.functionCall.name;
             const args = call.functionCall.args;
             const functionResponse = await functions[functionName](args);
-            
+
             toolResults.push({
               functionResponse: {
                 name: functionName,
@@ -151,7 +151,7 @@ export async function askMunicipalAI(prompt: string, history: { role: string, te
             });
           }
         }
-        
+
         const secondResult = await chat.sendMessage(toolResults);
         return secondResult.response.text();
       }
@@ -163,7 +163,7 @@ export async function askMunicipalAI(prompt: string, history: { role: string, te
         const currentModelShort = modelName.replace("gemini-", "").replace("-flash", "");
         const nextModelShort = MODELS_HIERARCHY[i + 1].replace("gemini-", "").replace("-flash", "");
         console.warn(`Gemini ${currentModelShort} failed, switching to ${nextModelShort}...`);
-        
+
         // Wait 2 seconds before retrying
         await delay(2000);
       } else {
@@ -172,7 +172,7 @@ export async function askMunicipalAI(prompt: string, history: { role: string, te
       }
     }
   }
-  
+
   return simulateMunicipalResponse(prompt);
 }
 
