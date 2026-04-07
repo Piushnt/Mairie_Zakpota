@@ -516,6 +516,10 @@ DROP POLICY IF EXISTS "Approved Agent Write Dossiers" ON public.dossiers;
 CREATE POLICY "Approved Agent Write Dossiers" ON public.dossiers FOR ALL TO authenticated 
 USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Approved Agent Write Sondages" ON public.sondages;
+CREATE POLICY "Approved Agent Write Sondages" ON public.sondages FOR ALL TO authenticated 
+USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
+
 -- Lecture des demandes (Audiences & Stade)
 DROP POLICY IF EXISTS "Approved Agent Select" ON public.audiences;
 CREATE POLICY "Approved Agent Select" ON public.audiences FOR SELECT TO authenticated 
