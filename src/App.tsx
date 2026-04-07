@@ -140,6 +140,7 @@ export default function App() {
   const [session, setSession] = useState<any>(null);
   const [userRole, setUserRole] = useState<'admin' | 'employee'>('employee');
   const [userName, setUserName] = useState('');
+  const [isApproved, setIsApproved] = useState(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
 
   // Auth Listener
@@ -166,10 +167,11 @@ export default function App() {
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
-    const { data } = await supabase.from('user_profiles').select('role, first_name, last_name').eq('id', userId).single();
+    const { data } = await supabase.from('user_profiles').select('role, first_name, last_name, is_approved').eq('id', userId).single();
     if (data) {
       setUserRole(data.role as 'admin' | 'employee');
       setUserName(`${data.first_name || ''} ${data.last_name || ''}`.trim());
+      setIsApproved(data.is_approved);
     }
     setIsProfileLoaded(true);
   };
@@ -463,16 +465,39 @@ export default function App() {
                  <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
               </div>
             ) : session ? (
-              <AdminDashboard
-                store={store}
-                onUpdateStore={handleUpdateStore}
-                onSendPush={handleSendPush}
-                onExit={() => window.location.href = '/'}
-                isDarkMode={isDarkMode}
-                toggleDarkMode={toggleDarkMode}
-                userRole={userRole}
-                userName={userName}
-              />
+              isApproved ? (
+                <AdminDashboard
+                  store={store}
+                  onUpdateStore={handleUpdateStore}
+                  onSendPush={handleSendPush}
+                  onExit={() => window.location.href = '/'}
+                  isDarkMode={isDarkMode}
+                  toggleDarkMode={toggleDarkMode}
+                  userRole={userRole}
+                  userName={userName}
+                />
+              ) : (
+                <div className="min-h-screen bg-muted flex items-center justify-center p-4">
+                  <div className="bg-card p-8 rounded-[32px] shadow-2xl border border-border max-w-md w-full text-center space-y-6">
+                    <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto text-primary">
+                      <Clock className="w-10 h-10" />
+                    </div>
+                    <h2 className="text-2xl font-black text-ink uppercase tracking-tighter">Accès en Attente</h2>
+                    <p className="text-ink/60 text-sm font-medium leading-relaxed">
+                      Bonjour <strong>{userName}</strong>. Votre compte est actuellement en attente d'approbation par le Secrétaire Exécutif. <br/><br/>Vous recevrez l'accès dès que votre identité sera confirmée.
+                    </p>
+                    <button 
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        window.location.href = '/';
+                      }}
+                      className="w-full bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs"
+                    >
+                      Retour au site
+                    </button>
+                  </div>
+                </div>
+              )
             ) : (
               <Login />
             )
