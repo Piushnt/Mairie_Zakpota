@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Vote, CheckCircle2, ListFilter, Calendar, BarChart3, HelpingHand, ArrowRight, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useTenant } from '../lib/TenantContext';
 import { Link } from 'react-router-dom';
 
 const CommunityPolls = ({ hideBudgetBlock }: { hideBudgetBlock?: boolean }) => {
+  const { currentTenant } = useTenant();
   const [sondages, setSondages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [votedIds, setVotedIds] = useState<string[]>([]);
@@ -16,9 +18,11 @@ const CommunityPolls = ({ hideBudgetBlock }: { hideBudgetBlock?: boolean }) => {
   }, []);
 
   const fetchSondages = async () => {
+    if (!currentTenant) return;
     const { data, error } = await supabase
       .from('sondages')
       .select('*')
+      .eq('tenant_id', currentTenant.id)
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     

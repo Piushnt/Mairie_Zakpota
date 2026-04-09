@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, Sparkles, Paperclip, Mic, ArrowRight } from 'lucide-react';
 import { askMunicipalAI } from '../lib/gemini';
 import { getOrCreateAISession, saveAIMessage, fetchAISessionHistory } from '../utils/aiSupport';
+import { useTenant } from '../lib/TenantContext';
 
 const FloatingAIAssistant = () => {
+  const { currentTenant, isFeatureEnabled } = useTenant();
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'bot', text: string }[]>([]);
@@ -29,7 +31,8 @@ const FloatingAIAssistant = () => {
     if (history.length > 0) {
       setChatHistory(history);
     } else {
-      setChatHistory([{ role: 'bot', text: "Bonjour ! Je suis l'assistant municipal de Za-Kpota. Comment puis-je vous aider aujourd'hui ?" }]);
+      const tenantName = currentTenant?.name || 'votre mairie';
+      setChatHistory([{ role: 'bot', text: `Bonjour ! Je suis l'assistant municipal de ${tenantName}. Comment puis-je vous aider aujourd'hui ?` }]);
     }
   };
 
@@ -63,6 +66,9 @@ const FloatingAIAssistant = () => {
     "Contacter la mairie"
   ];
 
+  // Si le module ia_assistant est désactivé pour cette mairie, on ne rend rien
+  if (!isFeatureEnabled('ia_assistant')) return null;
+
   return (
     <div className="fixed bottom-6 right-6 z-[9999]">
       <AnimatePresence>
@@ -80,7 +86,7 @@ const FloatingAIAssistant = () => {
                   <Bot className="w-6 h-6 text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-black text-sm uppercase tracking-widest">Za-Kpota GPT</h3>
+                  <h3 className="font-black text-sm uppercase tracking-widest">{currentTenant?.name || 'Mairie'} GPT</h3>
                   <div className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                     <span className="text-[10px] font-bold opacity-70">Assistant Municipal Officiel</span>
