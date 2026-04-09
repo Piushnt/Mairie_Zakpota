@@ -74,9 +74,10 @@ import {
 } from './data/config';
 
 import { initialStoreData } from './data/store';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import AdminDashboard from './components/AdminDashboard';
+import SuperAdminDashboard from './components/SuperAdminDashboard';
 import NotificationBell from './components/NotificationBell';
 import RapportsPage from './components/RapportsPage';
 import Arrondissements from './components/Arrondissements';
@@ -86,7 +87,10 @@ import RendezVous from './components/RendezVous';
 import NewsCard from './components/NewsCard';
 import ScrollToTop from './components/ScrollToTop';
 
-// Nouvelles extractions
+// --- NOUVELLES IMPORTATIONS SAAS ---
+import { useTenant } from './lib/TenantContext';
+import { Helmet } from 'react-helmet-async';
+// --- COMPOSANTS ---
 import Layout from './components/Layout';
 import PageHome from './pages/PageHome';
 import PageMaire from './pages/PageMaire';
@@ -117,13 +121,7 @@ import { parseImageUrl } from './utils/imageParser';
 // --- TYPES ---
 type Page = 'home' | 'etat-civil' | 'urbanisme' | 'economie' | 'conseil' | 'actualites' | 'contact' | 'maire' | 'decouvrir' | 'eservices' | 'histoire' | 'arrondissements' | 'publications' | 'agenda' | 'tourisme' | 'stade' | 'signalement' | 'simulateur' | 'admin-portal' | 'opportunites' | 'rendezvous';
 
-// --- CONSTANTS ---
-const NOM_VILLE = "Za-Kpota";
-const SLOGAN_VILLE = "Commune de Za-Kpota";
-const EMAIL_CONTACT = "contact@mairie-zakpota.bj";
-const TEL_CONTACT = "+229 97 00 00 00";
 const FALLBACK_NEWS_IMG = "https://images.unsplash.com/photo-1585829365234-781fcd96c813?auto=format&fit=crop&q=80&w=1200";
-const ADRESSE_MAIRIE = "Hôtel de Ville de Za-Kpota, Centre Ville";
 
 // --- COMPONENTS ---
 // Tous les composants ont été extraits dans src/components/
@@ -133,12 +131,21 @@ const ADRESSE_MAIRIE = "Hôtel de Ville de Za-Kpota, Centre Ville";
 
 
 export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState(false); // Za-Kpota 2.0: Light Mode by Default
+  const { currentTenant, isFeatureEnabled } = useTenant();
+  
+  // Variables SaaS Dynamiques
+  const NOM_VILLE = currentTenant?.name || "Mairie";
+  const SLOGAN_VILLE = `Portail Officiel de ${NOM_VILLE}`;
+  const EMAIL_CONTACT = currentTenant?.contact_email || "contact@mairie.bj";
+  const TEL_CONTACT = currentTenant?.contact_phone || "Non renseigné";
+  const ADRESSE_MAIRIE = `Hôtel de Ville de ${NOM_VILLE}`;
+
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useState(initialStoreData);
   const [session, setSession] = useState<any>(null);
-  const [userRole, setUserRole] = useState<'admin' | 'employee'>('employee');
+  const [userRole, setUserRole] = useState<'super_admin' | 'admin' | 'agent'>('agent');
   const [userName, setUserName] = useState('');
   const [isApproved, setIsApproved] = useState(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
@@ -169,7 +176,7 @@ export default function App() {
   const fetchUserProfile = async (userId: string) => {
     const { data } = await supabase.from('user_profiles').select('role, first_name, last_name, is_approved').eq('id', userId).single();
     if (data) {
-      setUserRole(data.role as 'admin' | 'employee');
+      setUserRole(data.role as 'super_admin' | 'admin' | 'agent');
       setUserName(`${data.first_name || ''} ${data.last_name || ''}`.trim());
       setIsApproved(data.is_approved);
     }
@@ -191,6 +198,8 @@ export default function App() {
         setLoading(true);
 
         // Fetch all tables in parallel
+        // SAAS IMPORTANT : Filtrage explicite public (mode anon) avec '.eq' (News, arr, services...)
+        // SAAS IMPORTANT : PAS de filtrage client sur les tables privées (audiences, res_stade...) -> RLS s'en charge.
         const [
           { data: tarifs },
           { data: news },
@@ -207,19 +216,19 @@ export default function App() {
           { data: counRes },
           { data: roles }
         ] = await Promise.all([
-          supabase.from('services_tarifs').select('*'),
-          supabase.from('news').select('*').order('date', { ascending: false }),
-          supabase.from('audiences').select('*').order('created_at', { ascending: false }),
-          supabase.from('opportunites').select('*'),
-          supabase.from('arrondissements').select('*').order('nom'),
-          supabase.from('agenda_events').select('*').order('date'),
-          supabase.from('site_config').select('*'),
-          supabase.from('reports').select('*').order('date', { ascending: false }),
-          supabase.from('reservations_stade').select('*').order('created_at', { ascending: false }),
-          supabase.from('formulaires').select('*').order('created_at', { ascending: false }),
-          supabase.from('tax_settings').select('*'),
-          supabase.from('locations').select('*').order('name'),
-          supabase.from('council').select('*, council_roles(*)'),
+          supabase.from('services_tarifs').select('*').eq('tenant_id', currentTenant!.id),
+          supabase.from('news').select('*').eq('tenant_id', currentTenant!.id).order('date', { ascending: false }),
+          supabase.from('audiences').select('*').order('created_at', { ascending: false }), // RLS STRICT
+          supabase.from('opportunites').select('*').eq('tenant_id', currentTenant!.id),
+          supabase.from('arrondissements').select('*').eq('tenant_id', currentTenant!.id).order('nom'),
+          supabase.from('agenda_events').select('*').eq('tenant_id', currentTenant!.id).order('date'),
+          supabase.from('site_config').select('*').eq('tenant_id', currentTenant!.id),
+          supabase.from('reports').select('*').eq('tenant_id', currentTenant!.id).order('date', { ascending: false }),
+          supabase.from('reservations_stade').select('*').order('created_at', { ascending: false }), // RLS STRICT
+          supabase.from('formulaires').select('*').eq('tenant_id', currentTenant!.id).order('created_at', { ascending: false }),
+          supabase.from('tax_settings').select('*').eq('tenant_id', currentTenant!.id),
+          supabase.from('locations').select('*').eq('tenant_id', currentTenant!.id).order('name'),
+          supabase.from('council').select('*, council_roles(*)').eq('tenant_id', currentTenant!.id),
           supabase.from('council_roles').select('*').order('importance_order', { ascending: true })
         ]);
 
@@ -406,6 +415,7 @@ export default function App() {
 
   const handleAudienceSubmit = async (data: any) => {
     const { error } = await supabase.from('audiences').insert([{
+      tenant_id: currentTenant!.id,
       name: data.nom + (data.prenom ? ' ' + data.prenom : ''),
       email: data.email,
       phone: data.telephone,
@@ -428,6 +438,7 @@ export default function App() {
 
   const handleStadeReservation = async (data: any) => {
     const { error } = await supabase.from('reservations_stade').insert([{
+      tenant_id: currentTenant!.id,
       nom: data.nom,
       prenom: data.prenom,
       telephone: data.telephone,
@@ -453,6 +464,11 @@ export default function App() {
 
   return (
     <HelmetProvider>
+      <Helmet>
+        <title>{NOM_VILLE} | Portail Officiel</title>
+        <meta name="description" content={SLOGAN_VILLE} />
+        {currentTenant?.logo_url && <link rel="icon" href={currentTenant.logo_url} />}
+      </Helmet>
       <BrowserRouter>
         <LazyMotion features={domMax}>
           <ScrollToTop />
@@ -465,7 +481,14 @@ export default function App() {
                  <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
               </div>
             ) : session ? (
-              isApproved ? (
+              userRole === 'super_admin' ? (
+                <SuperAdminDashboard
+                  onExit={() => window.location.href = '/'}
+                  userName={userName}
+                  isDarkMode={isDarkMode}
+                  toggleDarkMode={toggleDarkMode}
+                />
+              ) : isApproved ? (
                 <AdminDashboard
                   store={store}
                   onUpdateStore={handleUpdateStore}
@@ -528,26 +551,26 @@ export default function App() {
             <Route path="services" element={<PageService services={Object.keys(store.services || {}).length > 0 ? store.services : servicesData} />} />
             <Route path="services/:type" element={<PageService services={Object.keys(store.services || {}).length > 0 ? store.services : servicesData} />} />
 
-            <Route path="simulateur" element={<SimulateurFiscal settings={store.tax_settings} />} />
+            <Route path="simulateur" element={isFeatureEnabled('simulateur') ? <SimulateurFiscal settings={store.tax_settings} /> : <Navigate to="/" replace />} />
             <Route path="formulaires" element={<PageFormulaires formulaires={store.formulaires} />} />
             <Route path="rendezvous" element={<RendezVous onSubmit={(data) => handleAudienceSubmit({...data, type: 'rdv'})} />} />
             <Route path="suivi-dossier" element={<PageSuiviDossier />} />
-            <Route path="artisans" element={<PageAnnuaireArtisans />} />
-            <Route path="economie" element={<PageEconomie configMarche={store.configMarche} />} />
-            <Route path="opportunites" element={<Opportunities data={store.opportunites} />} />
-            <Route path="agenda" element={<PageAgenda agenda={store.agenda} />} />
-            <Route path="stade" element={<PageStade stade={store.stade} onReserve={handleStadeReservation} />} />
+            <Route path="artisans" element={isFeatureEnabled('artisans') ? <PageAnnuaireArtisans /> : <Navigate to="/" replace />} />
+            <Route path="economie" element={isFeatureEnabled('marche') ? <PageEconomie configMarche={store.configMarche} /> : <Navigate to="/" replace />} />
+            <Route path="opportunites" element={isFeatureEnabled('opportunites') ? <Opportunities data={store.opportunites} /> : <Navigate to="/" replace />} />
+            <Route path="agenda" element={isFeatureEnabled('agenda') ? <PageAgenda agenda={store.agenda} /> : <Navigate to="/" replace />} />
+            <Route path="stade" element={isFeatureEnabled('stade') ? <PageStade stade={store.stade} onReserve={handleStadeReservation} /> : <Navigate to="/" replace />} />
             <Route path="tourisme" element={<PageTourisme />} />
-            <Route path="carte" element={
+            <Route path="carte" element={isFeatureEnabled('carte') ? (
               <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center font-black animate-pulse uppercase tracking-widest text-primary">Chargement de la carte...</div>}>
                 <PageCarte locations={store.locations} />
               </React.Suspense>
-            } />
-            <Route path="actualites" element={<PageActualites news={store.news.length > 0 ? store.news : newsData} />} />
-            <Route path="news/:id" element={<PageNewsDetail news={store.news.length > 0 ? store.news : newsData} />} />
-            <Route path="sondages" element={<PageSondages />} />
-            <Route path="budget-participatif" element={<PageBudgetParticipatif />} />
-            <Route path="signalement" element={<SignalementForm />} />
+            ) : <Navigate to="/" replace />} />
+            <Route path="actualites" element={isFeatureEnabled('actualites') ? <PageActualites news={store.news.length > 0 ? store.news : newsData} /> : <Navigate to="/" replace />} />
+            <Route path="news/:id" element={isFeatureEnabled('actualites') ? <PageNewsDetail news={store.news.length > 0 ? store.news : newsData} /> : <Navigate to="/" replace />} />
+            <Route path="sondages" element={isFeatureEnabled('sondages') ? <PageSondages /> : <Navigate to="/" replace />} />
+            <Route path="budget-participatif" element={isFeatureEnabled('budget_participatif') ? <PageBudgetParticipatif /> : <Navigate to="/" replace />} />
+            <Route path="signalement" element={isFeatureEnabled('signalement') ? <SignalementForm /> : <Navigate to="/" replace />} />
             <Route path="contact" element={<PageContact onSubmit={(data) => handleAudienceSubmit({...data, type: 'contact'})} NOM_VILLE={NOM_VILLE} ADRESSE_MAIRIE={ADRESSE_MAIRIE} TEL_CONTACT={TEL_CONTACT} EMAIL_CONTACT={EMAIL_CONTACT} />} />
 
             <Route path="*" element={

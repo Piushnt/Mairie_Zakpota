@@ -1,0 +1,59 @@
+## ✅ VALIDATION FINALE – FRONTEND SAAS
+
+Ton plan est maintenant solide et conforme à une architecture SaaS Supabase production-ready.
+
+Je valide l’approche avec 3 derniers ajustements obligatoires :
+
+---
+
+## ❗ 1. CACHE TENANT
+
+Tu dois éviter une requête Supabase à chaque refresh.
+
+👉 Ajouter :
+
+* mise en cache du tenant (state global ou mémoire)
+* éviter les appels répétés inutiles
+
+---
+
+## ❗ 2. GESTION ERREUR TENANT
+
+Le fallback automatique n’est pas acceptable en production.
+
+👉 Tu dois :
+
+* afficher une page d’erreur si tenant introuvable
+* réserver le fallback uniquement pour environnement local
+
+---
+
+## ❗ 3. PRÉPARATION SEO / SSR
+
+La détection via window.location.hostname est uniquement client-side.
+
+👉 Tu dois prévoir :
+
+* une architecture compatible SSR ou pré-render
+* pour améliorer accessibilité et SEO
+
+---
+
+## 🎯 ACTION DEMANDÉE
+
+Après intégration de ces points, générer :
+
+1. TenantContext.tsx complet
+2. Intégration dans main.tsx
+3. Refactor propre de App.tsx
+4. Gestion loading + error propre
+
+---
+
+## 🚨 IMPORTANT
+
+* ne pas casser le code existant
+* refactor progressif uniquement
+* code propre et maintenable
+
+---

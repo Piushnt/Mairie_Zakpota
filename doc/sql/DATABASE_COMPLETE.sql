@@ -1,59 +1,114 @@
 -- ==========================================================
--- 🏢 MAIRIE CONNECT : BASE DE DONNÉES COMPLÈTE (V2.0)
--- 🌍 Projet : Za-Kpota (Adaptable SaaS)
--- 🛠️ Fichier consolidé (Scripts 1 à 13 corrigés)
--- ==========================================================
--- 💡 INSTRUCTIONS DE CONFIGURATION (A LIRE AVANT EXECUTION) :
--- 1. EXTENSIONS : Ce script active "uuid-ossp" et "pgcrypto". 
---    Assurez-vous qu'elles sont supportées par votre instance.
--- 2. AUTHENTIFICATION (Supabase Dashboard) : 
---    * Go to Authentication > Providers > Email.
---    * DÉSACTIVEZ "Confirm email" pour une inscription fluide.
--- 3. CODE PIN ADMINISTRATEUR : Le code par défaut est 'AD22510537'.
---    Il permet de devenir Admin (S.E) instantanément à l'inscription.
--- 4. UTILISATION : Copiez tout ce fichier et lancez-le dans le 
---    SQL Editor de Supabase pour une base 100% fonctionnelle.
+-- 🏢 SAAS GOVTECH MULTI-TENANT : BASE DE DONNÉES FINALE (V5.0)
+-- 🛡️ PRODUCTION READY - HAUTE SÉCURITÉ
 -- ==========================================================
 
--- ----------------------------------------------------
--- 0. EXTENSIONS & PRÉPRATION
--- ----------------------------------------------------
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- ----------------------------------------------------
--- 1. TABLES DE SÉCURITÉ & RBAC (ESSENTIAL)
--- ----------------------------------------------------
+-- ==========================================================
+-- SECTION 1 : ARCHITECTURE SAAS GLOBALE (SANS TENANT_ID)
+-- ==========================================================
 
--- Table des profils utilisateurs
+CREATE TABLE IF NOT EXISTS public.tenants (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  subdomain TEXT UNIQUE NOT NULL,
+  domain TEXT UNIQUE, 
+  contact_email TEXT,
+  contact_phone TEXT,
+  logo_url TEXT,
+  admin_pin_hash TEXT, 
+  is_active BOOLEAN DEFAULT true,
+  slogan TEXT,
+  primary_color TEXT DEFAULT '#006633',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.global_roles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL, 
+  description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS public.global_permissions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  description TEXT
+);
+
+INSERT INTO public.global_roles (name, description) VALUES
+('super_admin', 'SaaS Root (Global)'),
+('admin', 'Administrateur Local (Tenant)'),
+('agent', 'Agent Local (Tenant)')
+ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS public.features (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  key_name TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Modules disponibles par défaut sur la plateforme
+INSERT INTO public.features (key_name, title, description) VALUES
+  ('actualites',        'Actualités',             'Système de news communales'),
+  ('agenda',            'Agenda',                  'Calendrier des évènements'),
+  ('stade',             'Réservation Stade',       'Gestion des créneaux du stade municipal'),
+  ('sondages',          'Sondages Citoyens',        'Votes et consultations publiques'),
+  ('budget_participatif','Budget Participatif',     'Dépôt et vote de projets citoyens'),
+  ('artisans',          'Annuaire Artisans',        'Répertoire des artisans locaux'),
+  ('opportunites',      'Opportunités',            'Appels d''offres et recrutements'),
+  ('ia_assistant',      'Assistant IA',             'Chatbot Gemini pour les citoyens'),
+  ('carte',             'Carte Interactive',        'Localisation des services communaux'),
+  ('simulateur',        'Simulateur Fiscal',        'Calcul des taxes locales'),
+  ('signalement',       'Signalement Citoyen',      'Remontées citoyennes et urgences'),
+  ('marche',            'Marchés Locaux',           'Calendrier des marchés et hall des artisans')
+ON CONFLICT (key_name) DO NOTHING;
+
+-- ==========================================================
+-- SECTION 2 : TABLES MÉTIERS (TENANT ISOLÉ)
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS public.tenant_features (
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE,
+  feature_id UUID REFERENCES public.features(id) ON DELETE CASCADE,
+  is_enabled BOOLEAN DEFAULT false,
+  PRIMARY KEY (tenant_id, feature_id)
+);
+
 CREATE TABLE IF NOT EXISTS public.user_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE, 
   email TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
-  role TEXT DEFAULT 'employee' CHECK (role IN ('admin', 'employee')),
+  role TEXT DEFAULT 'agent' CHECK (role IN ('super_admin', 'admin', 'agent')),
   is_approved BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL,
+  CONSTRAINT tenant_required_unless_super_admin CHECK (role = 'super_admin' OR tenant_id IS NOT NULL)
 );
 
--- Journal d'Audit
+-- Format strict Audit Logs
 CREATE TABLE IF NOT EXISTS public.audit_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
-  user_name TEXT,
-  action_type TEXT NOT NULL,
-  module_name TEXT NOT NULL,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE SET NULL, -- NULL si super_admin inter-tenant
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  entity TEXT NOT NULL,
+  entity_id UUID,
   description TEXT,
-  timestamp TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- ----------------------------------------------------
--- 2. TABLES MÉTIERS (SERVICES & ENCADREMENT)
--- ----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS public.services_tarifs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   category TEXT NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
@@ -61,140 +116,180 @@ CREATE TABLE IF NOT EXISTS public.services_tarifs (
   cost INTEGER,
   delay TEXT,
   link TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.news (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
   category TEXT,
   image_url TEXT,
   likes BIGINT DEFAULT 0,
   date DATE DEFAULT CURRENT_DATE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.appointments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   citizen_name TEXT NOT NULL,
   citizen_email TEXT,
   citizen_phone TEXT,
   service TEXT NOT NULL,
   appointment_date DATE NOT NULL,
   appointment_time TIME NOT NULL,
-  status TEXT DEFAULT 'en_attente' CHECK (status IN ('en_attente', 'valide', 'annule')),
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  status TEXT DEFAULT 'en_attente',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.opportunites (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   titre TEXT NOT NULL,
   type TEXT,
   date_limite DATE,
   statut TEXT DEFAULT 'ouvert',
   description TEXT,
   contact TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.arrondissements (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   nom TEXT NOT NULL,
   ca TEXT,
   contact TEXT,
   localisation TEXT,
   quartiers TEXT[],
   image_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.agenda_events (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   date DATE NOT NULL,
   type TEXT,
   description TEXT,
   location TEXT,
   image_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.reports (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   date DATE NOT NULL,
   year INTEGER,
   type TEXT,
   category TEXT,
   file_url TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.site_config (
-  key TEXT PRIMARY KEY,
-  value JSONB
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  key TEXT NOT NULL,
+  value JSONB,
+  CONSTRAINT site_config_tenant_key_unique UNIQUE(tenant_id, key)
 );
 
 CREATE TABLE IF NOT EXISTS public.reservations_stade (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   nom TEXT NOT NULL,
   prenom TEXT NOT NULL,
   telephone TEXT NOT NULL,
   date DATE NOT NULL,
   creneau TEXT NOT NULL,
-  statut TEXT DEFAULT 'EN_ATTENTE' CHECK (statut IN ('EN_ATTENTE', 'VALIDE', 'REFUSE'))
+  statut TEXT DEFAULT 'EN_ATTENTE',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.user_subscriptions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  endpoint TEXT NOT NULL UNIQUE,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL,
   p256dh TEXT NOT NULL,
   auth TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT user_subscriptions_endpoint_unique UNIQUE(endpoint)
 );
 
 CREATE TABLE IF NOT EXISTS public.tax_settings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  key TEXT NOT NULL UNIQUE,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  key TEXT NOT NULL,
   value JSONB NOT NULL,
   description TEXT,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT tax_settings_tenant_key_unique UNIQUE(tenant_id, key)
 );
 
 CREATE TABLE IF NOT EXISTS public.formulaires (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   category TEXT NOT NULL,
   drive_link TEXT NOT NULL,
   description TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.locations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('Administration', 'Santé', 'Éducation', 'Sport', 'Tourisme', 'Autre')),
+  category TEXT NOT NULL,
   description TEXT,
   lat DOUBLE PRECISION NOT NULL,
   lng DOUBLE PRECISION NOT NULL,
   image_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.audiences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   email TEXT,
   phone TEXT,
   subject TEXT,
   message TEXT,
-  type TEXT NOT NULL CHECK (type IN ('contact', 'rdv')),
+  type TEXT NOT NULL,
   status TEXT DEFAULT 'En attente',
   appointment_date DATE,
   appointment_time TIME,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.dossiers (
+  code TEXT PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  citoyen_nom TEXT NOT NULL,
+  type TEXT NOT NULL,
+  statut TEXT DEFAULT 'En attente',
+  commentaire TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  last_update TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.council_roles (
@@ -206,16 +301,19 @@ CREATE TABLE IF NOT EXISTS public.council_roles (
 
 CREATE TABLE IF NOT EXISTS public.council (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   role TEXT,
   role_id UUID REFERENCES public.council_roles(id),
   photo_url TEXT,
   bio TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.artisans (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   nom TEXT NOT NULL,
   metier TEXT NOT NULL,
   arrondissement TEXT NOT NULL,
@@ -223,39 +321,35 @@ CREATE TABLE IF NOT EXISTS public.artisans (
   description TEXT,
   photo_url TEXT,
   is_verified BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS public.dossiers (
-  code TEXT PRIMARY KEY,
-  citoyen_nom TEXT NOT NULL,
-  type TEXT NOT NULL,
-  statut TEXT DEFAULT 'En attente',
-  commentaire TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  last_update TIMESTAMPTZ DEFAULT NOW()
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.sondages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   titre TEXT NOT NULL,
   description TEXT,
   options JSONB NOT NULL,
   is_active BOOLEAN DEFAULT true,
   end_date TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.ai_chat_sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.ai_messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   session_id UUID REFERENCES public.ai_chat_sessions(id) ON DELETE CASCADE,
   role TEXT NOT NULL,
   content TEXT NOT NULL,
@@ -263,118 +357,214 @@ CREATE TABLE IF NOT EXISTS public.ai_messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ----------------------------------------------------
--- 3. FONCTIONS UTILITAIRES (SÉCURITÉ & MÉTIER)
--- ----------------------------------------------------
+-- ==========================================================
+-- SECTION 3 : SOFT DELETE MOTEUR (NO HARD DELETES)
+-- ==========================================================
 
--- Anti-Récursion RLS : Vérifie si l'utilisateur est Admin sans loop
-CREATE OR REPLACE FUNCTION public.check_is_admin(user_id UUID)
-RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION public.soft_delete_trigger()
+RETURNS TRIGGER AS $$
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.user_profiles 
-    WHERE id = user_id AND role = 'admin'
-  );
+  -- Si une suppression arrive, on intercepte et on update
+  EXECUTE format('UPDATE %I.%I SET deleted_at = NOW() WHERE id = $1', TG_TABLE_SCHEMA, TG_TABLE_NAME) USING OLD.id;
+  RETURN NULL; -- Annule la suppression physique de Postgres
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Anti-Récursion RLS : Vérifie si l'utilisateur est un agent approuvé
-CREATE OR REPLACE FUNCTION public.check_is_approved(user_id UUID)
-RETURNS BOOLEAN AS $$
+-- Exécution automatique du Soft Delete pour tables critiques
+DO $$ 
+DECLARE
+  tables text[] := ARRAY['user_profiles', 'dossiers', 'audiences', 'appointments', 'reservations_stade', 'opportunites', 'news', 'agenda_events'];
+  t text;
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.user_profiles 
-    WHERE id = user_id AND is_approved = true
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+  FOREACH t IN ARRAY tables LOOP
+    EXECUTE format('
+      DROP TRIGGER IF EXISTS tr_%1$s_soft_delete ON public.%1$s;
+      CREATE TRIGGER tr_%1$s_soft_delete 
+      BEFORE DELETE ON public.%1$s 
+      FOR EACH ROW EXECUTE PROCEDURE public.soft_delete_trigger();
+    ', t);
+  END LOOP;
+END $$;
 
--- Trigger d'Auth : Création automatique du profil avec PIN de sécurité
+
+-- ==========================================================
+-- SECTION 4 : AUTH HOOKS (JWT)
+-- ==========================================================
+CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  claims jsonb;
+  user_role text;
+  user_tenant_id uuid;
+BEGIN
+  -- On ne filtre pas sur deleted_at ici pour bloquer un compte banni si besoin
+  SELECT role, tenant_id INTO user_role, user_tenant_id 
+  FROM public.user_profiles 
+  WHERE id = (event->>'user_id')::uuid;
+
+  -- SÉCURITÉ : Empêche l'initialisation à un JSON NULL via coalesce
+  claims := COALESCE(event->'claims', '{}'::jsonb);
+  
+  IF user_role IS NOT NULL THEN
+    claims := jsonb_set(claims, '{role}', to_jsonb(user_role));
+  END IF;
+  IF user_tenant_id IS NOT NULL THEN
+    claims := jsonb_set(claims, '{tenant_id}', to_jsonb(user_tenant_id));
+  END IF;
+
+  event := jsonb_set(event, '{claims}', claims);
+  RETURN event;
+END;
+$$;
+
+GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
+GRANT EXECUTE ON FUNCTION public.custom_access_token_hook TO supabase_auth_admin;
+
+-- ==========================================================
+-- SECTION 5 : TRIGGERS & AUDIT LOGS DYNAMIQUES
+-- ==========================================================
+
+-- Trigger Magique (Création depuis Auth vers user_profiles + Vérification du PIN)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 DECLARE
-  final_role TEXT := 'employee';
-  final_approved BOOLEAN := false;
+  v_role TEXT := 'agent';
+  v_is_approved BOOLEAN := false;
+  v_tenant_id UUID;
+  v_real_pin_hash TEXT;
+  v_provided_pin TEXT;
 BEGIN
-  -- Si le PIN est correct à l'inscription -> Admin approuvé direct
-  IF (new.raw_user_meta_data->>'admin_pin' = 'AD22510537') THEN
-    final_role := 'admin';
-    final_approved := true;
+  -- Cast sécurisé au cas où l'id serait manquant
+  BEGIN
+    v_tenant_id := (NEW.raw_user_meta_data->>'tenant_id')::uuid;
+  EXCEPTION WHEN OTHERS THEN
+    v_tenant_id := NULL;
+  END;
+
+  v_role := COALESCE(NEW.raw_user_meta_data->>'role', 'agent');
+  v_provided_pin := NEW.raw_user_meta_data->>'admin_pin';
+
+  IF v_tenant_id IS NOT NULL THEN
+    -- Si l'utilisateur prétend être Admin, on vérifie son PIN fourni
+    IF v_role = 'admin' AND v_provided_pin IS NOT NULL THEN
+      SELECT admin_pin_hash INTO v_real_pin_hash FROM public.tenants WHERE id = v_tenant_id;
+      
+      -- SÉCURITÉ : Vérification bcrypt du mot de passe / pin sans déclencher invalid salt
+      IF v_real_pin_hash IS NOT NULL AND v_real_pin_hash = crypt(v_provided_pin, v_real_pin_hash) THEN
+        v_role := 'admin';
+        v_is_approved := true; -- Validé automatiquement !
+      ELSE
+        -- Hack ou Pin faux, on le force en simple agent non approuvé
+        v_role := 'agent';
+      END IF;
+    ELSIF v_role = 'super_admin' THEN
+      v_role := 'agent'; -- Interdiction stricte de forger un super_admin à l'inscription web
+    END IF;
   END IF;
 
-  INSERT INTO public.user_profiles (id, email, first_name, last_name, role, is_approved)
+  INSERT INTO public.user_profiles (id, tenant_id, email, first_name, last_name, role, is_approved)
   VALUES (
-    new.id, 
-    new.email, 
-    new.raw_user_meta_data->>'first_name', 
-    new.raw_user_meta_data->>'last_name',
-    final_role, 
-    final_approved
-  ) ON CONFLICT (id) DO NOTHING;
-  RETURN new;
+    NEW.id,
+    v_tenant_id,
+    NEW.email,
+    NEW.raw_user_meta_data->>'first_name',
+    NEW.raw_user_meta_data->>'last_name',
+    v_role,
+    v_is_approved
+  );
+  
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Likage atomique des news
-CREATE OR REPLACE FUNCTION increment_news_likes(row_id UUID)
-RETURNS VOID AS $$
-BEGIN
-  UPDATE news SET likes = COALESCE(likes, 0) + 1 WHERE id = row_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION decrement_news_likes(row_id UUID)
-RETURNS VOID AS $$
-BEGIN
-  UPDATE news SET likes = GREATEST(COALESCE(likes, 0) - 1, 0) WHERE id = row_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- ----------------------------------------------------
--- 4. TRIGGERS SYSTÈME
--- ----------------------------------------------------
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- ----------------------------------------------------
--- 5. DONNÉES DE BASE (SEED DATA)
--- ----------------------------------------------------
 
-INSERT INTO site_config (key, value) VALUES 
-('flash_news', '"Bienvenue sur le portail officiel de la Mairie de Za-Kpota. Suivez toute l''actualité de votre commune en temps réel."'),
-('market_config', '{"referenceDate": "2026-03-15", "cycleDays": 5}'),
-('stade_config', '{"image": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200", "equipements": ["Pelouse synthétique FIFA", "Éclairage nocturne", "Vestiaires modernes", "Tribune de 5 000 places", "Piste d''athlétisme"]}')
-ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+CREATE OR REPLACE FUNCTION public.log_user_profile_changes()
+RETURNS trigger AS $$
+BEGIN
+  -- Si l'utilisateur est passé Approved
+  IF OLD.is_approved = false AND NEW.is_approved = true THEN
+     INSERT INTO public.audit_logs (tenant_id, user_id, action, entity, entity_id, description)
+     VALUES (NEW.tenant_id, auth.uid(), 'APPROVE_USER', 'user_profiles', NEW.id, 'Agent ' || NEW.email || ' a été validé.');
+  -- Si Changement Permissions (Role)
+  ELSIF OLD.role IS DISTINCT FROM NEW.role THEN
+     INSERT INTO public.audit_logs (tenant_id, user_id, action, entity, entity_id, description)
+     VALUES (NEW.tenant_id, auth.uid(), 'UPDATE_ROLE', 'user_profiles', NEW.id, 'Rôle Agent modifié : ' || NEW.role);
+  -- Profil banni / Supprimé (Soft deleted est reconnu via deleted_at)
+  ELSIF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
+     INSERT INTO public.audit_logs (tenant_id, user_id, action, entity, entity_id, description)
+     VALUES (NEW.tenant_id, auth.uid(), 'DELETE_USER', 'user_profiles', NEW.id, 'Utilisateur ' || NEW.email || ' supprimé (Soft Delete).');
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-INSERT INTO tax_settings (key, value, description) VALUES 
-('tfu_rates', '{"taux_bati": 6, "taux_non_bati": 5}', 'Taux globaux de la Taxe Foncière Unique (%)'),
-('patente_rates', '{"droit_fixe_base": 10000, "droit_proportionnel": 10}', 'Valeurs de base pour la Contribution des Patentes')
-ON CONFLICT (key) DO NOTHING;
+DROP TRIGGER IF EXISTS trigger_log_user_profiles ON public.user_profiles;
+CREATE TRIGGER trigger_log_user_profiles
+  AFTER UPDATE ON public.user_profiles
+  FOR EACH ROW EXECUTE PROCEDURE public.log_user_profile_changes();
 
-INSERT INTO council_roles (title, importance_order) VALUES 
-('Maire', 1),
-('Secrétaire Exécutif', 2),
-('Premier Adjoint au Maire', 3),
-('Deuxième Adjoint au Maire', 4),
-('Conseiller Municipal', 10)
-ON CONFLICT (title) DO NOTHING;
+-- RPC pur Audit système API (Exemple : Login frontend)
+CREATE OR REPLACE FUNCTION public.log_admin_login(p_tenant_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  INSERT INTO public.audit_logs (tenant_id, user_id, action, entity, description)
+  VALUES (p_tenant_id, auth.uid(), 'LOGIN_ADMIN', 'auth', 'Connexion au dashboard sécurisé réussie.');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-INSERT INTO locations (name, category, description, lat, lng)
-VALUES ('Hôtel de Ville de Za-Kpota', 'Administration', 'Siège central de l''administration municipale.', 7.1915, 2.2635)
-ON CONFLICT DO NOTHING;
 
--- ----------------------------------------------------
--- 6. SÉCURITÉ RLS (POLITIQUES UNIFIÉES)
--- ----------------------------------------------------
+-- ==========================================================
+-- SECTION 6 : FONCTIONS SUPER_ADMIN TRANSACTIONNELLES SÉCURISÉES
+-- ==========================================================
 
--- ----------------------------------------------------
--- 6. SÉCURITÉ RLS (POLITIQUES UNIFIÉES ET SÉCURISÉES)
--- ----------------------------------------------------
+CREATE OR REPLACE FUNCTION public.create_tenant_with_setup(
+  p_name TEXT, 
+  p_subdomain TEXT, 
+  p_contact_email TEXT, 
+  p_admin_pin TEXT
+) RETURNS UUID AS $$
+DECLARE
+  v_tenant_id UUID;
+  v_hash TEXT;
+BEGIN
+  -- Strict Restriction : Seul un profil connecté SUPER_ADMIN ou l'éditeur SQL (Administrateur Base) peut exécuter.
+  -- Dans le SQL Editor de Supabase, current_setting('request.jwt.claims', true) est null.
+  IF current_setting('request.jwt.claims', true) IS NOT NULL THEN
+    IF (auth.jwt()->>'role') IS DISTINCT FROM 'super_admin' THEN
+      RAISE EXCEPTION 'Access Denied: Seul un super_admin SaaS peut on-boarder une mairie.';
+    END IF;
+  END IF;
 
--- Activation Globale du RLS sur toutes les tables du schéma public
+  v_hash := crypt(p_admin_pin, gen_salt('bf', 8));
+
+  INSERT INTO public.tenants (name, subdomain, contact_email, admin_pin_hash)
+  VALUES (p_name, p_subdomain, p_contact_email, v_hash)
+  RETURNING id INTO v_tenant_id;
+  
+  INSERT INTO public.site_config (tenant_id, key, value) VALUES 
+    (v_tenant_id, 'flash_news', '"Bienvenue sur le portail ! SaaS Setup Complet."');
+
+  -- Log action
+  INSERT INTO public.audit_logs (tenant_id, user_id, action, entity, entity_id, description)
+  VALUES (NULL, auth.uid(), 'CREATE_TENANT', 'tenants', v_tenant_id, 'Enrôlement Tenant: ' || p_subdomain);
+
+  RETURN v_tenant_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- ==========================================================
+-- SECTION 7 : SÉCURITÉ RLS STRICTE PAR JWT CLAIMS
+-- ==========================================================
+
 DO $$ 
 DECLARE
     r record;
@@ -385,178 +575,288 @@ BEGIN
     END LOOP;
 END $$;
 
--- --- 6.1 LECTURE PUBLIQUE (Accès Visiteurs & Citoyens) ---
--- Autorise toute personne à LIRE les contenus informatifs.
+-- 📍 MODÈLES DE POLITIQUES RLS INVIOLABLES 
 
-DROP POLICY IF EXISTS "Public Read" ON public.news;
-CREATE POLICY "Public Read" ON public.news FOR SELECT USING (true);
+-- EXEMPLE 1 : TABLES PUBLIQUES (News, Tenants, Sondages, Council, Artisans)
+DROP POLICY IF EXISTS "Public Read Tenants" ON public.tenants;
+CREATE POLICY "Public Read Tenants" ON public.tenants FOR SELECT USING (true);
 
-DROP POLICY IF EXISTS "Public Read" ON public.services_tarifs;
-CREATE POLICY "Public Read" ON public.services_tarifs FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Read News" ON public.news;
+CREATE POLICY "Public Read News" ON public.news FOR SELECT USING ((auth.role() = 'anon' OR tenant_id = (auth.jwt()->>'tenant_id')::uuid) AND deleted_at IS NULL);
 
-DROP POLICY IF EXISTS "Public Read" ON public.reports;
-CREATE POLICY "Public Read" ON public.reports FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Read Sondages" ON public.sondages;
+CREATE POLICY "Public Read Sondages" ON public.sondages FOR SELECT USING ((auth.role() = 'anon' OR tenant_id = (auth.jwt()->>'tenant_id')::uuid) AND deleted_at IS NULL);
 
-DROP POLICY IF EXISTS "Public Read" ON public.agenda_events;
-CREATE POLICY "Public Read" ON public.agenda_events FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Read Council" ON public.council;
+CREATE POLICY "Public Read Council" ON public.council FOR SELECT USING ((auth.role() = 'anon' OR tenant_id = (auth.jwt()->>'tenant_id')::uuid) AND deleted_at IS NULL);
 
-DROP POLICY IF EXISTS "Public Read" ON public.appointments;
-CREATE POLICY "Public Read" ON public.appointments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Read Council Roles" ON public.council_roles;
+CREATE POLICY "Public Read Council Roles" ON public.council_roles FOR SELECT USING (true);
 
-DROP POLICY IF EXISTS "Public Read" ON public.opportunites;
-CREATE POLICY "Public Read" ON public.opportunites FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Read Artisans" ON public.artisans;
+CREATE POLICY "Public Read Artisans" ON public.artisans FOR SELECT USING ((auth.role() = 'anon' OR tenant_id = (auth.jwt()->>'tenant_id')::uuid) AND deleted_at IS NULL);
 
-DROP POLICY IF EXISTS "Public Read" ON public.arrondissements;
-CREATE POLICY "Public Read" ON public.arrondissements FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Tenant Isolation Agent Write News" ON public.news;
+CREATE POLICY "Tenant Isolation Agent Write News" ON public.news 
+FOR ALL TO authenticated  
+USING (
+  tenant_id = (auth.jwt()->>'tenant_id')::uuid 
+  -- Super admin peut lire mais n'écrit PAS directement
+  OR auth.jwt()->>'role' = 'super_admin'
+)
+WITH CHECK (
+  -- SEUL L'AGENT CONNECTÉ DU BON TENANT PEUT ECRIRE (Injection Proof) -> Exit le Super Admin!
+  tenant_id = (auth.jwt()->>'tenant_id')::uuid 
+);
 
-DROP POLICY IF EXISTS "Public Read" ON public.site_config;
-CREATE POLICY "Public Read" ON public.site_config FOR SELECT USING (true);
+-- EXEMPLE 2 : TABLE DOSSIERS (Donnée Privée, Aucun accès Anonymous)
+DROP POLICY IF EXISTS "Private Tenant Select Dossier" ON public.dossiers;
+CREATE POLICY "Private Tenant Select Dossier" ON public.dossiers 
+FOR SELECT TO authenticated  
+USING (
+  (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+  AND deleted_at IS NULL
+);
 
-DROP POLICY IF EXISTS "Public Read" ON public.tax_settings;
-CREATE POLICY "Public Read" ON public.tax_settings FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public Read" ON public.formulaires;
-CREATE POLICY "Public Read" ON public.formulaires FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public Read" ON public.locations;
-CREATE POLICY "Public Read" ON public.locations FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public Read" ON public.council;
-CREATE POLICY "Public Read" ON public.council FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public Read" ON public.council_roles;
-CREATE POLICY "Public Read" ON public.council_roles FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public Read" ON public.artisans;
-CREATE POLICY "Public Read" ON public.artisans FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public Read" ON public.sondages;
-CREATE POLICY "Public Read" ON public.sondages FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public Read" ON public.dossiers;
-CREATE POLICY "Public Read" ON public.dossiers FOR SELECT USING (true);
-
--- --- 6.2 ACTIONS CITOYENNES (Insertion de données) ---
--- Autorise les citoyens non-connectés à soumettre des demandes.
-
-DROP POLICY IF EXISTS "Citizen Insert" ON public.audiences;
-CREATE POLICY "Citizen Insert" ON public.audiences FOR INSERT WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Citizen Insert" ON public.reservations_stade;
-CREATE POLICY "Citizen Insert" ON public.reservations_stade FOR INSERT WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Citizen Insert" ON public.user_subscriptions;
-CREATE POLICY "Citizen Insert" ON public.user_subscriptions FOR INSERT WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Public Read Subscriptions" ON public.user_subscriptions;
-CREATE POLICY "Public Read Subscriptions" ON public.user_subscriptions FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Public Update Subscriptions" ON public.user_subscriptions;
-CREATE POLICY "Public Update Subscriptions" ON public.user_subscriptions FOR UPDATE USING (true);
-
--- --- 6.3 ACCÈS PRIVÉS (Profil & IA) ---
-
-DROP POLICY IF EXISTS "Self View" ON public.user_profiles;
-CREATE POLICY "Self View" ON public.user_profiles FOR SELECT USING (id = auth.uid());
-
-DROP POLICY IF EXISTS "Self Update" ON public.user_profiles;
-CREATE POLICY "Self Update" ON public.user_profiles FOR UPDATE USING (id = auth.uid());
-
-DROP POLICY IF EXISTS "Self Manage" ON public.ai_chat_sessions;
-CREATE POLICY "Self Manage" ON public.ai_chat_sessions FOR ALL TO authenticated USING (user_id = auth.uid());
-
-DROP POLICY IF EXISTS "Self Manage" ON public.ai_messages;
-CREATE POLICY "Self Manage" ON public.ai_messages FOR ALL TO authenticated USING (session_id IN (SELECT id FROM ai_chat_sessions WHERE user_id = auth.uid()));
-
--- --- 6.4 ACCÈS AGENTS APPROUVÉS (Gestion Quotidienne) ---
--- Autorise les agents validés (is_approved = true) à gérer les contenus.
-
--- Politique générique pour la plupart des tables gérées par les agents
-DROP POLICY IF EXISTS "Approved Agent Write" ON public.news;
-CREATE POLICY "Approved Agent Write" ON public.news FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write" ON public.services_tarifs;
-CREATE POLICY "Approved Agent Write" ON public.services_tarifs FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write" ON public.reports;
-CREATE POLICY "Approved Agent Write" ON public.reports FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write" ON public.agenda_events;
-CREATE POLICY "Approved Agent Write" ON public.agenda_events FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write" ON public.appointments;
-CREATE POLICY "Approved Agent Write" ON public.appointments FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write" ON public.opportunites;
-CREATE POLICY "Approved Agent Write" ON public.opportunites FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write" ON public.arrondissements;
-CREATE POLICY "Approved Agent Write" ON public.arrondissements FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write" ON public.formulaires;
-CREATE POLICY "Approved Agent Write" ON public.formulaires FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write" ON public.locations;
-CREATE POLICY "Approved Agent Write" ON public.locations FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write Artisans" ON public.artisans;
-CREATE POLICY "Approved Agent Write Artisans" ON public.artisans FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write Dossiers" ON public.dossiers;
-CREATE POLICY "Approved Agent Write Dossiers" ON public.dossiers FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Write Sondages" ON public.sondages;
-CREATE POLICY "Approved Agent Write Sondages" ON public.sondages FOR ALL TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
--- Lecture des demandes (Audiences & Stade)
-DROP POLICY IF EXISTS "Approved Agent Select" ON public.audiences;
-CREATE POLICY "Approved Agent Select" ON public.audiences FOR SELECT TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Approved Agent Select" ON public.reservations_stade;
-CREATE POLICY "Approved Agent Select" ON public.reservations_stade FOR SELECT TO authenticated 
-USING (public.check_is_approved(auth.uid()) OR public.check_is_admin(auth.uid()));
-
--- Audit (Insert uniquement pour archivage des actions)
-DROP POLICY IF EXISTS "Approved Agent Log" ON public.audit_logs;
-CREATE POLICY "Approved Agent Log" ON public.audit_logs FOR INSERT TO authenticated WITH CHECK (true);
-
--- --- 6.5 ACCÈS S.E / ADMIN (Contrôle Total) ---
--- Réservé aux administrateurs (S.E) pour la gestion du système.
-
-DROP POLICY IF EXISTS "Admin View Profiles" ON public.user_profiles;
-CREATE POLICY "Admin View Profiles" ON public.user_profiles FOR SELECT USING (public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Admin Delete Profiles" ON public.user_profiles;
-CREATE POLICY "Admin Delete Profiles" ON public.user_profiles FOR DELETE USING (public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Admin Update Profiles" ON public.user_profiles;
-CREATE POLICY "Admin Update Profiles" ON public.user_profiles FOR UPDATE 
-USING (public.check_is_admin(auth.uid())) WITH CHECK (public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Admin Manage Config" ON public.site_config;
-CREATE POLICY "Admin Manage Config" ON public.site_config FOR ALL TO authenticated 
-USING (public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Admin Manage Taxes" ON public.tax_settings;
-CREATE POLICY "Admin Manage Taxes" ON public.tax_settings FOR ALL TO authenticated 
-USING (public.check_is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Admin View Logs" ON public.audit_logs;
-CREATE POLICY "Admin View Logs" ON public.audit_logs FOR SELECT USING (public.check_is_admin(auth.uid()));
+DROP POLICY IF EXISTS "Private Tenant Write Dossier" ON public.dossiers;
+CREATE POLICY "Private Tenant Write Dossier" ON public.dossiers 
+FOR ALL TO authenticated  
+USING (
+  tenant_id = (auth.jwt()->>'tenant_id')::uuid 
+  OR auth.jwt()->>'role' = 'super_admin'
+)
+WITH CHECK (
+  tenant_id = (auth.jwt()->>'tenant_id')::uuid 
+);
 
 -- ==========================================================
--- ✅ FIN DU SCRIPT COMPLET (V2.0 PARFAITE)
+-- SECTION 8 : RLS SUPER_ADMIN - GESTION TENANTS (FACTURATION)
+-- ==========================================================
+
+-- Super Admin peut lire toutes les mairies (déjà couvert par Public Read Tenants ci-dessus)
+-- Super Admin peut mettre à jour is_active (facturation) et les infos d'un tenant
+DROP POLICY IF EXISTS "SuperAdmin Manage Tenants" ON public.tenants;
+CREATE POLICY "SuperAdmin Manage Tenants" ON public.tenants
+FOR ALL TO authenticated
+USING (auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (auth.jwt()->>'role' = 'super_admin');
+
+-- ==========================================================
+-- SECTION 9 : RLS COMPLÈTE POUR TOUTES LES TABLES MÉTIERS
+-- ==========================================================
+
+-- User Profiles : chaque agent lit et modifie son seul profil, l'admin lit tout son tenant, super_admin lit tout
+DROP POLICY IF EXISTS "Self Read-Write user_profiles" ON public.user_profiles;
+CREATE POLICY "Self Read-Write user_profiles" ON public.user_profiles
+FOR SELECT TO authenticated
+USING (
+  id = auth.uid()
+  OR (auth.jwt()->>'role' IN ('admin', 'super_admin') AND (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin'))
+);
+
+DROP POLICY IF EXISTS "Admin Approve user_profiles" ON public.user_profiles;
+CREATE POLICY "Admin Approve user_profiles" ON public.user_profiles
+FOR UPDATE TO authenticated
+USING (
+  id = auth.uid()
+  OR (auth.jwt()->>'role' IN ('admin', 'super_admin') AND (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin'))
+)
+WITH CHECK (
+  id = auth.uid()
+  OR (auth.jwt()->>'role' IN ('admin', 'super_admin') AND (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin'))
+);
+
+-- Audiences / RDV : Agents creent pour leur tenant, Admins lisent tout le tenant
+DROP POLICY IF EXISTS "Tenant audiences" ON public.audiences;
+CREATE POLICY "Tenant audiences" ON public.audiences
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- Dossiers / Approbations : Inscription publique possible
+DROP POLICY IF EXISTS "Public Insert Dossiers" ON public.dossiers;
+CREATE POLICY "Public Insert Dossiers" ON public.dossiers
+FOR INSERT WITH CHECK (true);
+
+-- Reservations Stade
+DROP POLICY IF EXISTS "Tenant reservations_stade" ON public.reservations_stade;
+CREATE POLICY "Tenant reservations_stade" ON public.reservations_stade
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+DROP POLICY IF EXISTS "Public Insert reservations_stade" ON public.reservations_stade;
+CREATE POLICY "Public Insert reservations_stade" ON public.reservations_stade
+FOR INSERT WITH CHECK (true);
+
+-- Agenda Events
+DROP POLICY IF EXISTS "Public Read agenda_events" ON public.agenda_events;
+CREATE POLICY "Public Read agenda_events" ON public.agenda_events
+FOR SELECT USING ((auth.role() = 'anon' OR tenant_id = (auth.jwt()->>'tenant_id')::uuid) AND deleted_at IS NULL);
+
+DROP POLICY IF EXISTS "Admin Write agenda_events" ON public.agenda_events;
+CREATE POLICY "Admin Write agenda_events" ON public.agenda_events
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid AND auth.jwt()->>'role' IN ('admin','super_admin'))
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- Reports / Publications
+DROP POLICY IF EXISTS "Public Read reports" ON public.reports;
+CREATE POLICY "Public Read reports" ON public.reports
+FOR SELECT USING ((auth.role() = 'anon' OR tenant_id = (auth.jwt()->>'tenant_id')::uuid) AND deleted_at IS NULL);
+
+DROP POLICY IF EXISTS "Admin Write reports" ON public.reports;
+CREATE POLICY "Admin Write reports" ON public.reports
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- Formulaires
+DROP POLICY IF EXISTS "Public Read formulaires" ON public.formulaires;
+CREATE POLICY "Public Read formulaires" ON public.formulaires
+FOR SELECT USING (auth.role() = 'anon' OR tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+DROP POLICY IF EXISTS "Admin Write formulaires" ON public.formulaires;
+CREATE POLICY "Admin Write formulaires" ON public.formulaires
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- Audit Logs : lecture seulement admin+
+DROP POLICY IF EXISTS "Admin Read audit_logs" ON public.audit_logs;
+CREATE POLICY "Admin Read audit_logs" ON public.audit_logs
+FOR SELECT TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin');
+
+-- Council (écriture Admin)
+DROP POLICY IF EXISTS "Admin Write Council" ON public.council;
+CREATE POLICY "Admin Write Council" ON public.council
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- Artisans (écriture Admin)
+DROP POLICY IF EXISTS "Admin Write Artisans" ON public.artisans;
+CREATE POLICY "Admin Write Artisans" ON public.artisans
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- Sondages (écriture Admin)
+DROP POLICY IF EXISTS "Admin Write Sondages" ON public.sondages;
+CREATE POLICY "Admin Write Sondages" ON public.sondages
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- Opportunites
+DROP POLICY IF EXISTS "Public Read opportunites" ON public.opportunites;
+CREATE POLICY "Public Read opportunites" ON public.opportunites
+FOR SELECT USING (auth.role() = 'anon' OR tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+DROP POLICY IF EXISTS "Admin Write opportunites" ON public.opportunites;
+CREATE POLICY "Admin Write opportunites" ON public.opportunites
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- site_config
+DROP POLICY IF EXISTS "Admin Manage site_config" ON public.site_config;
+CREATE POLICY "Admin Manage site_config" ON public.site_config
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- ==========================================================
+-- SECTION 10 : RLS FEATURES & TENANT_FEATURES
+-- ==========================================================
+
+ALTER TABLE public.features ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tenant_features ENABLE ROW LEVEL SECURITY;
+
+-- Tout le monde peut lire les features disponibles (pour résolution frontend)
+DROP POLICY IF EXISTS "Public Read features" ON public.features;
+CREATE POLICY "Public Read features" ON public.features FOR SELECT USING (true);
+
+-- Seul le super_admin peut créer/modifier des features globales
+DROP POLICY IF EXISTS "SuperAdmin Manage features" ON public.features;
+CREATE POLICY "SuperAdmin Manage features" ON public.features
+FOR ALL TO authenticated
+USING (auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (auth.jwt()->>'role' = 'super_admin');
+
+-- Lecture des tenant_features : super_admin + le tenant lui-même
+DROP POLICY IF EXISTS "Read tenant_features" ON public.tenant_features;
+CREATE POLICY "Read tenant_features" ON public.tenant_features
+FOR SELECT TO authenticated
+USING (
+  tenant_id = (auth.jwt()->>'tenant_id')::uuid
+  OR auth.jwt()->>'role' = 'super_admin'
+);
+
+-- Modification tenant_features : super_admin uniquement
+DROP POLICY IF EXISTS "SuperAdmin Manage tenant_features" ON public.tenant_features;
+CREATE POLICY "SuperAdmin Manage tenant_features" ON public.tenant_features
+FOR ALL TO authenticated
+USING (auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (auth.jwt()->>'role' = 'super_admin');
+
+-- ==========================================================
+-- SECTION 11 : FONCTIONS UTILITAIRES
+-- ==========================================================
+
+-- Système de Likes sur les Actualités
+CREATE OR REPLACE FUNCTION public.increment_news_likes(row_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.news SET likes = COALESCE(likes, 0) + 1 WHERE id = row_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Réinitialisation des modules d'un tenant (utilitaire pour migration)
+CREATE OR REPLACE FUNCTION public.enable_all_features_for_tenant(p_tenant_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  -- Insère tous les modules disponibles pour ce tenant
+  INSERT INTO public.tenant_features (tenant_id, feature_id, is_enabled)
+  SELECT p_tenant_id, f.id, true
+  FROM public.features f
+  ON CONFLICT (tenant_id, feature_id) DO UPDATE SET is_enabled = true;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.enable_all_features_for_tenant TO supabase_auth_admin;
+GRANT EXECUTE ON FUNCTION public.increment_news_likes TO authenticated;
+GRANT EXECUTE ON FUNCTION public.increment_news_likes TO anon;
+
+-- ==========================================================
+-- SECTION 12 : INDEX DE PERFORMANCE
+-- ==========================================================
+
+CREATE INDEX IF NOT EXISTS idx_tenants_subdomain ON public.tenants(subdomain);
+CREATE INDEX IF NOT EXISTS idx_tenants_domain ON public.tenants(domain);
+CREATE INDEX IF NOT EXISTS idx_tenants_is_active ON public.tenants(is_active);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_tenant ON public.user_profiles(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON public.user_profiles(role);
+CREATE INDEX IF NOT EXISTS idx_news_tenant ON public.news(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_news_date ON public.news(date DESC);
+CREATE INDEX IF NOT EXISTS idx_dossiers_code ON public.dossiers(code);
+CREATE INDEX IF NOT EXISTS idx_dossiers_tenant ON public.dossiers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_features_tenant ON public.tenant_features(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_audiences_tenant ON public.audiences(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_agenda_events_tenant ON public.agenda_events(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_sondages_tenant ON public.sondages(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_artisans_tenant ON public.artisans(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON public.audit_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
+
+-- ==========================================================
+-- ✅ FIN DU SCRIPT — BASE IMMÉDIATEMENT OPÉRATIONNELLE
+-- ==========================================================
+-- Après exécution, la base est 100% fonctionnelle pour production SaaS.
+-- Étapes post-exécution :
+--   1. Aller dans Supabase Auth > Hooks > Activer custom_access_token_hook
+--   2. Créer un compte via /register
+--   3. Exécuter : UPDATE user_profiles SET role='super_admin', is_approved=true, tenant_id=NULL WHERE email='votre@email.bj';
+--   4. Accéder à /admin-portal pour le Dashboard GovTech SaaS
 -- ==========================================================

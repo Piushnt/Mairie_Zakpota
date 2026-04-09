@@ -1,0 +1,61 @@
+=============================================================
+🛠️ GUIDE DE TEST COMPLET (SaaS MULTI-TENANT LOCALHOST)
+=============================================================
+
+Étant donné que nous avons basculé d'un modèle "Normal" à un modèle "SaaS Haute Sécurité" où le backend dicte la loi, voici les étapes exactes pour tester l'intégrité de l'application de bout-en-bout avant la mise en production.
+
+---
+ÉTAPE 1 : PRÉPARATION DE LA BASE DE DONNÉES (ZERO-STATE)
+---
+1. Allez sur votre interface Supabase > SQL Editor.
+2. Copiez-collez l'intégralité du fichier `doc/sql/DATABASE_COMPLETE.sql` (V5 finale) et cliquez sur "Run".
+3. Allez dans Auth > Hooks (dans les paramètres Supabase) et ACTIFEZ le hook "Custom access token" en sélectionnant la fonction `custom_access_token_hook`.
+   ⚠️ CRITIQUE : Si ce hook n'est pas activé, Supabase n'injectera pas le tenant_id dans le Token, et tout le système RLS bloquera l'utilisateur.
+
+---
+ÉTAPE 2 : TEST DE L'ÉCHEC (LA SÉCURITÉ TENANT)
+---
+1. Ouvrez votre application `http://localhost:5173` dans le navigateur.
+2. Vous DEVEZ tomber sur l'écran rouge "Erreur 404 : Mairie introuvable".
+   👉 Pourquoi ? Parce que la base est vierge et que la sécurité empêche l'accès tant qu'aucun locataire "zakpota" n'est détecté.
+
+---
+ÉTAPE 3 : ONBOARDING DU PREMIER TENANT (ZA-KPOTA)
+---
+1. Retournez dans le SQL Editor de Supabase.
+2. Appelez la procédure transactionnelle sécurisée pour créer la commune :
+   `SELECT public.create_tenant_with_setup('Mairie de Za-Kpota', 'zakpota', 'contact@zakpota.bj', 'MON_PIN_SECRET');`
+3. Rafraîchissez votre application locale `http://localhost:5173`.
+4. Miracles 🎉 ! L'application se débloque. Le fallback localhost a trouvé la Mairie. Les requêtes s'exécutent.
+
+---
+ÉTAPE 4 : TEST DU FLUX AGENT (EMPLOYÉ)
+---
+1. Sur l'interface, allez sur la page "Accès Agent" ou "Créer un compte" (`/register`).
+2. Saisissez vore prénom, nom, et email (ex: agent1@zakpota.bj) et sélectionnez "Employé". Validez.
+3. Allez dans le Dashboard Supabase > Tables > `user_profiles`.
+4. Vérifiez que la colonne `tenant_id` contient bien l'ID de la commune Za-Kpota (preuve que le Frontend ne choisit pas l'ID au hasard).
+5. Vérifiez qu'il est en `is_approved = false`. Connectez-vous sur le front : vos requêtes aux tables métiers privées (`dossiers`, `audiences`) DOIVENT planter ou retourner "0 lignes" (l'employé n'est pas approuvé ou le profil n'est pas encore autorisé via un dashboard admin).
+
+---
+ÉTAPE 5 : TEST DU FLUX ADMIN (PIN SECRET)
+---
+1. Refaites un compte sur `localhost:5173/register` (`admin1@zakpota.bj`).
+2. Choisissez "Administrateur" et tapez le code PIN : `MON_PIN_SECRET`.
+3. Allez voir dans `user_profiles` sur Supabase.
+4. Magie ! Le compte `admin1` a contourné la file d'attente : son profil stipule `role = 'admin'` et `is_approved = true` parce que le Trigger a reconnu le hash crypté associé à la Mairie de Za-Kpota !
+
+---
+ÉTAPE 6 : TEST RLS ET ISOLATION DES DONNÉES
+---
+1. Connectez-vous avec ce nouveau compte Admin sur l'interface.
+2. Créez un dossier / formulaire ou prenez rendez-vous.
+3. Créez ensuite informatiquement une seconde Mairie (ex: Cotonou) via : 
+   `SELECT public.create_tenant_with_setup('Mairie de Cotonou', 'cotonou', 'contact@cotonou.bj', 'COTONOU_PIN');`
+4. Allez dans vos requêtes Supabase, et essayez de lire avec votre JWT de compte Admin. Vous ne verrez que les données liées à l'ID du locataire Zakpota.
+5. Observez la table `audit_logs` ! Le trigger fantôme a déjà enregistré vos logins et l'approbation du compte.
+
+=============================================================
+SI TOUTES CES ÉTAPES SONT VERTES ALORS LE CŒUR SAAS EST BÉTONNÉ.
+Le Frontend et le Backend discutent en parfaite harmonie.
+=============================================================

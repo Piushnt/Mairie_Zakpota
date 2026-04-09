@@ -1,0 +1,178 @@
+# 🧠 PHASE SUPPLÉMENTAIRE – SYSTÈME 100% ADMINISTRABLE (NO-CODE)
+
+## 🎯 Objectif
+
+Après déploiement, AUCUNE opération technique ne doit être nécessaire.
+
+Tout doit être piloté via les dashboards :
+
+* super_admin
+* admin (DSI/SE)
+* agent
+
+---
+
+## 🏢 SUPER ADMIN – CONTRÔLE TOTAL
+
+### Fonctionnalités obligatoires
+
+Le dashboard super admin doit permettre :
+
+### 1. Gestion des mairies (tenants)
+
+* créer une mairie
+* modifier ses informations
+* activer/désactiver une mairie
+
+---
+
+### 2. Gestion des modules (CRITIQUE)
+
+Le super admin doit pouvoir :
+
+* activer/désactiver des modules pour chaque mairie
+
+Exemples :
+
+* actualités
+* stade
+* sondages
+* opportunités
+* IA assistant
+
+---
+
+### 3. Contrôle des pages visibles
+
+Chaque mairie doit avoir :
+
+* uniquement les pages correspondant aux modules activés
+
+👉 si module désactivé :
+
+* page invisible
+* route inaccessible
+
+---
+
+### 4. Configuration dynamique
+
+Le super admin doit pouvoir définir :
+
+* nom de la mairie
+* logo
+* slogan
+* couleurs
+* contact
+
+---
+
+### 5. Gestion des rôles globaux
+
+* créer/modifier rôles
+* définir permissions
+
+---
+
+## 🟡 ADMIN MAIRIE (DSI / SE)
+
+### Fonctionnalités
+
+* valider comptes agents
+* gérer contenu :
+
+  * news
+  * événements
+  * services
+* gérer utilisateurs
+* consulter statistiques
+
+---
+
+## 🔵 AGENT
+
+### Fonctionnalités
+
+* accès uniquement aux services métiers
+* interface simplifiée
+* aucune configuration système
+
+---
+
+## 🧩 SYSTÈME CONFIG-DRIVEN (CRITIQUE)
+
+### Objectif
+
+Toute l’application doit être pilotée par la base de données.
+
+---
+
+### Implémentation obligatoire
+
+Créer tables :
+
+* tenants
+* features
+* tenant_features
+* site_config
+
+---
+
+### Comportement
+
+Le frontend doit :
+
+* charger dynamiquement :
+
+  * modules actifs
+  * configuration
+* adapter automatiquement :
+
+  * pages
+  * navigation
+  * routes
+
+---
+
+## 🧱 BASE DE DONNÉES (EXIGENCE MAXIMALE)
+
+### Contraintes obligatoires
+
+Le script SQL final doit être :
+
+* complet (aucune étape manuelle)
+* exécutable en une seule fois
+* sans erreur
+* optimisé (index, contraintes)
+* sécurisé (RLS, triggers, fonctions)
+
+---
+
+### Doit inclure :
+
+* toutes les tables
+* toutes les relations
+* toutes les RLS
+* toutes les fonctions RPC
+* tous les triggers
+* toutes les contraintes
+
+---
+
+### Résultat attendu
+
+Après exécution du SQL :
+
+* la base est immédiatement fonctionnelle
+* aucune modification requise
+* prête pour production SaaS
+
+---
+
+## 🚨 RÈGLE ABSOLUE
+
+Toute fonctionnalité technique doit être contrôlable via interface.
+
+Aucune dépendance au code ou SQL après déploiement.
+
+---

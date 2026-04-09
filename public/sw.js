@@ -32,8 +32,15 @@ self.addEventListener('activate', (event) => {
 
 // Cache strategy: Network first falling back to cache
 self.addEventListener('fetch', (event) => {
-  // Ignorer les requêtes vers Supabase ou les analytics pour le cache offline strict
-  if (event.request.url.includes('supabase.co')) return;
+  // Ignorer les requêtes de dev localhost, Vite et Supabase
+  if (
+    event.request.url.includes('localhost') ||
+    event.request.url.includes('127.0.0.1') ||
+    event.request.url.includes('supabase.co') ||
+    event.request.url.includes('chrome-extension')
+  ) {
+    return;
+  }
 
   event.respondWith(
     fetch(event.request)

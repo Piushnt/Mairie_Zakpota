@@ -48,8 +48,8 @@ const Hero: React.FC<HeroProps> = ({ news = [] }) => {
               alt={items[current].title}
               width={1920}
               height={1080}
-              // @ts-ignore - fetchpriority is relatively new in React types
-              fetchpriority={current === 0 ? "high" : "low"}
+              // @ts-ignore - fetchPriority is relatively new in React types
+              fetchPriority={current === 0 ? "high" : "low"}
               loading={current === 0 ? "eager" : "lazy"}
               className="w-full h-full object-cover grayscale-[0.1]"
             />

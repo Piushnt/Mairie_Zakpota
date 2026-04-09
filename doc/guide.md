@@ -41,5 +41,20 @@ Lors du passage au domaine officiel :
 2. **Push** : Régénérez les clés VAPID si vous changez de fournisseur de push.
 3. **CORS** : Ajoutez `https://www.mairie-zakpota.bj` dans les URLs autorisées de Supabase.
 
+## 5. Plateforme SaaS & Accès Super Admin
+Avec l'architecture Multi-tenant, le compte Super Admin détient tous les privilèges sur TOUTES les mairies existantes en shuntant les blocages `tenant_id`.
+**Puisque le Dashboard UI pour les super-admins n'est pas encore programmé**, voici comment se connecter en tant que Créateur du Logiciel :
+
+1. Inscrivez-vous sur l'application (en local ou sur n'importe quel domaine Mairie). 
+2. Allez dans le **SQL Editor de Supabase**.
+3. Élevez vos privilèges manuellement pour convertir votre compte agent en Dieu du système :
+```sql
+UPDATE public.user_profiles 
+SET role = 'super_admin', is_approved = true, tenant_id = NULL 
+WHERE email = 'votre_email_perso@domaine.com';
+```
+4. Déconnectez-vous et reconnectez-vous sur le Frontend. 
+5. Votre profil redescendra du JWT Supabase en tant que `'super_admin'`. RLS vous ouvrira 100% des accès lecture/écriture (votre dashboard local affichera les données administratives globales sans être limité en base de données).
+
 ---
-*Dernière mise à jour : 6 Avril 2026*
+*Dernière mise à jour (SaaS V3) : 9 Avril 2026*

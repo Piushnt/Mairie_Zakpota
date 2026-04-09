@@ -3,21 +3,25 @@ import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, Loader2, ArrowLeft, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTenant } from '../lib/TenantContext';
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState<'employee' | 'admin'>('employee');
+  const [role, setRole] = useState<'agent' | 'admin'>('agent');
   const [adminPin, setAdminPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
+  const { currentTenant } = useTenant();
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentTenant) return;
     setLoading(true);
     setError(null);
 
@@ -30,6 +34,7 @@ export default function Register() {
             first_name: firstName,
             last_name: lastName,
             role: role,
+            tenant_id: currentTenant.id,
             admin_pin: role === 'admin' ? adminPin : undefined
           }
         }
@@ -151,8 +156,8 @@ export default function Register() {
                   <div className="flex gap-4">
                     <button
                       type="button"
-                      onClick={() => setRole('employee')}
-                      className={`flex-1 py-3 text-xs font-bold uppercase rounded-xl transition-all ${role === 'employee' ? 'bg-primary text-white shadow-lg' : 'bg-card text-ink/60 hover:bg-card/50 border border-border'}`}
+                      onClick={() => setRole('agent')}
+                      className={`flex-1 py-3 text-xs font-bold uppercase rounded-xl transition-all ${role === 'agent' ? 'bg-primary text-white shadow-lg' : 'bg-card text-ink/60 hover:bg-card/50 border border-border'}`}
                     >
                       Employé
                     </button>

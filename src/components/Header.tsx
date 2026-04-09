@@ -6,12 +6,13 @@ import {
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import { useTenant } from '../lib/TenantContext';
 
 const TopBar = ({ TEL_CONTACT, EMAIL_CONTACT }: any) => (
   <div className="bg-black text-white py-2 hidden lg:block">
     <div className="container mx-auto px-4 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
       <div className="flex items-center space-x-6">
-        <span className="opacity-50">Mairie de Za-Kpota - Portail Officiel</span>
+        <span className="opacity-50">{TEL_CONTACT ? `${TEL_CONTACT} - Portail Officiel` : 'Portail Officiel'}</span>
       </div>
       <div className="flex items-center space-x-6">
         <a href={`tel:${TEL_CONTACT}`} className="flex items-center hover:text-accent transition-colors">
@@ -55,6 +56,7 @@ const Header = ({
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isFeatureEnabled, currentTenant } = useTenant();
 
   React.useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -72,7 +74,7 @@ const Header = ({
       label: 'La Mairie', id: 'mairie', submenu: [
         { label: 'Le Maire', path: '/maire' },
         { label: 'Le Conseil Municipal', path: '/conseil' },
-        { label: 'Carte de la Commune', path: '/carte' },
+        ...(isFeatureEnabled('carte') ? [{ label: 'Carte de la Commune', path: '/carte' }] : []),
         { label: 'Les Arrondissements', path: '/arrondissements' },
         { label: 'Histoire et Culture', path: '/histoire' },
         { label: 'Transparence & Rapports', path: '/publications' },
@@ -84,40 +86,42 @@ const Header = ({
         { label: 'Suivi de Dossier', path: '/suivi-dossier' },
         { label: 'Formulaires (Guichet)', path: '/formulaires' },
         { label: 'Urbanisme', path: '/services/urbanisme' },
-        { label: 'Simulateur Fiscal', path: '/simulateur' },
+        ...(isFeatureEnabled('simulateur') ? [{ label: 'Simulateur Fiscal', path: '/simulateur' }] : []),
         { label: 'Prise de RDV', path: '/rendezvous' },
       ]
     },
     {
       label: 'Économie', id: 'economie', submenu: [
-        { label: 'Marchés Locaux', path: '/economie' },
-        { label: 'Annuaire des Artisans', path: '/artisans' },
-        { label: 'Opportunités Locales', path: '/opportunites' },
-      ]
+        ...(isFeatureEnabled('marche') ? [{ label: 'Marchés Locaux', path: '/economie' }] : []),
+        ...(isFeatureEnabled('artisans') ? [{ label: 'Annuaire des Artisans', path: '/artisans' }] : []),
+        ...(isFeatureEnabled('opportunites') ? [{ label: 'Opportunités Locales', path: '/opportunites' }] : []),
+      ].filter(Boolean)
     },
     {
       label: 'Citoyenneté', id: 'participation', submenu: [
-        { label: 'Sondages Citoyens', path: '/sondages' },
-        { label: 'Budget Participatif', path: '/budget-participatif' },
-        { label: 'Signalement Urgence', path: '/signalement' },
-      ]
+        ...(isFeatureEnabled('sondages') ? [{ label: 'Sondages Citoyens', path: '/sondages' }] : []),
+        ...(isFeatureEnabled('budget_participatif') ? [{ label: 'Budget Participatif', path: '/budget-participatif' }] : []),
+        ...(isFeatureEnabled('signalement') ? [{ label: 'Signalement Urgence', path: '/signalement' }] : []),
+      ].filter(Boolean)
     },
     {
       label: 'Agenda & Loisirs', id: 'agenda', submenu: [
-        { label: 'Événements', path: '/agenda' },
-        { label: 'Stade Municipal', path: '/stade' },
+        ...(isFeatureEnabled('agenda') ? [{ label: 'Événements', path: '/agenda' }] : []),
+        ...(isFeatureEnabled('stade') ? [{ label: 'Stade Municipal', path: '/stade' }] : []),
         { label: 'Guide Touristique', path: '/tourisme' },
-      ]
+      ].filter(Boolean)
     },
-    { label: 'Actualités', path: '/actualites' },
+    ...(isFeatureEnabled('actualites') ? [{ label: 'Actualités', path: '/actualites' }] : []),
     { label: 'Contact', id: 'contact', path: '/contact' },
-  ];
+  ].filter((item: any) => !item.submenu || item.submenu.length > 0);
 
   const isActive = (path: string) => location.pathname === path;
   const isParentActive = (item: any) => item.submenu?.some((sub: any) => isActive(sub.path));
 
-  // Institution Naming
-  const DISPLAY_NAME = "Mairie de Za-Kpota";
+  // Institution Naming - Dynamique via TenantContext
+  const DISPLAY_NAME = currentTenant?.name || NOM_VILLE || 'Mairie';
+  const DISPLAY_SLOGAN = currentTenant?.slogan || '';
+  const PRIMARY_COLOR = currentTenant?.primary_color || '#006633';
 
   return (
     <>
@@ -218,7 +222,7 @@ const Header = ({
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[9px] font-black leading-none uppercase tracking-tighter">Mairie de</span>
-                    <span className="text-[9px] font-black leading-none uppercase tracking-tighter">Za-Kpota</span>
+                    <span className="text-[9px] font-black leading-none uppercase tracking-tighter">{DISPLAY_NAME}</span>
                   </div>
                 </div>
                 
@@ -274,7 +278,7 @@ const Header = ({
                       className="w-full h-full object-contain" 
                     />
                   </div>
-                  <span className="font-black uppercase tracking-tighter text-sm">Menu ZA-KPOTA</span>
+                  <span className="font-black uppercase tracking-tighter text-sm">Menu {DISPLAY_NAME.toUpperCase()}</span>
                 </div>
                 <button 
                   onClick={() => setIsMenuOpen(false)}
