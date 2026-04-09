@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Phone, Briefcase, Star, Filter, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useTenant } from '../lib/TenantContext';
 
 const ArtisanDirectory = () => {
+  const { currentTenant } = useTenant();
   const [artisans, setArtisans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,10 +18,12 @@ const ArtisanDirectory = () => {
   }, []);
 
   const fetchArtisans = async () => {
+    if (!currentTenant) return;
     setLoading(true);
     const { data, error } = await supabase
       .from('artisans')
       .select('*')
+      .eq('tenant_id', currentTenant.id)
       .order('nom', { ascending: true });
     
     if (!error && data) {

@@ -15,7 +15,7 @@ const urlBase64ToUint8Array = (base64String: string) => {
   return outputArray;
 };
 
-export const subscribeToPushNotifications = async () => {
+export const subscribeToPushNotifications = async (tenantId?: string) => {
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       alert("Votre navigateur ne supporte pas les notifications Web Push.");
@@ -44,7 +44,11 @@ export const subscribeToPushNotifications = async () => {
 
     const subData = JSON.parse(JSON.stringify(subscription));
 
+    // tenant_id est NOT NULL dans le schéma
+    const resolvedTenantId = tenantId || sessionStorage.getItem('mairie_tenant_id') || '';
+    
     const { error } = await supabase.from('user_subscriptions').upsert({
+      tenant_id: resolvedTenantId,
       endpoint: subData.endpoint,
       p256dh: subData.keys.p256dh,
       auth: subData.keys.auth

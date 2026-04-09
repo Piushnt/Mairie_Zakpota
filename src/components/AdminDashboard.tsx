@@ -52,8 +52,9 @@ interface AdminDashboardProps {
   onExit: () => void;
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
-  userRole?: 'admin' | 'employee';
+  userRole?: 'admin' | 'agent';
   userName?: string;
+  tenantId?: string;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
@@ -63,9 +64,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onExit, 
   isDarkMode, 
   toggleDarkMode,
-  userRole = 'employee',
-  userName = ''
+  userRole = 'agent',
+  userName = '',
+  tenantId = ''
 }) => {
+  // Helper : ajoute tenant_id à tout payload insert/upsert
+  const withTenant = <T extends object>(data: T): T & { tenant_id: string } => ({
+    ...data,
+    tenant_id: tenantId
+  });
   const [activeTab, setActiveTab] = useState(userRole === 'admin' ? 'analytics' : 'services');
 
   // Enforce correct tab when role changes
@@ -82,21 +89,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [users, setUsers] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
-  // Audit Helper
-  const logAuditAction = async (actionType: string, moduleName: string, description: string) => {
+  // Audit Helper — colonnes réelles : action, entity, description, tenant_id, user_id
+  const logAuditAction = async (action: string, entity: string, description: string, entityId?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       await supabase.from('audit_logs').insert([{
+        tenant_id: tenantId || null,
         user_id: user.id,
-        user_name: user.email,
-        action_type: actionType,
-        module_name: moduleName,
-        description: description
+        action,
+        entity,
+        entity_id: entityId || null,
+        description
       }]);
       
-      // Refresh logs if we are on the audit tab
       if (activeTab === 'audit') fetchAuditLogs();
     } catch (err) {
       console.error("Failed to log audit action:", err);
@@ -104,12 +111,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+    // RLS filtre automatiquement par tenant_id via JWT — filtre explicite en plus pour la clarté
+    const query = supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+    const { data } = tenantId ? await query.eq('tenant_id', tenantId) : await query;
     if (data) setUsers(data);
   };
 
   const fetchAuditLogs = async () => {
-    const { data } = await supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(50);
+    // colonne réelle = created_at (pas 'timestamp')
+    const query = supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(100);
+    const { data } = tenantId ? await query.eq('tenant_id', tenantId) : await query;
     if (data) setAuditLogs(data);
   };
 
@@ -142,17 +153,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer définitivement cet utilisateur du système ?")) return;
+    if (!window.confirm("Êtes-vous sûr de vouloir révoquer cet utilisateur ?")) return;
 
     const userToRemove = users.find(u => u.id === userId);
-    const { error } = await supabase.from('user_profiles').delete().eq('id', userId);
+    // Soft delete : on met deleted_at plutôt que DELETE physique
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ deleted_at: new Date().toISOString(), is_approved: false })
+      .eq('id', userId);
     
     if (!error) {
-      showSuccess("Utilisateur supprimé avec succès.");
+      showSuccess("Utilisateur révoqué avec succès.");
       fetchUsers();
-      logAuditAction('DELETE', 'Utilisateurs', `A supprimé définitivement le compte de : ${userToRemove?.email}`);
+      logAuditAction('DELETE', 'user_profiles', `Compte révoqué (soft delete) : ${userToRemove?.email}`, userId);
     } else {
-      setErrorMessage("Échec de la suppression de l'utilisateur.");
+      setErrorMessage("Échec de la révocation de l'utilisateur.");
     }
   };
 
@@ -255,17 +270,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setCouncil(store.council || []);
     
     const fetchData = async () => {
-      const { data: doss } = await supabase.from('dossiers').select('*').order('created_at', { ascending: false });
-      const { data: arts } = await supabase.from('artisans').select('*').order('nom', { ascending: true });
-      const { data: sond } = await supabase.from('sondages').select('*').order('created_at', { ascending: false });
+      // Filtrage explicite par tenant_id (RLS en double protection)
+      const tFilter = tenantId ? (q: any) => q.eq('tenant_id', tenantId) : (q: any) => q;
+      const { data: doss } = await tFilter(supabase.from('dossiers').select('*')).order('created_at', { ascending: false });
+      const { data: arts } = await tFilter(supabase.from('artisans').select('*')).order('nom', { ascending: true });
+      const { data: sond } = await tFilter(supabase.from('sondages').select('*')).order('created_at', { ascending: false });
       
       if (doss) setDossiers(doss);
       if (arts) setArtisans(arts);
       if (sond) setSondages(sond);
 
-      const { data: artData } = await supabase.from('artisans').select('id');
-      const { data: dosData } = await supabase.from('dossiers').select('id');
-      const { data: sonData } = await supabase.from('sondages').select('id, is_active');
+      const { data: artData } = await tFilter(supabase.from('artisans').select('id'));
+      const { data: dosData } = await tFilter(supabase.from('dossiers').select('id'));
+      const { data: sonData } = await tFilter(supabase.from('sondages').select('id, is_active'));
       
       setStats({
         totalArtisans: artData?.length || 0,
@@ -301,13 +318,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsSaving(true);
     const { error } = await supabase
       .from('site_config')
-      .upsert({ key: 'flash_news', value: flashNews });
+      .upsert(
+        { tenant_id: tenantId, key: 'flash_news', value: flashNews },
+        { onConflict: 'tenant_id,key' }
+      );
 
     if (!error) {
       onUpdateStore({ ...store, flashNews });
       onSendPush("Flash Info", "Le bandeau défilant a été mis à jour.", "/", "", "flash-info");
       showSuccess("Bandeau Flash mis à jour avec succès !");
-      logAuditAction('UPDATE', 'Alertes & Push', "A mis à jour le bandeau défilant municipal.");
+      logAuditAction('UPDATE', 'site_config', "A mis à jour le bandeau défilant municipal.");
     } else {
       console.error(error);
       setErrorMessage("Échec de la mise à jour du bandeau.");
@@ -389,6 +409,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       Object.keys(services).forEach(category => {
         services[category].forEach((s: any) => {
           const serviceData: any = {
+            tenant_id: tenantId,
             category: category,
             name: s.name,
             cost: Number(s.cost),
@@ -426,7 +447,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       onSendPush("Tarifs Mis à Jour", "Les prix des services municipaux ont été actualisés.", "/services", "", "service-update");
       showSuccess("Tous les tarifs ont été enregistrés avec succès !");
-      logAuditAction('UPDATE', 'Tarifs des Actes', "A mis à jour la grille tarifaire complète des actes municipaux.");
+      logAuditAction('UPDATE', 'services_tarifs', "A mis à jour la grille tarifaire complète des actes municipaux.");
     } catch (error: any) {
       console.error('Supabase Error:', error);
       setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de l'enregistrement des services"}`);
@@ -483,6 +504,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       const formattedEvents = agenda.map((e: any) => {
         const eventData: any = {
+          tenant_id: tenantId,
           title: e.title,
           date: e.date,
           type: e.type,
@@ -513,7 +535,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       onSendPush("Agenda Mis à Jour", "Les événements du stade ont été actualisés.", "/agenda", "", "agenda-update");
       showSuccess("Agenda enregistré avec succès !");
-      logAuditAction('UPDATE', 'Planning du Stade', "A mis à jour le planning officiel du stade.");
+      logAuditAction('UPDATE', 'agenda_events', "A mis à jour le planning officiel du stade.");
     } catch (error: any) {
       console.error('Supabase Error:', error);
       setErrorMessage(`Erreur [${error.code}]: ${error.message || "Échec de l'enregistrement de l'agenda"}`);
@@ -532,6 +554,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setErrorMessage(null);
     try {
       const reportData = {
+        tenant_id: tenantId,
         title: newReport.title,
         date: newReport.date,
         year: parseInt(newReport.date.split('-')[0]),
@@ -554,7 +577,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         onUpdateStore({ reports: updatedReports });
         onSendPush("Nouveau Document Officiel", `Le document "${newReport.title}" est désormais disponible.`, "/publications", "", "document-alert");
         showSuccess("Rapport publié avec succès !");
-        logAuditAction('CREATE', 'Rapports Officiels', `A publié un nouveau document : "${newReport.title}"`);
+        logAuditAction('CREATE', 'reports', `A publié un nouveau document : "${newReport.title}"`, data[0].id);
         setNewReport({
           title: '',
           date: new Date().toISOString().split('T')[0],
@@ -599,6 +622,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       const formattedArrs = arrondissements.map((a: any) => {
         const arrData: any = {
+          tenant_id: tenantId,
           nom: a.name,
           ca: a.chef,
           contact: a.contact,
@@ -652,6 +676,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const { data, error } = await supabase
         .from('opportunites')
         .insert([{
+          tenant_id: tenantId,
           titre: newOpportunity.title,
           type: newOpportunity.type,
           description: newOpportunity.description,
@@ -672,6 +697,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         setOpportunites(updatedOpps);
         onUpdateStore({ opportunites: updatedOpps });
         onSendPush("Nouvelle Opportunité", `Une nouvelle annonce "${newOpportunity.title}" a été publiée.`, "/opportunites", "", "job-alert");
+        logAuditAction('CREATE', 'opportunites', `A publié l'opportunité : "${newOpportunity.title}"`, data[0].id);
         showSuccess("Opportunité publiée avec succès !");
         setNewOpportunity({
           title: '',
@@ -706,8 +732,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsSaving(true);
     setErrorMessage('');
     try {
-      await supabase.from('tax_settings').upsert({ key: 'tfu_rates', value: taxSettings.tfu_rates });
-      await supabase.from('tax_settings').upsert({ key: 'patente_rates', value: taxSettings.patente_rates });
+      await supabase.from('tax_settings').upsert(
+        { tenant_id: tenantId, key: 'tfu_rates', value: taxSettings.tfu_rates },
+        { onConflict: 'tenant_id,key' }
+      );
+      await supabase.from('tax_settings').upsert(
+        { tenant_id: tenantId, key: 'patente_rates', value: taxSettings.patente_rates },
+        { onConflict: 'tenant_id,key' }
+      );
       
       onUpdateStore({ tax_settings: taxSettings });
       showSuccess("Paramètres fiscaux enregistrés !");
@@ -729,7 +761,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       const { data, error } = await supabase
         .from('formulaires')
-        .insert([newFormulaire])
+        .insert([withTenant(newFormulaire)])
         .select();
 
       if (error) throw error;
@@ -772,7 +804,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       const { data, error } = await supabase
         .from('locations')
-        .insert([newLocation])
+        .insert([withTenant(newLocation)])
         .select();
 
       if (error) throw error;
@@ -819,7 +851,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       const { error } = await supabase
         .from('site_config')
-        .upsert({ key: 'market_config', value: configMarche });
+        .upsert(
+          { tenant_id: tenantId, key: 'market_config', value: configMarche },
+          { onConflict: 'tenant_id,key' }
+        );
 
       if (error) throw error;
 
@@ -847,6 +882,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       let updatedStoreAgenda = [...agenda];
       if (newStatus === 'VALIDE') {
         const eventData = {
+          tenant_id: tenantId,
           title: `Réservation : ${reservation.nom} ${reservation.prenom}`,
           date: reservation.date,
           type: "Sport",
@@ -885,7 +921,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       );
       
       showSuccess(newStatus === 'VALIDE' ? "Réservation validée et ajoutée à l'agenda !" : "Réservation refusée.");
-      logAuditAction('UPDATE', 'Gestion Stade', `A ${newStatus === 'VALIDE' ? 'validé' : 'refusé'} la réservation de ${reservation.nom} pour le ${reservation.date}.`);
+      logAuditAction('UPDATE', 'reservations_stade', `A ${newStatus === 'VALIDE' ? 'validé' : 'refusé'} la réservation de ${reservation.nom} pour le ${reservation.date}.`, reservation.id);
     } catch (error: any) {
       console.error('Supabase Error:', error);
       setErrorMessage(`Erreur [${error.code}]: Échec de l'action.`);
@@ -962,6 +998,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const { data, error } = await supabase
         .from('news')
         .insert([{
+          tenant_id: tenantId,
           title: newNews.title,
           description: newNews.description,
           category: newNews.category,
@@ -993,7 +1030,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       );
 
       showSuccess("Actualité publiée et notification envoyée !");
-      logAuditAction('CREATE', 'Actualités', `A publié l'actualité : "${newNews.title}"`);
+      logAuditAction('CREATE', 'news', `A publié l'actualité : "${newNews.title}"`, data[0].id);
       setNewNews({
         title: '',
         description: '',
@@ -1046,6 +1083,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsSaving(true);
     try {
       const payload = {
+        tenant_id: tenantId,
         name: newCouncilMember.name,
         role: newCouncilMember.role,
         photo_url: parseImageUrl(newCouncilMember.photo_url),
@@ -1068,6 +1106,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       setCouncil(sorted);
       onUpdateStore({ council: sorted });
+      logAuditAction('CREATE', 'council', `A ajouté ${newCouncilMember.name} au Conseil Municipal.`, freshMember.id);
       showSuccess("Membre du conseil ajouté !");
       setNewCouncilMember({ name: '', role: '', photo_url: '', bio: '', role_id: '' });
     } catch (e) {
@@ -1093,31 +1132,46 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleAddDossier = async () => {
     if (!newDossier.code || !newDossier.citoyen_nom) return;
     setIsSaving(true);
-    const { data, error } = await supabase.from('dossiers').insert([newDossier]).select();
+    const { data, error } = await supabase
+      .from('dossiers')
+      .insert([withTenant(newDossier)])
+      .select();
     if (!error && data) {
       setDossiers([data[0], ...dossiers]);
+      logAuditAction('CREATE', 'dossiers', `Dossier créé : ${newDossier.code} — ${newDossier.citoyen_nom}`);
       setNewDossier({ code: '', citoyen_nom: '', type: 'Acte de Naissance', statut: 'Dépôt' });
       showSuccess("Dossier créé !");
+    } else if (error) {
+      setErrorMessage(`Erreur dossier [${error.code}]: ${error.message}`);
     }
     setIsSaving(false);
   };
 
   const handleUpdateDossierStatus = async (code: string, statut: string) => {
-    const { error } = await supabase.from('dossiers').update({ statut }).eq('code', code);
+    const { error } = await supabase.from('dossiers').update({ statut, last_update: new Date().toISOString() }).eq('code', code);
     if (!error) {
       setDossiers(dossiers.map(d => d.code === code ? { ...d, statut } : d));
+      logAuditAction('UPDATE', 'dossiers', `Statut dossier ${code} → ${statut}`);
       showSuccess("Statut du dossier mis à jour !");
+    } else if (error) {
+      setErrorMessage(`Erreur mise à jour dossier: ${error.message}`);
     }
   };
 
   const handleAddArtisan = async () => {
     if (!newArtisan.nom || !newArtisan.telephone) return;
     setIsSaving(true);
-    const { data, error } = await supabase.from('artisans').insert([newArtisan]).select();
+    const { data, error } = await supabase
+      .from('artisans')
+      .insert([withTenant(newArtisan)])
+      .select();
     if (!error && data) {
       setArtisans([...artisans, data[0]]);
+      logAuditAction('CREATE', 'artisans', `Artisan ajouté : ${newArtisan.nom} (${newArtisan.metier})`, data[0].id);
       setNewArtisan({ nom: '', metier: 'Menuisier', arrondissement: 'Za-Kpota', telephone: '', is_verified: true });
       showSuccess("Artisan ajouté à l'annuaire !");
+    } else if (error) {
+      setErrorMessage(`Erreur artisan [${error.code}]: ${error.message}`);
     }
     setIsSaving(false);
   };
@@ -1133,11 +1187,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleAddSondage = async () => {
     if (!newSondage.titre) return;
     setIsSaving(true);
-    const { data, error } = await supabase.from('sondages').insert([{ ...newSondage, is_active: true }]).select();
+    const { data, error } = await supabase
+      .from('sondages')
+      .insert([withTenant({ ...newSondage, is_active: true })])
+      .select();
     if (!error && data) {
       setSondages([data[0], ...sondages]);
+      logAuditAction('CREATE', 'sondages', `Sondage publié : "${newSondage.titre}"`, data[0].id);
       setNewSondage({ titre: '', description: '', options: [{ label: '', votes: 0 }, { label: '', votes: 0 }] });
       showSuccess("Sondage publié !");
+    } else if (error) {
+      setErrorMessage(`Erreur sondage [${error.code}]: ${error.message}`);
     }
     setIsSaving(false);
   };

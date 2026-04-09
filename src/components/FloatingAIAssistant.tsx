@@ -26,7 +26,7 @@ const FloatingAIAssistant = () => {
   }, [chatHistory]);
 
   const loadHistory = async () => {
-    const sessionId = await getOrCreateAISession();
+    const sessionId = await getOrCreateAISession(currentTenant?.id || '');
     const history = await fetchAISessionHistory(sessionId);
     if (history.length > 0) {
       setChatHistory(history);
@@ -45,13 +45,13 @@ const FloatingAIAssistant = () => {
     setIsLoading(true);
 
     try {
-      const sessionId = await getOrCreateAISession();
-      await saveAIMessage(sessionId, 'user', userMsg);
+      const sessionId = await getOrCreateAISession(currentTenant?.id || '');
+      await saveAIMessage(sessionId, 'user', userMsg, currentTenant?.id || '');
 
       const response = await askMunicipalAI(userMsg, chatHistory);
       
       setChatHistory(prev => [...prev, { role: 'bot', text: response }]);
-      await saveAIMessage(sessionId, 'model', response);
+      await saveAIMessage(sessionId, 'model', response, currentTenant?.id || '');
     } catch (error) {
       setChatHistory(prev => [...prev, { role: 'bot', text: "Désolé, je rencontre un problème de connexion. Veuillez réessayer." }]);
     } finally {

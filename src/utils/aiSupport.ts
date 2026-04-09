@@ -23,17 +23,23 @@ export async function fileToGenerativePart(file: File): Promise<{ inlineData: { 
 
 /**
  * Saves a chat message to the database
+ * tenant_id est requis (NOT NULL dans le schéma)
  */
-export async function saveAIMessage(sessionId: string, role: string, content: string, metadata: any = {}) {
-  // Use session_id if available, otherwise just log to console for now
+export async function saveAIMessage(sessionId: string, role: string, content: string, tenantId: string, metadata: any = {}) {
   if (!sessionId || sessionId.length < 10) return;
 
   try {
     const { error } = await supabase
       .from('ai_messages')
-      .insert([{ session_id: sessionId, role, content, metadata }]);
+      .insert([{ 
+        session_id: sessionId, 
+        tenant_id: tenantId,
+        role, 
+        content, 
+        metadata 
+      }]);
     
-    if (error) console.error("Error saving AI message:", error);
+    if (error) console.error("Error saving AI message:", error.message);
   } catch (e) {
     console.error("DB Error:", e);
   }
@@ -41,33 +47,41 @@ export async function saveAIMessage(sessionId: string, role: string, content: st
 
 /**
  * Creates or gets a chat session
+ * tenant_id est NOT NULL dans le schéma — obligatoire
  */
-export async function getOrCreateAISession(title: string = "Nouvelle conversation") {
-  // Check if session exists in sessionStorage
-  const existingId = sessionStorage.getItem('za_kpota_ai_session');
+export async function getOrCreateAISession(tenantId: string, title: string = "Nouvelle conversation") {
+  const cacheKey = `ai_session_${tenantId}`;
+  const existingId = sessionStorage.getItem(cacheKey);
   if (existingId) return existingId;
+
+  if (!tenantId) {
+    // Si pas de tenant (visiteur non résolu), on utilise un ID temporaire local
+    const fallbackId = crypto.randomUUID();
+    return fallbackId; // Pas de stockage DB
+  }
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
     const { data, error } = await supabase
       .from('ai_chat_sessions')
-      .insert([{ title, user_id: user?.id }])
+      .insert([{ 
+        title, 
+        tenant_id: tenantId,
+        user_id: user?.id || null 
+      }])
       .select()
       .single();
 
     if (error || !data) {
-      const fallbackId = crypto.randomUUID();
-      sessionStorage.setItem('za_kpota_ai_session', fallbackId);
-      return fallbackId;
+      console.warn("AI session fallback (DB non dispo):", error?.message);
+      return crypto.randomUUID();
     }
 
-    sessionStorage.setItem('za_kpota_ai_session', data.id);
+    sessionStorage.setItem(cacheKey, data.id);
     return data.id;
   } catch (e) {
-    const fallbackId = crypto.randomUUID();
-    sessionStorage.setItem('za_kpota_ai_session', fallbackId);
-    return fallbackId;
+    return crypto.randomUUID();
   }
 }
 
@@ -85,7 +99,7 @@ export async function fetchAISessionHistory(sessionId: string) {
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error("Error fetching AI history:", error);
+      console.error("Error fetching AI history:", error.message);
       return [];
     }
 

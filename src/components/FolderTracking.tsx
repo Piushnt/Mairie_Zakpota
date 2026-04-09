@@ -22,7 +22,7 @@ const FolderTracking = () => {
         .from('dossiers')
         .select('*')
         .eq('code', folderId.trim().toUpperCase())
-        .single();
+        .maybeSingle();
 
       if (fetchError || !data) {
         setError("Aucun dossier trouvé avec cet identifiant. Vérifiez votre code (ex: ZK-9912).");

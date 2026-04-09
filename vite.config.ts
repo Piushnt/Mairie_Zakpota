@@ -1,9 +1,9 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig, loadEnv} from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
-export default defineConfig(({mode}) => {
+export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
     plugins: [react(), tailwindcss()],
@@ -17,9 +17,27 @@ export default defineConfig(({mode}) => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
+    },
+    build: {
+      chunkSizeWarningLimit: 600,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react':    ['react', 'react-dom', 'react-router-dom'],
+            'vendor-supabase': ['@supabase/supabase-js'],
+            'vendor-framer':   ['framer-motion', 'motion'],
+            'vendor-leaflet':  ['leaflet', 'react-leaflet'],
+            'vendor-gemini':   ['@google/generative-ai'],
+            'vendor-pdf':      ['jspdf', 'html2canvas'],
+            'chunk-admin':     [
+              './src/components/AdminDashboard',
+              './src/components/AdminAI_Assistant',
+              './src/components/SuperAdminDashboard',
+            ],
+          },
+        },
+      },
     },
   };
 });

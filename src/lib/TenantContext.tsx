@@ -107,6 +107,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               if (fallbackData) {
                 setCurrentTenant(fallbackData);
                 sessionStorage.setItem(cacheKey, JSON.stringify(fallbackData));
+                sessionStorage.setItem('mairie_tenant_id', fallbackData.id);
                 await fetchFeatures(fallbackData.id);
                 setLoading(false);
                 return;
@@ -120,6 +121,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         setCurrentTenant(data);
         sessionStorage.setItem(cacheKey, JSON.stringify(data));
+        sessionStorage.setItem('mairie_tenant_id', data.id);
         await fetchFeatures(data.id);
 
       } catch (err: any) {

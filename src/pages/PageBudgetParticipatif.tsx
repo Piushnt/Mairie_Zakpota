@@ -4,8 +4,10 @@ import { motion } from 'framer-motion';
 import { HelpingHand, Lightbulb, Pickaxe, CheckCircle2, ChevronLeft, ChevronRight, ArrowRight, Wallet, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useTenant } from '../lib/TenantContext';
 
 const PageBudgetParticipatif = () => {
+  const { currentTenant } = useTenant();
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -30,6 +32,7 @@ const PageBudgetParticipatif = () => {
 
     try {
       const { error } = await supabase.from('audiences').insert([{
+        tenant_id: currentTenant?.id,
         name: `${formData.nom} ${formData.prenom}`,
         email: `${formData.quartier} - ${formData.telephone}`,
         phone: formData.telephone,

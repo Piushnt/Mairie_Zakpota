@@ -174,11 +174,20 @@ export default function App() {
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
-    const { data } = await supabase.from('user_profiles').select('role, first_name, last_name, is_approved').eq('id', userId).single();
+    // maybeSingle() évite l'erreur 406 si le profil n'existe pas encore (async trigger)
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('role, first_name, last_name, is_approved, tenant_id')
+      .eq('id', userId)
+      .maybeSingle();
     if (data) {
       setUserRole(data.role as 'super_admin' | 'admin' | 'agent');
       setUserName(`${data.first_name || ''} ${data.last_name || ''}`.trim());
       setIsApproved(data.is_approved);
+      // Log connexion admin dans audit_logs
+      if (data.role === 'admin' && data.tenant_id) {
+        try { await supabase.rpc('log_admin_login', { p_tenant_id: data.tenant_id }); } catch {}
+      }
     }
     setIsProfileLoaded(true);
   };
@@ -496,8 +505,9 @@ export default function App() {
                   onExit={() => window.location.href = '/'}
                   isDarkMode={isDarkMode}
                   toggleDarkMode={toggleDarkMode}
-                  userRole={userRole}
+                  userRole={userRole as 'admin' | 'agent'}
                   userName={userName}
+                  tenantId={currentTenant?.id || ''}
                 />
               ) : (
                 <div className="min-h-screen bg-muted flex items-center justify-center p-4">

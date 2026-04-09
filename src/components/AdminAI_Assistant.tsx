@@ -3,8 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Sparkles, FileText, Send, ChevronRight, X, Loader2, Wand2 } from 'lucide-react';
 import { askMunicipalAI } from '../lib/gemini';
 import { supabase } from '../lib/supabase';
+import { useTenant } from '../lib/TenantContext';
 
 const AdminAI_Assistant = () => {
+  const { currentTenant } = useTenant();
+  const tenantName = currentTenant?.name || 'la commune';
+  const tenantId = currentTenant?.id;
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +20,8 @@ const AdminAI_Assistant = () => {
   }, []);
 
   const fetchRecentReports = async () => {
-    const { data } = await supabase.from('reports').select('*').order('date', { ascending: false }).limit(3);
+    const query = supabase.from('reports').select('*').order('date', { ascending: false }).limit(3);
+    const { data } = tenantId ? await query.eq('tenant_id', tenantId) : await query;
     if (data) setRecentReports(data);
   };
 
@@ -27,8 +32,8 @@ const AdminAI_Assistant = () => {
     setResponse('');
     
     const prompt = type === 'news' 
-      ? `Génère 3 idées de 'Flash News' percutantes basées sur l'actualité municipale de Za-Kpota pour les notifications push.`
-      : `Résume en 5 points clés le rapport suivant : "${selectedReport.title}". Souligne les décisions importantes pour les citoyens.`;
+      ? `Génère 3 idées de 'Flash News' percutantes basées sur l'actualité municipale de ${tenantName} pour les notifications push.`
+      : `Résume en 5 points clés le rapport suivant : "${selectedReport.title}". Souligne les décisions importantes pour les citoyens de ${tenantName}.`;
 
     try {
       const res = await askMunicipalAI(prompt);
@@ -63,7 +68,7 @@ const AdminAI_Assistant = () => {
           </div>
           <div>
             <h3 className="text-xl font-black text-ink uppercase tracking-tight">Assistant Décisionnel IA</h3>
-            <p className="text-ink-muted text-xs font-medium">Za-Kpota Admin Intelligence</p>
+            <p className="text-ink-muted text-xs font-medium">{tenantName} — Admin Intelligence</p>
           </div>
         </div>
         <Sparkles className="w-6 h-6 text-accent animate-pulse" />
