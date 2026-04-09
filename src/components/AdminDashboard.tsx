@@ -79,8 +79,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   useEffect(() => {
     setActiveTab(userRole === 'admin' ? 'analytics' : 'services');
   }, [userRole]);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [userSearch, setUserSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -111,8 +112,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const fetchUsers = async () => {
-    // RLS filtre automatiquement par tenant_id via JWT — filtre explicite en plus pour la clarté
-    const query = supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+    // Filtre explicite : tenant_id + exclut comptes supprimés + exclut super_admin
+    const query = supabase
+      .from('user_profiles')
+      .select('*')
+      .is('deleted_at', null)
+      .neq('role', 'super_admin')
+      .order('created_at', { ascending: false });
     const { data } = tenantId ? await query.eq('tenant_id', tenantId) : await query;
     if (data) setUsers(data);
   };
@@ -153,13 +159,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir révoquer cet utilisateur ?")) return;
+    const reason = window.prompt("Motif du rejet/révocation (sera visible par l'utilisateur) :");
+    if (reason === null) return; // Annulé
 
     const userToRemove = users.find(u => u.id === userId);
-    // Soft delete : on met deleted_at plutôt que DELETE physique
+    // Soft delete : on met deleted_at et on enregistre le motif
     const { error } = await supabase
       .from('user_profiles')
-      .update({ deleted_at: new Date().toISOString(), is_approved: false })
+      .update({ deleted_at: new Date().toISOString(), is_approved: false, rejection_reason: reason })
       .eq('id', userId);
     
     if (!error) {
@@ -1410,76 +1417,162 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'ai' && <AdminAI_Assistant />}
 
           {activeTab === 'users' && userRole === 'admin' && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-xl">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-muted text-[10px] font-black uppercase tracking-[0.2em] text-ink/40">
-                      <th className="px-8 py-6">Utilisateur</th>
-                      <th className="px-8 py-6">Rôle</th>
-                      <th className="px-8 py-6">Statut</th>
-                      <th className="px-8 py-6 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {users.map((u: any) => (
-                      <tr key={u.id} className="hover:bg-muted/30 transition-all">
-                        <td className="px-8 py-6">
-                          <p className="font-bold text-ink">{u.first_name} {u.last_name}</p>
-                          <p className="text-xs text-ink/40">{u.email}</p>
-                        </td>
-                        <td className="px-8 py-6">
-                          <select 
-                            value={u.role}
-                            onChange={(e) => handleChangeUserRole(u.id, e.target.value)}
-                            className="bg-muted border border-border rounded-lg px-3 py-1 text-[10px] font-black uppercase outline-none"
-                          >
-                            <option value="employee">Employé</option>
-                            <option value="admin">Administrateur (SE/DSI)</option>
-                          </select>
-                        </td>
-                        <td className="px-8 py-6">
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                            u.is_approved ? 'bg-green-500/10 text-green-500' : 'bg-red/10 text-red'
-                          }`}>
-                            {u.is_approved ? 'Approuvé' : 'En attente'}
-                          </span>
-                        </td>
-                        <td className="px-8 py-6 text-right space-x-2">
-                          {u.role !== 'admin' && (
-                            <>
-                              {u.is_approved ? (
-                                <button 
-                                  onClick={() => handleApproveUser(u.id, false)}
-                                  className="px-4 py-2 bg-red/10 text-red rounded-xl text-[10px] font-black uppercase hover:bg-red hover:text-white transition-all"
-                                >
-                                  Révoquer
-                                </button>
-                              ) : (
-                                <button 
-                                  onClick={() => handleApproveUser(u.id, true)}
-                                  className="px-4 py-2 bg-green-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-green-500/20 hover:scale-105 transition-all"
-                                >
-                                  Approuver
-                                </button>
-                              )}
-                              <button 
-                                onClick={() => handleDeleteUser(u.id)}
-                                className="p-2 text-red hover:bg-red/5 rounded-xl transition-all"
-                                title="Supprimer définitivement"
-                              >
-                                <Trash2 className="w-5 h-5" />
-                              </button>
-                            </>
-                          )}
-                          {u.role === 'admin' && (
-                            <span className="text-[10px] font-black text-primary uppercase tracking-widest px-4">Admin Principal</span>
-                          )}
-                        </td>
+            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+              {/* Sous-section : Agents en attente de validation */}
+              {(() => {
+                const pending = users.filter((u: any) => !u.is_approved && !u.deleted_at);
+                return pending.length > 0 ? (
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-2 h-6 bg-amber-500 rounded-full" />
+                      <h3 className="font-black text-ink uppercase tracking-tight text-lg">En attente de validation</h3>
+                      <span className="px-3 py-1 bg-amber-100 text-amber-600 text-[10px] font-black rounded-full uppercase">{pending.length}</span>
+                    </div>
+                    <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-3xl overflow-hidden">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="bg-amber-100/60 dark:bg-amber-900/20 text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400">
+                            <th className="px-6 py-4">Agent</th>
+                            <th className="px-6 py-4">Email</th>
+                            <th className="px-6 py-4">Date d'inscription</th>
+                            <th className="px-6 py-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-amber-100 dark:divide-amber-900/30">
+                          {pending.map((u: any) => (
+                            <tr key={u.id} className="hover:bg-amber-100/30 transition-all">
+                              <td className="px-6 py-5">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-amber-200 text-amber-700 rounded-2xl flex items-center justify-center font-black text-sm">
+                                    {(u.first_name?.[0] || '') + (u.last_name?.[0] || '')}
+                                  </div>
+                                  <p className="font-bold text-ink">{u.first_name} {u.last_name}</p>
+                                </div>
+                              </td>
+                              <td className="px-6 py-5 text-xs text-ink/60">{u.email}</td>
+                              <td className="px-6 py-5 text-xs text-ink/40">
+                                {u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                              </td>
+                              <td className="px-6 py-5 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={() => handleApproveUser(u.id, true)}
+                                    className="flex items-center gap-1 px-4 py-2 bg-green-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-green-500/20 hover:bg-green-600 transition-all"
+                                  >
+                                    <CheckCircle className="w-3.5 h-3.5" /> Valider
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteUser(u.id)}
+                                    className="flex items-center gap-1 px-4 py-2 bg-red/10 text-red rounded-xl text-[10px] font-black uppercase hover:bg-red hover:text-white transition-all"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" /> Rejeter
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Sous-section : Tous les agents actifs */}
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-6 bg-primary rounded-full" />
+                    <h3 className="font-black text-ink uppercase tracking-tight text-lg">Agents de la mairie</h3>
+                  </div>
+                  
+                  {/* Barre de recherche */}
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink/40" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher par nom ou email..."
+                      className="w-full sm:w-64 bg-muted/50 border border-border rounded-xl py-2 pl-10 pr-4 outline-none focus:border-primary transition-all text-sm font-medium"
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-xl">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-muted text-[10px] font-black uppercase tracking-[0.2em] text-ink/40">
+                        <th className="px-8 py-6">Utilisateur</th>
+                        <th className="px-8 py-6">Rôle</th>
+                        <th className="px-8 py-6">Statut</th>
+                        <th className="px-8 py-6 text-right">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {users.filter((u: any) => !u.deleted_at).filter((u: any) => (u.first_name + ' ' + u.last_name + ' ' + u.email).toLowerCase().includes(userSearch.toLowerCase())).map((u: any) => (
+                        <tr key={u.id} className="hover:bg-muted/30 transition-all">
+                          <td className="px-8 py-6">
+                            <p className="font-bold text-ink">{u.first_name} {u.last_name}</p>
+                            <p className="text-xs text-ink/40">{u.email}</p>
+                          </td>
+                          <td className="px-8 py-6">
+                            <select
+                              value={u.role}
+                              onChange={(e) => handleChangeUserRole(u.id, e.target.value)}
+                              className="bg-muted border border-border rounded-lg px-3 py-1 text-[10px] font-black uppercase outline-none"
+                              disabled={u.role === 'admin'}
+                            >
+                              <option value="agent">Agent Municipal</option>
+                              <option value="admin">Administrateur (SE/DSI)</option>
+                            </select>
+                          </td>
+                          <td className="px-8 py-6">
+                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                              u.is_approved ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-600'
+                            }`}>
+                              {u.is_approved ? 'Actif' : 'En attente'}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6 text-right space-x-2">
+                            {u.role !== 'admin' && (
+                              <>
+                                {u.is_approved ? (
+                                  <button
+                                    onClick={() => handleApproveUser(u.id, false)}
+                                    className="px-4 py-2 bg-red/10 text-red rounded-xl text-[10px] font-black uppercase hover:bg-red hover:text-white transition-all"
+                                  >
+                                    Révoquer
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleApproveUser(u.id, true)}
+                                    className="px-4 py-2 bg-green-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-green-500/20 hover:scale-105 transition-all"
+                                  >
+                                    Valider
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteUser(u.id)}
+                                  className="p-2 text-red hover:bg-red/5 rounded-xl transition-all"
+                                  title="Révoquer définitivement"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </>
+                            )}
+                            {u.role === 'admin' && (
+                              <span className="text-[10px] font-black text-primary uppercase tracking-widest px-4">Admin Principal</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {users.filter((u: any) => !u.deleted_at).length === 0 && (
+                        <tr><td colSpan={4} className="px-8 py-12 text-center text-ink/40 font-bold">Aucun utilisateur pour cette mairie.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -1487,45 +1580,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'audit' && userRole === 'admin' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-xl">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-muted text-[10px] font-black uppercase tracking-[0.2em] text-ink/40">
-                      <th className="px-8 py-6">Date & Heure</th>
-                      <th className="px-8 py-6">Agent</th>
-                      <th className="px-8 py-6">Action</th>
-                      <th className="px-8 py-6">Module</th>
-                      <th className="px-8 py-6">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {auditLogs.map((log: any) => (
-                      <tr key={log.id} className="hover:bg-muted/30 transition-all text-xs">
-                        <td className="px-8 py-4 font-medium text-ink/40">
-                          {new Date(log.timestamp).toLocaleString()}
-                        </td>
-                        <td className="px-8 py-4 font-bold text-ink">
-                          {log.user_name}
-                        </td>
-                        <td className="px-8 py-4">
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
-                            log.action_type === 'CREATE' ? 'bg-green-500/10 text-green-500' :
-                            log.action_type === 'DELETE' ? 'bg-red/10 text-red' :
-                            log.action_type === 'UPDATE' ? 'bg-blue-500/10 text-blue-500' :
-                            'bg-muted text-ink/40'
-                          }`}>
-                            {log.action_type}
-                          </span>
-                        </td>
-                        <td className="px-8 py-4 font-bold text-primary uppercase tracking-widest text-[9px]">
-                          {log.module_name}
-                        </td>
-                        <td className="px-8 py-4 text-ink/60 italic">
-                          {log.description}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-muted text-[10px] font-black uppercase tracking-[0.2em] text-ink/40">
+                        <th className="px-6 py-5">Date &amp; Heure</th>
+                        <th className="px-6 py-5">Action</th>
+                        <th className="px-6 py-5">Entité</th>
+                        <th className="px-6 py-5">Description</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {auditLogs.length === 0 && (
+                        <tr><td colSpan={4} className="px-8 py-12 text-center text-ink/40 font-bold">Aucune action enregistrée.</td></tr>
+                      )}
+                      {auditLogs.map((log: any) => (
+                        <tr key={log.id} className="hover:bg-muted/30 transition-all text-xs">
+                          <td className="px-6 py-4 font-medium text-ink/40 whitespace-nowrap">
+                            {log.created_at ? new Date(log.created_at).toLocaleString('fr-FR') : '—'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                              log.action === 'CREATE' ? 'bg-green-500/10 text-green-500' :
+                              log.action === 'DELETE' ? 'bg-red/10 text-red' :
+                              log.action === 'UPDATE' ? 'bg-blue-500/10 text-blue-500' :
+                              log.action === 'APPROVE' || log.action === 'APPROVE_ADMIN' ? 'bg-emerald-500/10 text-emerald-500' :
+                              log.action === 'LOGIN_ADMIN' ? 'bg-primary/10 text-primary' :
+                              'bg-muted text-ink/40'
+                            }`}>
+                              {log.action}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 font-bold text-primary uppercase tracking-widest text-[9px]">
+                            {log.entity}
+                          </td>
+                          <td className="px-6 py-4 text-ink/60">
+                            {log.description}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}

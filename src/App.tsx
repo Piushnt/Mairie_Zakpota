@@ -115,6 +115,7 @@ import PageFormulaires from './pages/PageFormulaires';
 import FloatingAIAssistant from './components/FloatingAIAssistant';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import PagePending from './pages/PagePending';
 import PushPrompt from './components/PushPrompt';
 import { parseImageUrl } from './utils/imageParser';
 
@@ -482,8 +483,42 @@ export default function App() {
         <LazyMotion features={domMax}>
           <ScrollToTop />
           <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={
+            session && isProfileLoaded
+              ? <Navigate to={userRole === 'super_admin' ? '/saas-superadmin-portal' : '/admin-portal'} replace />
+              : <Login />
+          } />
+          <Route path="/register" element={
+            session && isProfileLoaded && isApproved
+              ? <Navigate to="/admin-portal" replace />
+              : <Register />
+          } />
+          <Route path="/pending" element={
+            session && isProfileLoaded && !isApproved && userRole !== 'super_admin'
+              ? <PagePending userName={userName} userRole={userRole as 'admin' | 'agent'} />
+              : <Navigate to="/" replace />
+          } />
+
+          {/* Route dédiée Super Admin — URL non publiée, accès direct */}
+          <Route path="/saas-superadmin-portal" element={
+            !isProfileLoaded ? (
+              <div className="min-h-screen flex items-center justify-center bg-muted">
+                <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+              </div>
+            ) : session && userRole === 'super_admin' ? (
+              <SuperAdminDashboard
+                onExit={() => window.location.href = '/'}
+                userName={userName}
+                isDarkMode={isDarkMode}
+                toggleDarkMode={toggleDarkMode}
+              />
+            ) : (
+              // Accès interdit : redirige vers login sans révéler l'existence de la route
+              <Navigate to="/login" replace />
+            )
+          } />
+
+          {/* Route Admin/Agent — Plus accessible au super_admin */}
           <Route path="/admin-portal" element={
             !isProfileLoaded ? (
               <div className="min-h-screen flex items-center justify-center bg-muted">
@@ -491,12 +526,8 @@ export default function App() {
               </div>
             ) : session ? (
               userRole === 'super_admin' ? (
-                <SuperAdminDashboard
-                  onExit={() => window.location.href = '/'}
-                  userName={userName}
-                  isDarkMode={isDarkMode}
-                  toggleDarkMode={toggleDarkMode}
-                />
+                // Super admin ne passe jamais par ici
+                <Navigate to="/saas-superadmin-portal" replace />
               ) : isApproved ? (
                 <AdminDashboard
                   store={store}
@@ -510,26 +541,8 @@ export default function App() {
                   tenantId={currentTenant?.id || ''}
                 />
               ) : (
-                <div className="min-h-screen bg-muted flex items-center justify-center p-4">
-                  <div className="bg-card p-8 rounded-[32px] shadow-2xl border border-border max-w-md w-full text-center space-y-6">
-                    <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto text-primary">
-                      <Clock className="w-10 h-10" />
-                    </div>
-                    <h2 className="text-2xl font-black text-ink uppercase tracking-tighter">Accès en Attente</h2>
-                    <p className="text-ink/60 text-sm font-medium leading-relaxed">
-                      Bonjour <strong>{userName}</strong>. Votre compte est actuellement en attente d'approbation par le Secrétaire Exécutif. <br/><br/>Vous recevrez l'accès dès que votre identité sera confirmée.
-                    </p>
-                    <button 
-                      onClick={async () => {
-                        await supabase.auth.signOut();
-                        window.location.href = '/';
-                      }}
-                      className="w-full bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs"
-                    >
-                      Retour au site
-                    </button>
-                  </div>
-                </div>
+                // Compte non approuvé → page dédiée
+                <Navigate to="/pending" replace />
               )
             ) : (
               <Login />

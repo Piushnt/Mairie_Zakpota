@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
   last_name TEXT,
   role TEXT DEFAULT 'agent' CHECK (role IN ('super_admin', 'admin', 'agent')),
   is_approved BOOLEAN DEFAULT false,
+  rejection_reason TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ NULL,
@@ -447,7 +448,19 @@ BEGIN
   v_role := COALESCE(NEW.raw_user_meta_data->>'role', 'agent');
   v_provided_pin := NEW.raw_user_meta_data->>'admin_pin';
 
-  IF v_tenant_id IS NOT NULL THEN
+  IF v_tenant_id IS NULL THEN
+    -- Création manuelle via Supabase UI (pas de metadata de tenant)
+    -- Si aucun super_admin n'existe encore, on le déclare Super Admin et on l'approuve direct.
+    IF NOT EXISTS (SELECT 1 FROM public.user_profiles WHERE role = 'super_admin') THEN
+      v_role := 'super_admin';
+      v_is_approved := true;
+    ELSE
+      -- Si un super_admin existe déjà, tout nouveau compte manuel sans tenant est un agent bloqué.
+      v_role := 'agent';
+      v_is_approved := false;
+    END IF;
+  ELSE
+    -- Création classique via le Frontend (avec un tenant_id)
     -- Si l'utilisateur prétend être Admin, on vérifie son PIN fourni
     IF v_role = 'admin' AND v_provided_pin IS NOT NULL THEN
       SELECT admin_pin_hash INTO v_real_pin_hash FROM public.tenants WHERE id = v_tenant_id;
@@ -455,7 +468,8 @@ BEGIN
       -- SÉCURITÉ : Vérification bcrypt du mot de passe / pin sans déclencher invalid salt
       IF v_real_pin_hash IS NOT NULL AND v_real_pin_hash = crypt(v_provided_pin, v_real_pin_hash) THEN
         v_role := 'admin';
-        v_is_approved := true; -- Validé automatiquement !
+        -- PIN correct = rôle admin accordé, MAIS validation manuelle super_admin OBLIGATOIRE
+        v_is_approved := false;
       ELSE
         -- Hack ou Pin faux, on le force en simple agent non approuvé
         v_role := 'agent';
@@ -519,6 +533,39 @@ BEGIN
   VALUES (p_tenant_id, auth.uid(), 'LOGIN_ADMIN', 'auth', 'Connexion au dashboard sécurisé réussie.');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- RPC : Modification sécurisée du PIN admin d'une mairie (Super Admin uniquement)
+CREATE OR REPLACE FUNCTION public.update_tenant_pin(
+  p_tenant_id UUID,
+  p_new_pin TEXT
+) RETURNS VOID AS $$
+DECLARE
+  v_hash TEXT;
+BEGIN
+  -- Restriction Super Admin (ou SQL Editor)
+  IF current_setting('request.jwt.claims', true) IS NOT NULL THEN
+    IF (auth.jwt()->>'role') IS DISTINCT FROM 'super_admin' THEN
+      RAISE EXCEPTION 'Access Denied: Seul un super_admin peut modifier le PIN.';
+    END IF;
+  END IF;
+
+  IF length(p_new_pin) < 4 THEN
+    RAISE EXCEPTION 'Le PIN doit contenir au moins 4 caractères.';
+  END IF;
+
+  v_hash := crypt(p_new_pin, gen_salt('bf', 8));
+
+  UPDATE public.tenants
+  SET admin_pin_hash = v_hash, updated_at = NOW()
+  WHERE id = p_tenant_id;
+
+  -- Audit du changement de PIN
+  INSERT INTO public.audit_logs (tenant_id, user_id, action, entity, entity_id, description)
+  VALUES (p_tenant_id, auth.uid(), 'UPDATE_PIN', 'tenants', p_tenant_id, 'Code PIN admin modifié par le Super Admin.');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.update_tenant_pin TO authenticated;
 
 
 -- ==========================================================

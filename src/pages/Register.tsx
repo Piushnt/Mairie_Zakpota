@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, Loader2, ArrowLeft, User } from 'lucide-react';
+import { Lock, Mail, Loader2, ArrowLeft, User, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTenant } from '../lib/TenantContext';
 
@@ -18,10 +18,62 @@ export default function Register() {
   const navigate = useNavigate();
 
   const { currentTenant } = useTenant();
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('register_attempts');
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.attempts >= 3) {
+        const now = new Date().getTime();
+        const diff = now - data.time;
+        const waitTime = 15 * 60 * 1000; // 15 mins
+        if (diff < waitTime) {
+          setCooldown(Math.ceil((waitTime - diff) / 1000));
+        } else {
+          localStorage.removeItem('register_attempts');
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (cooldown > 0) {
+      timer = setInterval(() => setCooldown(c => c - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTenant) return;
+    if (cooldown > 0) {
+       setError(`Veuillez patienter ${Math.floor(cooldown / 60)}m ${cooldown % 60}s.`);
+       return;
+    }
+    if (!currentTenant) {
+      setError("Impossible de déterminer la mairie. Veuillez accéder via l'URL officielle de votre mairie.");
+      return;
+    }
+
+    const stored = localStorage.getItem('register_attempts');
+    let attempts = 1;
+    const nowTime = new Date().getTime();
+    if (stored) {
+      const data = JSON.parse(stored);
+      // Reset after 1 hour anyway
+      if (nowTime - data.time < 60 * 60 * 1000) {
+        attempts = data.attempts + 1;
+      }
+    }
+    localStorage.setItem('register_attempts', JSON.stringify({ attempts, time: nowTime }));
+
+    if (attempts >= 4) {
+      setCooldown(15 * 60);
+      setError("Trop de tentatives. Veuillez patienter 15 minutes.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -76,20 +128,20 @@ export default function Register() {
 
           {success ? (
             <div className="p-8 text-center space-y-4">
-              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8" />
+              <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-8 h-8" />
               </div>
               <h2 className="text-xl font-black text-ink">
-                {role === 'admin' ? "Compte Administrateur Actif" : "Demande Envoyée"}
+                Demande Soumise avec Succès
               </h2>
               <p className="text-ink-muted text-sm font-medium">
-                {role === 'admin' 
-                  ? "Votre compte a été authentifié avec succès en tant que Secrétaire Exécutif et validé grâce au PIN de sécurité."
-                  : "Votre compte a été créé avec succès. Il est actuellement en attente d'approbation par le Secrétaire Exécutif (SE)."
+                {role === 'admin'
+                  ? "Votre candidature en tant que Responsable DSI/SE a été enregistrée. L'équipe GovTech SaaS va examiner et valider votre compte. Vous serez notifié dès approbation."
+                  : "Votre compte a été créé. Il est en attente d'approbation par le Responsable DSI de votre mairie. Vous pouvez vous connecter et vérifier régulièrement l'état de votre accès."
                 }
               </p>
               <Link to="/login" className="block mt-6 bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl">
-                Retour à la connexion
+                Se connecter / Vérifier l'accès
               </Link>
             </div>
           ) : (
@@ -196,10 +248,14 @@ export default function Register() {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-primary text-white rounded-2xl py-4 font-black uppercase tracking-widest text-xs hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 flex items-center justify-center space-x-2 disabled:opacity-50"
+                disabled={loading || cooldown > 0}
+                className={`w-full text-white rounded-2xl py-4 font-black uppercase tracking-widest text-xs transition-all shadow-xl flex items-center justify-center space-x-2 
+                  ${cooldown > 0 ? 'bg-slate-400 cursor-not-allowed shadow-none' : 'bg-primary hover:bg-primary/90 shadow-primary/20'}
+                `}
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>S'inscrire</span>}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 
+                 cooldown > 0 ? <span>⏳ Attendre {Math.floor(cooldown / 60)}m {cooldown % 60}s</span> :
+                 <span>S'inscrire</span>}
               </button>
 
               <div className="text-center mt-4">

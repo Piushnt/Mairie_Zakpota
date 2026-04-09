@@ -17,15 +17,25 @@ export default function Login() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      
-      // Verification logic is handled in App.tsx via useEffect on session change
-      navigate('/admin-portal');
+
+      // Lecture du rôle pour redirection intelligente
+      if (authData.user) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('id', authData.user.id)
+          .maybeSingle();
+
+        if (profile?.role === 'super_admin') {
+          navigate('/saas-superadmin-portal');
+        } else {
+          navigate('/admin-portal');
+        }
+      } else {
+        navigate('/admin-portal');
+      }
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la connexion. Vérifiez vos identifiants.');
     } finally {
