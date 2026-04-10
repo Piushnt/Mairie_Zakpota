@@ -372,9 +372,10 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Exécution automatique du Soft Delete pour tables critiques
+-- NOTE: 'dossiers' est exclu car sa PK est 'code' (TEXT), pas 'id' (UUID)
 DO $$ 
 DECLARE
-  tables text[] := ARRAY['user_profiles', 'dossiers', 'audiences', 'appointments', 'reservations_stade', 'opportunites', 'news', 'agenda_events'];
+  tables text[] := ARRAY['user_profiles', 'audiences', 'appointments', 'reservations_stade', 'opportunites', 'news', 'agenda_events'];
   t text;
 BEGIN
   FOREACH t IN ARRAY tables LOOP
@@ -386,6 +387,20 @@ BEGIN
     ', t);
   END LOOP;
 END $$;
+
+-- Soft Delete manuel pour dossiers (PK = code TEXT)
+CREATE OR REPLACE FUNCTION public.soft_delete_dossier()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.dossiers SET deleted_at = NOW() WHERE code = OLD.code;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS tr_dossiers_soft_delete ON public.dossiers;
+CREATE TRIGGER tr_dossiers_soft_delete
+  BEFORE DELETE ON public.dossiers
+  FOR EACH ROW EXECUTE PROCEDURE public.soft_delete_dossier();
 
 
 -- ==========================================================
@@ -713,12 +728,26 @@ WITH CHECK (
   OR (auth.jwt()->>'role' IN ('admin', 'super_admin') AND (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin'))
 );
 
--- Audiences / RDV : Agents creent pour leur tenant, Admins lisent tout le tenant
+-- Audiences / RDV : Lecture par agents du tenant, admin, super_admin
 DROP POLICY IF EXISTS "Tenant audiences" ON public.audiences;
 CREATE POLICY "Tenant audiences" ON public.audiences
-FOR ALL TO authenticated
+FOR SELECT TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin');
+
+-- Ecriture audiences par agents authentifiés du même tenant
+DROP POLICY IF EXISTS "Tenant Write audiences" ON public.audiences;
+CREATE POLICY "Tenant Write audiences" ON public.audiences
+FOR UPDATE TO authenticated
 USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
 WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- INSERT public par citoyens anonymes : le tenant_id doit être réel (sous-requête de validation)
+DROP POLICY IF EXISTS "Public Insert audiences" ON public.audiences;
+CREATE POLICY "Public Insert audiences" ON public.audiences
+FOR INSERT WITH CHECK (
+  tenant_id IS NOT NULL
+  AND EXISTS (SELECT 1 FROM public.tenants WHERE id = tenant_id AND is_active = true)
+);
 
 -- Dossiers / Approbations : Inscription publique possible
 DROP POLICY IF EXISTS "Public Insert Dossiers" ON public.dossiers;
@@ -807,7 +836,11 @@ FOR ALL TO authenticated
 USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
 WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 
--- site_config
+-- site_config : Lecture publique (flashNews, config marché, etc.) + écriture admin
+DROP POLICY IF EXISTS "Public Read site_config" ON public.site_config;
+CREATE POLICY "Public Read site_config" ON public.site_config
+FOR SELECT USING (true);
+
 DROP POLICY IF EXISTS "Admin Manage site_config" ON public.site_config;
 CREATE POLICY "Admin Manage site_config" ON public.site_config
 FOR ALL TO authenticated
@@ -832,14 +865,10 @@ FOR ALL TO authenticated
 USING (auth.jwt()->>'role' = 'super_admin')
 WITH CHECK (auth.jwt()->>'role' = 'super_admin');
 
--- Lecture des tenant_features : super_admin + le tenant lui-même
-DROP POLICY IF EXISTS "Read tenant_features" ON public.tenant_features;
-CREATE POLICY "Read tenant_features" ON public.tenant_features
-FOR SELECT TO authenticated
-USING (
-  tenant_id = (auth.jwt()->>'tenant_id')::uuid
-  OR auth.jwt()->>'role' = 'super_admin'
-);
+-- Lecture des tenant_features : PUBLIQUE (necessite pour résolution features par anon)
+DROP POLICY IF EXISTS "Public Read tenant_features" ON public.tenant_features;
+CREATE POLICY "Public Read tenant_features" ON public.tenant_features
+FOR SELECT USING (true);
 
 -- Modification tenant_features : super_admin uniquement
 DROP POLICY IF EXISTS "SuperAdmin Manage tenant_features" ON public.tenant_features;
@@ -898,12 +927,155 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON public.audit_logs(tenant_id)
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
 
 -- ==========================================================
+-- SECTION 13 : RLS PUBLIQUES MANQUANTES (CORRECTIF)
+-- ==========================================================
+
+-- services_tarifs : lecture publique (utilisé par la page Accueil/Services)
+DROP POLICY IF EXISTS "Public Read services_tarifs" ON public.services_tarifs;
+CREATE POLICY "Public Read services_tarifs" ON public.services_tarifs
+FOR SELECT USING (deleted_at IS NULL);
+
+DROP POLICY IF EXISTS "Admin Write services_tarifs" ON public.services_tarifs;
+CREATE POLICY "Admin Write services_tarifs" ON public.services_tarifs
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- locations : lecture publique (carte interactive)
+DROP POLICY IF EXISTS "Public Read locations" ON public.locations;
+CREATE POLICY "Public Read locations" ON public.locations
+FOR SELECT USING (deleted_at IS NULL);
+
+DROP POLICY IF EXISTS "Admin Write locations" ON public.locations;
+CREATE POLICY "Admin Write locations" ON public.locations
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- tax_settings : lecture publique (simulateur fiscal)
+DROP POLICY IF EXISTS "Public Read tax_settings" ON public.tax_settings;
+CREATE POLICY "Public Read tax_settings" ON public.tax_settings
+FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Admin Write tax_settings" ON public.tax_settings;
+CREATE POLICY "Admin Write tax_settings" ON public.tax_settings
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- arrondissements : lecture publique
+DROP POLICY IF EXISTS "Public Read arrondissements" ON public.arrondissements;
+CREATE POLICY "Public Read arrondissements" ON public.arrondissements
+FOR SELECT USING (deleted_at IS NULL);
+
+DROP POLICY IF EXISTS "Admin Write arrondissements" ON public.arrondissements;
+CREATE POLICY "Admin Write arrondissements" ON public.arrondissements
+FOR ALL TO authenticated
+USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid OR auth.jwt()->>'role' = 'super_admin')
+WITH CHECK (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+
+-- reservations_stade : INSERT public validé par tenant existant
+DROP POLICY IF EXISTS "Public Insert reservations_stade" ON public.reservations_stade;
+CREATE POLICY "Public Insert reservations_stade" ON public.reservations_stade
+FOR INSERT WITH CHECK (
+  tenant_id IS NOT NULL
+  AND EXISTS (SELECT 1 FROM public.tenants WHERE id = tenant_id AND is_active = true)
+);
+
+-- dossiers : INSERT public validé par tenant existant
+DROP POLICY IF EXISTS "Public Insert Dossiers" ON public.dossiers;
+CREATE POLICY "Public Insert Dossiers" ON public.dossiers
+FOR INSERT WITH CHECK (
+  tenant_id IS NOT NULL
+  AND EXISTS (SELECT 1 FROM public.tenants WHERE id = tenant_id AND is_active = true)
+);
+
+-- user_subscriptions : INSERT public pour push notifications
+DROP POLICY IF EXISTS "Public Insert user_subscriptions" ON public.user_subscriptions;
+CREATE POLICY "Public Insert user_subscriptions" ON public.user_subscriptions
+FOR INSERT WITH CHECK (
+  tenant_id IS NOT NULL
+  AND EXISTS (SELECT 1 FROM public.tenants WHERE id = tenant_id AND is_active = true)
+);
+
+-- ==========================================================
+-- SECTION 14 : BOOTSTRAP DONNÉES INITIALES (ZAKPOTA)
+-- ==========================================================
+-- Ce bloc crée le tenant initial pour que l'application
+-- soit utilisable immédiatement sans configuration manuelle.
+-- IDEMPOTENT : safe à ré-exécuter grace aux ON CONFLICT.
+
+DO $$
+DECLARE
+  v_tenant_id UUID;
+  v_pin_hash TEXT;
+BEGIN
+  -- PIN par défaut : ZAK2024-ADMIN (à changer dans le dashboard)
+  v_pin_hash := crypt('ZAK2024-ADMIN', gen_salt('bf', 8));
+
+  -- Créer ou ignorer le tenant Zakpota
+  INSERT INTO public.tenants (
+    name, subdomain, domain, contact_email, contact_phone,
+    logo_url, slogan, primary_color, admin_pin_hash, is_active
+  ) VALUES (
+    'Mairie de Za-Kpota',
+    'zakpota',
+    NULL,
+    'contact@mairie-zakpota.bj',
+    '+229 XX XX XX XX',
+    NULL,
+    'Ensemble, bâtissons Za-Kpota',
+    '#006633',
+    v_pin_hash,
+    true
+  )
+  ON CONFLICT (subdomain) DO UPDATE SET
+    name = EXCLUDED.name,
+    is_active = true
+  RETURNING id INTO v_tenant_id;
+
+  -- Si tenant existait dejà (conflit), récupérer son id
+  IF v_tenant_id IS NULL THEN
+    SELECT id INTO v_tenant_id FROM public.tenants WHERE subdomain = 'zakpota';
+  END IF;
+
+  -- Activer tous les modules pour ce tenant
+  INSERT INTO public.tenant_features (tenant_id, feature_id, is_enabled)
+  SELECT v_tenant_id, f.id, true
+  FROM public.features f
+  ON CONFLICT (tenant_id, feature_id) DO UPDATE SET is_enabled = true;
+
+  -- Configuration initiale du site
+  INSERT INTO public.site_config (tenant_id, key, value) VALUES
+    (v_tenant_id, 'flash_news', '"Bienvenue sur le Portail Officiel de Za-Kpota ! 🏛️"'),
+    (v_tenant_id, 'market_config', '{"nom": "Grand Marché de Zakpota", "jours": ["Mercredi", "Samedi"], "description": "Marché hebdomadaire de la commune"}')
+  ON CONFLICT (tenant_id, key) DO NOTHING;
+
+END $$;
+
+
+-- ==========================================================
 -- ✅ FIN DU SCRIPT — BASE IMMÉDIATEMENT OPÉRATIONNELLE
 -- ==========================================================
--- Après exécution, la base est 100% fonctionnelle pour production SaaS.
--- Étapes post-exécution :
---   1. Aller dans Supabase Auth > Hooks > Activer custom_access_token_hook
---   2. Créer un compte via /register
---   3. Exécuter : UPDATE user_profiles SET role='super_admin', is_approved=true, tenant_id=NULL WHERE email='votre@email.bj';
---   4. Accéder à /admin-portal pour le Dashboard GovTech SaaS
--- ==========================================================
+--
+-- ⚠️  ACTION MANUELLE OBLIGATOIRE APRÈS EXÉCUTION :
+-- ================================================================
+-- 1. Supabase Dashboard → Authentication → Hooks
+--    → Add new hook : type = "HTTP" ou "Postgres Function"
+--    → Choisir : custom_access_token_hook
+--    → Cela injecte role + tenant_id dans chaque JWT
+--    → SANS ÇA : toutes les politiques RLS basées sur auth.jwt() échouent
+-- ================================================================
+-- 2. Créer le Super Admin :
+--    → Supabase Dashboard → Authentication → Users → Add User
+--    → Email : votre@email.bj | Password : mot_de_passe_fort
+--    → Désactiver la vérification email (Email Confirm = OFF)
+--    → Le trigger handle_new_user détecte l'absence de tenant_id
+--       et le premier compte devient automatiquement super_admin
+-- ================================================================
+-- 3. Se connecter sur : https://egouvsaas.vercel.app/login
+--    → Vous serez redirigé vers /saas-superadmin-portal
+-- ================================================================
+-- 4. PIN Admin Zakpota par défaut : ZAK2024-ADMIN
+--    (À changer immédiatement dans le Dashboard Super Admin)
+-- ================================================================

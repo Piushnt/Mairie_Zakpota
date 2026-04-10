@@ -1,0 +1,294 @@
+# ✅ VALIDATION + CORRECTION CONTRÔLÉE – PHASE 2
+
+---
+
+# 🎯 VALIDATION
+
+Le rapport d’audit est globalement validé.
+
+Tu peux procéder aux corrections.
+
+---
+
+# ⚠️ EXIGENCES SUPPLÉMENTAIRES (CRITIQUES)
+
+Avant de commencer, tu dois respecter STRICTEMENT les points suivants :
+
+---
+
+# 🔐 1. SÉCURITÉ RLS (OBLIGATOIRE)
+
+### ❌ Interdiction absolue :
+
+NE JAMAIS utiliser :
+
+WITH CHECK (true)
+
+---
+
+### ✅ Pour les inserts publics (anon)
+
+Tu dois :
+
+* forcer tenant_id valide
+* empêcher injection arbitraire
+
+### Exemple attendu :
+
+WITH CHECK (
+tenant_id IS NOT NULL
+)
+
+---
+
+### BONUS (si possible) :
+
+Valider que tenant_id existe dans tenants
+
+---
+
+# 🧠 2. DOUBLE SÉCURITÉ
+
+Ne jamais te reposer uniquement sur RLS.
+
+Pour chaque action critique :
+
+* validation logique côté code
+* * validation RLS côté DB
+
+---
+
+# 🔑 3. JWT HOOK (CRITIQUE)
+
+Tu dois :
+
+* vérifier que le custom_access_token_hook fonctionne réellement
+* vérifier que :
+  auth.jwt()->>'tenant_id'
+  auth.jwt()->>'role'
+  sont bien injectés
+
+---
+
+# 🧩 4. COHÉRENCE TOTALE
+
+Tu dois vérifier :
+
+* user_profiles ↔ auth.users
+* tenant_id toujours cohérent
+* create_tenant_with_setup fonctionne réellement
+
+---
+
+# 🧾 5. BOOTSTRAP COMPLET (OBLIGATOIRE)
+
+À la fin du script SQL :
+
+Tu dois créer :
+
+### 1. Une mairie par défaut :
+
+* nom : Zakpota
+* subdomain : zakpota
+
+### 2. Un admin :
+
+* role : admin
+* status : active
+
+### 3. Features activées
+
+### 4. site_config rempli
+
+---
+
+### 🎯 Objectif :
+
+Après exécution du SQL :
+
+* le SaaS fonctionne immédiatement
+* aucun crash
+* aucune configuration manuelle
+
+---
+
+# ⚙️ 6. FRONTEND (CRITIQUE)
+
+Tu dois garantir :
+
+* aucun crash si tenant null
+* loading propre
+* gestion erreurs propre
+* reload automatique quand tenant arrive
+
+---
+
+# 🧪 7. VALIDATION FINALE
+
+Tu dois tester :
+
+* utilisateur anon
+* agent
+* admin
+* super admin
+
+---
+
+# 📦 OUTPUT ATTENDU
+
+Tu dois fournir :
+
+1. Code frontend corrigé
+2. Script SQL FINAL COMPLET
+3. Liste des corrections appliquées
+4. Validation finale (aucun bug critique restant)
+
+---
+
+# 🚨 RÈGLES ABSOLUES
+
+* aucune régression
+* aucune faille sécurité
+* aucun crash
+* code production-ready
+
+---
+
+# ▶️ INSTRUCTION
+
+Commence directement la PHASE 2 (corrections complètes).
+
+---
+# 🔴 PHASE CRITIQUE – BOOTSTRAP SUPER ADMIN (MODE GLOBAL)
+
+---
+
+# 🎯 OBJECTIF
+
+Permettre l’accès au dashboard Super Admin même si :
+
+* aucune mairie n’existe
+* aucun tenant n’est résolu
+* la base de données est vide
+
+---
+
+# 🧠 PRINCIPE
+
+Le Super Admin est un utilisateur GLOBAL :
+
+* il n’appartient à aucun tenant
+* son tenant_id = NULL
+* il bypass complètement le système multi-tenant
+
+---
+
+# ⚙️ FRONTEND – MODIFICATIONS
+
+### 1. Routes Super Admin
+
+Les routes suivantes doivent être accessibles sans tenant :
+
+* /saas-superadmin-portal
+* /login (si mode super admin)
+* /register (optionnel)
+
+---
+
+### 2. TenantContext
+
+Tu dois modifier le TenantContext :
+
+* NE PAS bloquer le rendu si route = super admin
+* NE PAS afficher "Mairie introuvable"
+
+---
+
+### 3. Condition critique
+
+if (isSuperAdminRoute) {
+return children; // bypass total
+}
+
+---
+
+### 4. App.tsx
+
+Toutes les fonctions dépendantes de currentTenant doivent :
+
+* être désactivées si mode super admin
+* ne jamais crasher si tenant = null
+
+---
+
+# 🔐 BACKEND / SQL
+
+---
+
+## 1. Super Admin global
+
+Créer un utilisateur avec :
+
+* role = 'super_admin'
+* tenant_id = NULL
+
+---
+
+## 2. RLS
+
+Adapter les policies :
+
+USING (
+tenant_id = (auth.jwt()->>'tenant_id')::uuid
+OR auth.jwt()->>'role' = 'super_admin'
+)
+
+---
+
+## 3. IMPORTANT
+
+Le super admin :
+
+* peut lire toutes les données
+* MAIS ne peut pas écrire directement via frontend
+
+👉 Toute écriture doit passer par RPC sécurisée
+
+---
+
+# 🧱 BOOTSTRAP MINIMAL (OBLIGATOIRE)
+
+Même si aucune mairie n’existe :
+
+* le super admin peut :
+
+  * se connecter
+  * accéder à son dashboard
+  * créer la première mairie
+
+---
+
+# 🧪 TESTS OBLIGATOIRES
+
+Tu dois valider :
+
+1. DB vide → accès super admin OK
+2. login super admin → OK
+3. accès dashboard → OK
+4. création première mairie → OK
+5. après création → tenant fonctionne
+
+---
+
+# 🚨 RÈGLE ABSOLUE
+
+Le système ne doit JAMAIS dépendre d’un tenant pour fonctionner.
+
+---
+
+# 🎯 RÉSULTAT ATTENDU
+
+Le SaaS fonctionne même dans un état "vide".
+
+---
+Prepare tout pour un deployement vercel

@@ -201,8 +201,14 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  // Fetch Data from Supabase
+  // Fetch Data from Supabase — se déclenche uniquement quand le tenant est résolu
   useEffect(() => {
+    // Guard : ne pas charger si le tenant n'est pas encore résolu
+    if (!currentTenant) {
+      setLoading(false);
+      return;
+    }
+
     async function loadData() {
       try {
         setLoading(true);
@@ -363,7 +369,7 @@ export default function App() {
     }
 
     loadData();
-  }, []);
+  }, [currentTenant?.id]); // Redéclencher si le tenant change
 
   // Service Worker removed to prevent stale cache on Vercel
 
@@ -424,6 +430,10 @@ export default function App() {
   };
 
   const handleAudienceSubmit = async (data: any) => {
+    if (!currentTenant) {
+      console.error('Impossible de soumettre : tenant non résolu');
+      return;
+    }
     const { error } = await supabase.from('audiences').insert([{
       tenant_id: currentTenant!.id,
       name: data.nom + (data.prenom ? ' ' + data.prenom : ''),
@@ -447,6 +457,10 @@ export default function App() {
   };
 
   const handleStadeReservation = async (data: any) => {
+    if (!currentTenant) {
+      console.error('Impossible de réserver : tenant non résolu');
+      return;
+    }
     const { error } = await supabase.from('reservations_stade').insert([{
       tenant_id: currentTenant!.id,
       nom: data.nom,

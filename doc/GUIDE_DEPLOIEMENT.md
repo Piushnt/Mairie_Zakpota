@@ -1,10 +1,10 @@
 # 🚀 Guide de Déploiement — GovTech SaaS (Vercel + Supabase)
 
-**Version :** 6.0 PRODUCTION | **Date :** Avril 2026
+**Version :** 7.0 PRODUCTION | **Date :** Avril 2026
 
 > [!IMPORTANT]
 > Ce guide est validé pour un déploiement **sans aucune erreur 400/406/500**.  
-> TypeScript : 0 erreur | Build : 0 erreur | Isolation : 100%
+> TypeScript : 0 erreur | Build : 0 erreur | Isolation multi-tenant : 100%
 
 ---
 
@@ -20,33 +20,38 @@
 
 ---
 
-## 2. Étape 1 — Initialiser la Base de Données Supabase
+## 2. Étape 1 — Base de Données Supabase
 
 ### 2.1 Créer le projet Supabase
 1. [app.supabase.com](https://app.supabase.com) → **New Project**
 2. Notez votre `Project URL` et `anon key` (Settings > API)
 
-### 2.2 Exécuter le script SQL (1 seule exécution)
+### 2.2 Exécuter le script SQL (1 seule fois)
 1. **SQL Editor** → **New Query**
 2. Copiez-collez **l'intégralité** du fichier `doc/sql/DATABASE_COMPLETE.sql`
-3. Cliquez **Run** ▶️
+3. Cliquez **Run ▶️**
 
-> [!IMPORTANT]
-> Le script est idempotent (`CREATE IF NOT EXISTS`, `ON CONFLICT DO NOTHING`).
-> Il crée 25 tables, 15 politiques RLS, 6 fonctions, 4 triggers, 16 index.
+> [!NOTE]
+> Le script est **idempotent** (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`).  
+> Il crée : 25 tables, 16+ politiques RLS, 7 fonctions, 6 triggers, 16 index.  
+> Il crée **automatiquement** le tenant **Zakpota** avec tous les modules activés.  
+> PIN Admin Zakpota par défaut : **`ZAK2024-ADMIN`** ← À changer dès connexion.
 
-### 2.3 Activer le Hook JWT (CRITIQUE)
-1. **Authentication > Hooks**
-2. Activer **"Custom Access Token"**
-3. Sélectionner : `public.custom_access_token_hook`
-4. **Save**
+### 2.3 Activer le Hook JWT 🔴 CRITIQUE
 
-> [!WARNING]
-> Sans ce Hook, les rôles et `tenant_id` ne seront PAS injectés dans le JWT.  
-> Conséquence : TOUTES les politiques RLS échoueront silencieusement = erreurs 400 partout.
+> [!CAUTION]
+> **Sans cette étape, toute l'application est cassée** (RLS ignorée, 400 partout).
 
-### 2.4 Désactiver la confirmation email (pour tests)
-1. **Authentication > Providers > Email** → "Confirm email" = **OFF**
+1. **Authentication → Hooks**
+2. Bouton **"Add a new hook"**
+3. Type : **"PostgreSQL Function"**
+4. Nom de la fonction : **`public.custom_access_token_hook`**
+5. Enregistrer → **Save**
+
+Cela injecte `role` + `tenant_id` dans chaque JWT Supabase.
+
+### 2.4 Désactiver la confirmation email (pour développement)
+1. **Authentication → Providers → Email** → **"Confirm email" = OFF**
 
 ---
 
@@ -62,7 +67,7 @@ VAPID_PRIVATE_KEY=On2Y6...
 ```
 
 ### Vercel (Production)
-Dans **Settings > Environment Variables** :
+Dans **Settings → Environment Variables** :
 
 | Clé | Scope |
 |-----|-------|
@@ -76,51 +81,56 @@ Dans **Settings > Environment Variables** :
 
 ## 4. Étape 3 — Déployer sur Vercel
 
-### Option A : CLI
+### Option A : CLI (recommandé)
 ```bash
 npm i -g vercel
 cd c:\Users\HNT\Desktop\MairieZakpota
-vercel          # Premier déploiement interactif
+vercel          # Premier déploiement interactif (choisir Vite)
 vercel --prod   # Production
 ```
 
 ### Option B : Interface Web
 1. [vercel.com/new](https://vercel.com/new) → Import Git repo
-2. Framework : **Vite**
-3. Build : `npm run build`
-4. Output : `dist`
-5. Variables d'environnement → renseigner
+2. Framework Preset : **Vite**
+3. Build Command : `npm run build`
+4. Output Directory : `dist`
+5. Variables d'environnement → renseigner (voir ci-dessus)
 6. **Deploy**
 
-### Configuration déjà en place
-- `vercel.json` : SPA rewrites + cache headers
-- `vite.config.ts` : code-splitting en 7 chunks (max 651 KB)
-- API Push : `/api/send-push` (Serverless Function)
+> [!NOTE]  
+> `vercel.json` est déjà configuré avec les rewrites SPA + headers de sécurité.
 
 ---
 
 ## 5. Étape 4 — Créer le Super Admin
 
-Après inscription sur `/register`, exécuter dans **SQL Editor** :
-```sql
-UPDATE public.user_profiles 
-SET role = 'super_admin', is_approved = true, tenant_id = NULL 
-WHERE email = 'votre@email.bj';
-```
+> [!IMPORTANT]  
+> Le Super Admin est créé **directement dans Supabase**, pas via le formulaire d'inscription.
 
-Se reconnecter → `/admin-portal` → **GovTech SaaS Dashboard** ✅
+1. **Supabase → Authentication → Users → Add User**
+2. Renseigner : `email`, `password`
+3. **Désactiver** la vérification email → **Create User**
+
+> ✅ Le trigger `handle_new_user` détecte automatiquement l'absence de `tenant_id`  
+> et attribue `role = super_admin` + `is_approved = true` au premier compte créé ainsi.
+
+4. Accéder à : `https://egouvsaas.vercel.app/login`
+5. Se connecter → Redirection automatique vers **`/saas-superadmin-portal`** ✅
 
 ---
 
-## 6. Étape 5 — Activer les Modules
+## 6. Étape 5 — Créer la Première Mairie
 
-Via SQL :
-```sql
-SELECT public.enable_all_features_for_tenant(
-  (SELECT id FROM public.tenants WHERE subdomain = 'zakpota')
-);
-```
-Ou via le **Dashboard Super Admin → Onglet "Modules"**.
+> [!NOTE]
+> Une mairie **Zakpota** est déjà créée par le script SQL avec tous ses modules.  
+> Mais vous pouvez en créer d'autres via le Dashboard Super Admin.
+
+Via le **Dashboard Super Admin → Bouton "Déployer"** :
+1. Nom officiel de la mairie
+2. Sous-domaine (ex: `cotonou` → `cotonou.egouv.bj`)
+3. Email de contact technique
+4. PIN administrateur (sécurisé, hashé en bcrypt)
+5. Cliquer **Déployer**
 
 ---
 
@@ -131,20 +141,35 @@ zakpota.egouv.bj  → CNAME → cname.vercel-dns.com
 cotonou.egouv.bj  → CNAME → cname.vercel-dns.com
 ```
 
-Vercel → **Settings > Domains** → ajouter chaque domaine.  
-Le `TenantContext` détecte automatiquement le sous-domaine.
+Vercel → **Settings → Domains** → ajouter chaque sous-domaine.  
+Le `TenantContext` résout automatiquement le tenant via le sous-domaine.
 
 ---
 
-## 8. Checklist Déploiement
+## 8. ✅ Checklist de Déploiement
 
-- [ ] Script SQL exécuté sans erreur
-- [ ] Hook JWT activé
-- [ ] Variables d'environnement sur Vercel
-- [ ] Super Admin créé
-- [ ] Modules activés pour le premier tenant
-- [ ] Test `/register` → inscription réussie
-- [ ] Test `/login` → `/admin-portal` réussi
-- [ ] Test désactivation module → page redirige vers `/`
-- [ ] Test insertion dossier/artisan/sondage dans AdminDashboard sans erreur
-- [ ] Test onglet Audit → logs visibles avec actions correctes
+```
+[ ] Script SQL exécuté sans erreur (aucune ligne rouge)
+[ ] Hook JWT custom_access_token_hook activé
+[ ] Variables d'environnement configurées sur Vercel
+[ ] Super Admin créé via Supabase UI (trigger auto)
+[ ] Connexion sur /login → redirigé vers /saas-superadmin-portal ✅
+[ ] Création première mairie dans le dashboard ✅
+[ ] Test /register avec PIN admin → inscription soumise ✅
+[ ] Test /login → /admin-portal (agent ou admin) ✅
+[ ] Test insertion RDV, contact (formulaires publics) ✅
+[ ] Test Audit Logs dans AdminDashboard ✅
+[ ] Test désactivation module → page redirige vers / ✅
+```
+
+---
+
+## 9. Troubleshooting
+
+| Erreur | Cause | Solution |
+|--------|-------|----------|
+| `406 Not Acceptable` | Politique RLS manquante | Re-exécuter tout le script SQL |
+| `JWT missing claims` | Hook JWT non activé | Section 2.3 de ce guide |
+| `Mairie introuvable 404` | Sous-domaine non trouvé en DB | Créer le tenant dans SuperAdminDashboard |
+| `/login` → `/pending` | trigger handle_new_user pas super_admin | Vérifier que c'est bien le 1er compte créé sans tenant |
+| Build écho | `VITE_*` env non configurées | Section 3 de ce guide |

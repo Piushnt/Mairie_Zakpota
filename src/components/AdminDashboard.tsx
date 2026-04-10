@@ -112,14 +112,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const fetchUsers = async () => {
+    // Sécurité : ne pas charger sans tenant valide (risque cross-tenant)
+    if (!tenantId) {
+      setUsers([]);
+      return;
+    }
     // Filtre explicite : tenant_id + exclut comptes supprimés + exclut super_admin
-    const query = supabase
+    const { data } = await supabase
       .from('user_profiles')
       .select('*')
+      .eq('tenant_id', tenantId)
       .is('deleted_at', null)
       .neq('role', 'super_admin')
       .order('created_at', { ascending: false });
-    const { data } = tenantId ? await query.eq('tenant_id', tenantId) : await query;
     if (data) setUsers(data);
   };
 
